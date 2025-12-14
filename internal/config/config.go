@@ -1,25 +1,18 @@
 package config
 
-import "os"
+import (
+	"cmp"
+	"os"
+)
 
 type Config struct {
 	Port string
-	Env  string
 }
 
 func Load() *Config {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	env := os.Getenv("ENV")
-	if env == "" {
-		env = "development"
-	}
+	port := cmp.Or(os.Getenv("PORT"), "8080")
 
 	return &Config{
 		Port: port,
-		Env:  env,
 	}
 }

@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/EwenQuim/microchat/internal/config"
 	"github.com/EwenQuim/microchat/internal/handlers"
 	"github.com/EwenQuim/microchat/internal/repository/memory"
 	"github.com/EwenQuim/microchat/internal/services"
+
 	"github.com/go-fuego/fuego"
 )
 
@@ -22,8 +22,9 @@ func main() {
 	chatService := services.NewChatService(repo)
 
 	// Create Fuego server with port
-	os.Setenv("SERVER_PORT", cfg.Port)
-	s := fuego.NewServer()
+	s := fuego.NewServer(
+		fuego.WithAddr("0.0.0.0:9999"),
+	)
 
 	// API routes
 	apiGroup := fuego.Group(s, "/api")

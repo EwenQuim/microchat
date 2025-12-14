@@ -7,7 +7,7 @@ COPY app/ ./
 RUN npm run build
 
 # Build stage for Go
-FROM golang:1.23-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -26,9 +26,6 @@ COPY --from=go-builder /app/cli .
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist ./static
-
-# Expose port
-EXPOSE 8080
 
 # Run server
 CMD ["./server"]
