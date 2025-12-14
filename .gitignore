@@ -1,0 +1,37 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go
+*.test
+*.out
+go.work
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+server
+cli
+static/*
+!static/.gitkeep
+
+# Frontend (in case not covered by app/.gitignore)
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

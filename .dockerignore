@@ -1,0 +1,12 @@
+.git
+.gitignore
+README.md
+app/node_modules
+app/dist
+static
+server
+cli
+*.exe
+*.test
+*.out
+.env
