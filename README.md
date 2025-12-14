@@ -74,6 +74,16 @@ make build-cli
 
 ## Docker Deployment
 
+### Using Pre-built Image (GitHub Container Registry)
+
+Pull and run the latest image:
+```bash
+docker pull ghcr.io/ewenquim/microchat:latest
+docker run -p 8080:8080 ghcr.io/ewenquim/microchat:latest
+```
+
+### Building Locally
+
 Build Docker image:
 ```bash
 make docker-build
@@ -118,6 +128,34 @@ List all rooms:
 
 - `PORT` - Server port (default: 8080)
 - `ENV` - Environment (development/production)
+
+## CI/CD
+
+The project includes GitHub Actions workflows for:
+
+- **CI** (`ci.yml`): Runs on PRs and pushes
+  - Tests Go code (server & CLI)
+  - Builds frontend
+  - Runs with race detection and coverage
+
+- **Lint** (`lint.yml`): Go code linting with golangci-lint
+  - Strict on PRs (blocks merge on issues)
+  - Warnings only on main/master
+
+- **Docker Publish** (`docker-publish.yml`): Builds and pushes to GHCR
+  - Triggers on push to main/master or version tags
+  - Automatic tagging: `latest`, `v1.0.0`, `v1.0`, `v1`
+  - Published to: `ghcr.io/ewenquim/microchat`
+
+### Releasing
+
+To create a new release:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This will automatically build and push the Docker image with version tags.
 
 ## Clean Up
 
