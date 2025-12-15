@@ -32,11 +32,10 @@ jobs:
       - name: Build CLI
         run: make build-cli
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
       - name: Run linter
-        run: make lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2
 
       - name: Run tests
         run: make test

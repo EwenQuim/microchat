@@ -18,6 +18,7 @@ go.work
 # Build artifacts
 static/*
 !static/.gitkeep
+cmd/server/static/
 
 # Frontend (in case not covered by app/.gitignore)
 node_modules/

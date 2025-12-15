@@ -28,9 +28,10 @@ install:
 build-frontend:
 	@echo "Building frontend..."
 	cd app && npm run build
-	@echo "Copying frontend build to static..."
-	rm -rf static/*
-	cp -r app/dist/* static/
+	@echo "Copying frontend build to cmd/server/static for embedding..."
+	rm -rf cmd/server/static
+	mkdir -p cmd/server/static
+	cp -r app/dist/* cmd/server/static/
 
 build-server:
 	@echo "Building server..."
@@ -76,5 +77,5 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf bin/
 	rm -rf app/dist
-	rm -rf static/*
+	rm -rf cmd/server/static
 	go clean

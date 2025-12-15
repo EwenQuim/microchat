@@ -16,6 +16,8 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 COPY . .
+# Copy frontend build to be embedded
+COPY --from=frontend-builder /app/frontend/dist ./cmd/server/static
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
@@ -28,12 +30,9 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
-# Copy Go binaries
+# Copy Go binaries (static files are now embedded in the binary)
 COPY --from=go-builder /app/server .
 COPY --from=go-builder /app/cli .
-
-# Copy frontend build
-COPY --from=frontend-builder /app/frontend/dist ./static
 
 # Run server
 CMD ["./server"]

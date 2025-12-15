@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,6 +15,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 )
+
+//go:embed static
+var staticFiles embed.FS
 
 func main() {
 	// Initialize repository
@@ -35,7 +40,12 @@ func main() {
 	handlers.RegisterChatRoutes(apiGroup, chatService)
 
 	// Serve static files with SPA fallback
-	spaHandler := createSPAHandler("./static")
+	staticFS, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		slog.Error("Failed to create sub filesystem", "error", err)
+		os.Exit(1)
+	}
+	spaHandler := createSPAHandler(staticFS)
 	fuego.GetStd(s, "/", spaHandler)
 	fuego.GetStd(s, "/*", spaHandler)
 
@@ -46,18 +56,24 @@ func main() {
 }
 
 // createSPAHandler creates a handler that serves static files and falls back to index.html for SPA routes
-func createSPAHandler(staticDir string) http.HandlerFunc {
-	fileServer := http.FileServer(http.Dir(staticDir))
+func createSPAHandler(staticFS fs.FS) http.HandlerFunc {
+	fileServer := http.FileServer(http.FS(staticFS))
 
 	assetExtensions := []string{".js", ".css", ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Build the full file path
-		path := filepath.Join(staticDir, r.URL.Path)
+		// Clean the path to prevent directory traversal
+		path := filepath.Clean(r.URL.Path)
+		if path == "/" {
+			path = "index.html"
+		} else {
+			// Remove leading slash for fs.FS
+			path = path[1:]
+		}
 
-		// Check if the file exists
-		_, err := os.Stat(path)
-		if os.IsNotExist(err) {
+		// Check if the file exists in the embedded FS
+		_, err := fs.Stat(staticFS, path)
+		if err != nil {
 			// Check if this is a request for an asset file (should return 404)
 			ext := filepath.Ext(r.URL.Path)
 			if slices.Contains(assetExtensions, ext) {
@@ -66,7 +82,13 @@ func createSPAHandler(staticDir string) http.HandlerFunc {
 			}
 
 			// Not an asset file, serve index.html for SPA routing
-			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+			indexData, err := fs.ReadFile(staticFS, "index.html")
+			if err != nil {
+				http.Error(w, "index.html not found", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(indexData)
 			return
 		}
 
