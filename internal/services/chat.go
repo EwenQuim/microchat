@@ -3,7 +3,7 @@ package services
 import "github.com/EwenQuim/microchat/internal/models"
 
 type Repository interface {
-	SaveMessage(room, user, content string) (*models.Message, error)
+	SaveMessage(room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
 	GetMessages(room string) ([]models.Message, error)
 	GetRooms() ([]models.Room, error)
 	CreateRoom(name string) (*models.Room, error)
@@ -19,8 +19,8 @@ func NewChatService(repo Repository) *ChatService {
 	}
 }
 
-func (s *ChatService) SendMessage(room, user, content string) (*models.Message, error) {
-	return s.repo.SaveMessage(room, user, content)
+func (s *ChatService) SendMessage(room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error) {
+	return s.repo.SaveMessage(room, user, content, signature, pubkey, timestamp)
 }
 
 func (s *ChatService) GetMessages(room string) ([]models.Message, error) {

@@ -3,11 +3,13 @@ module github.com/EwenQuim/microchat
 go 1.25.5
 
 require (
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 	github.com/go-fuego/fuego v0.19.0
 	github.com/google/uuid v1.6.0
 )
 
 require (
+	github.com/btcsuite/btcd/btcec/v2 v2.3.6 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
 	github.com/getkin/kin-openapi v0.133.0 // indirect
 	github.com/go-openapi/jsonpointer v0.22.3 // indirect

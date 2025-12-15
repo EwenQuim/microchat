@@ -195,6 +195,9 @@ export interface Room {
 export interface SendMessageRequest {
   content: string;
   user: string;
+  signature?: string;
+  pubkey?: string;
+  timestamp?: number;
 }
 
 /**

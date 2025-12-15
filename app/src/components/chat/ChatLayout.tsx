@@ -17,7 +17,7 @@ interface ChatLayoutProps {
 }
 
 export function ChatLayout({ roomName }: ChatLayoutProps) {
-	const { username, setUsername, isLoading } = useUsername();
+	const { username, keys, setUsername, isLoading } = useUsername();
 	const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 	const [tempUsername, setTempUsername] = useState("");
 
@@ -27,9 +27,9 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 		}
 	}, [isLoading, username]);
 
-	const handleSaveUsername = () => {
+	const handleSaveUsername = async () => {
 		if (tempUsername.trim()) {
-			setUsername(tempUsername.trim());
+			await setUsername(tempUsername.trim());
 			setShowUsernameDialog(false);
 		}
 	};
@@ -57,6 +57,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 				<ChatArea
 					roomName={roomName}
 					username={username ?? ""}
+					keys={keys}
 					className={cn(
 						"w-full md:flex-1",
 						!roomName ? "hidden md:flex" : "flex",

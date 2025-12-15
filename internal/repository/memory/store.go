@@ -20,16 +20,19 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) SaveMessage(room, user, content string) (*models.Message, error) {
+func (s *Store) SaveMessage(room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	msg := models.Message{
-		ID:        uuid.New().String(),
-		Room:      room,
-		User:      user,
-		Content:   content,
-		Timestamp: time.Now(),
+		ID:              uuid.New().String(),
+		Room:            room,
+		User:            user,
+		Content:         content,
+		Timestamp:       time.Now(),
+		Signature:       signature,
+		Pubkey:          pubkey,
+		SignedTimestamp: signedTimestamp,
 	}
 
 	s.messages[room] = append(s.messages[room], msg)

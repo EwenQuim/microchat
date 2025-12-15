@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import { useSendMessage } from "@/hooks/useSendMessage";
+import { type KeyPair, signMessage } from "@/lib/crypto";
 import { cn } from "@/lib/utils";
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList";
@@ -10,19 +11,40 @@ import { MessageList } from "./MessageList";
 interface ChatAreaProps {
 	roomName: string | null;
 	username: string;
+	keys: KeyPair | null;
 	className?: string;
 }
 
-export function ChatArea({ roomName, username, className }: ChatAreaProps) {
+export function ChatArea({
+	roomName,
+	username,
+	keys,
+	className,
+}: ChatAreaProps) {
 	const navigate = useNavigate();
 	const { data: messages, isLoading } = useMessages(roomName);
 	const sendMessageMutation = useSendMessage(roomName || "");
 
-	const handleSendMessage = (content: string) => {
-		if (!roomName) return;
+	const handleSendMessage = async (content: string) => {
+		if (!roomName || !keys) return;
+
+		// Sign the message using Nostr-style cryptography
+		const { signature, timestamp } = await signMessage({
+			privateKey: keys.privateKey,
+			publicKey: keys.publicKey,
+			content,
+			room: roomName,
+		});
+
 		sendMessageMutation.mutate({
 			room: roomName,
-			data: { content, user: username },
+			data: {
+				content,
+				user: username,
+				signature,
+				pubkey: keys.publicKey,
+				timestamp,
+			},
 		});
 	};
 
