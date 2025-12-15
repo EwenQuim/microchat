@@ -16,7 +16,7 @@ import (
 	"github.com/go-fuego/fuego"
 )
 
-//go:embed static
+//go:embed all:static
 var staticFiles embed.FS
 
 func main() {

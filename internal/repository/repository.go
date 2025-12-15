@@ -18,7 +18,7 @@ func NewRepository() (services.Repository, error) {
 	dbPath := cmp.Or(os.Getenv("DB_PATH"), ":memory:")
 
 	if dbPath == ":memory:" {
-		slog.Info("Using in-memory storage. Set DB_PATH if you want persistent data")
+		slog.Info("Using in-memory storage. Set DB_PATH if you want persistent data with SQLite")
 		return memory.NewStore(), nil
 	}
 
