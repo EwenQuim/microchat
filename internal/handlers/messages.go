@@ -13,7 +13,7 @@ import (
 func GetMessages(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Message, error) {
 	return func(c fuego.ContextNoBody) ([]models.Message, error) {
 		room := c.PathParam("room")
-		return chatService.GetMessages(room)
+		return chatService.GetMessages(c.Context(), room)
 	}
 }
 
@@ -39,6 +39,6 @@ func SendMessage(chatService *services.ChatService) func(c fuego.ContextWithBody
 			}
 		}
 
-		return chatService.SendMessage(room, body.User, body.Content, body.Signature, body.Pubkey, body.Timestamp)
+		return chatService.SendMessage(c.Context(), room, body.User, body.Content, body.Signature, body.Pubkey, body.Timestamp)
 	}
 }

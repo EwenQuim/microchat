@@ -1,20 +1,24 @@
 package services
 
-import "github.com/EwenQuim/microchat/internal/models"
+import (
+	"context"
+
+	"github.com/EwenQuim/microchat/internal/models"
+)
 
 type Repository interface {
-	SaveMessage(room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
-	GetMessages(room string) ([]models.Message, error)
-	GetRooms() ([]models.Room, error)
-	CreateRoom(name string) (*models.Room, error)
+	SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
+	GetMessages(ctx context.Context, room string) ([]models.Message, error)
+	GetRooms(ctx context.Context) ([]models.Room, error)
+	CreateRoom(ctx context.Context, name string) (*models.Room, error)
 
 	// User management
-	RegisterUser(publicKey string) (*models.User, error)
-	GetUser(publicKey string) (*models.User, error)
-	GetUserByPublicKey(publicKey string) (*models.User, error)
-	GetAllUsers() ([]models.User, error)
-	VerifyUser(publicKey string) error
-	UnverifyUser(publicKey string) error
+	RegisterUser(ctx context.Context, publicKey string) (*models.User, error)
+	GetUser(ctx context.Context, publicKey string) (*models.User, error)
+	GetUserByPublicKey(ctx context.Context, publicKey string) (*models.User, error)
+	GetAllUsers(ctx context.Context) ([]models.User, error)
+	VerifyUser(ctx context.Context, publicKey string) error
+	UnverifyUser(ctx context.Context, publicKey string) error
 }
 
 type ChatService struct {
@@ -27,42 +31,42 @@ func NewChatService(repo Repository) *ChatService {
 	}
 }
 
-func (s *ChatService) SendMessage(room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error) {
-	return s.repo.SaveMessage(room, user, content, signature, pubkey, timestamp)
+func (s *ChatService) SendMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error) {
+	return s.repo.SaveMessage(ctx, room, user, content, signature, pubkey, timestamp)
 }
 
-func (s *ChatService) GetMessages(room string) ([]models.Message, error) {
-	return s.repo.GetMessages(room)
+func (s *ChatService) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
+	return s.repo.GetMessages(ctx, room)
 }
 
-func (s *ChatService) GetRooms() ([]models.Room, error) {
-	return s.repo.GetRooms()
+func (s *ChatService) GetRooms(ctx context.Context) ([]models.Room, error) {
+	return s.repo.GetRooms(ctx)
 }
 
-func (s *ChatService) CreateRoom(name string) (*models.Room, error) {
-	return s.repo.CreateRoom(name)
+func (s *ChatService) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
+	return s.repo.CreateRoom(ctx, name)
 }
 
-func (s *ChatService) RegisterUser(publicKey string) (*models.User, error) {
-	return s.repo.RegisterUser(publicKey)
+func (s *ChatService) RegisterUser(ctx context.Context, publicKey string) (*models.User, error) {
+	return s.repo.RegisterUser(ctx, publicKey)
 }
 
-func (s *ChatService) GetUser(publicKey string) (*models.User, error) {
-	return s.repo.GetUser(publicKey)
+func (s *ChatService) GetUser(ctx context.Context, publicKey string) (*models.User, error) {
+	return s.repo.GetUser(ctx, publicKey)
 }
 
-func (s *ChatService) GetUserByPublicKey(publicKey string) (*models.User, error) {
-	return s.repo.GetUserByPublicKey(publicKey)
+func (s *ChatService) GetUserByPublicKey(ctx context.Context, publicKey string) (*models.User, error) {
+	return s.repo.GetUserByPublicKey(ctx, publicKey)
 }
 
-func (s *ChatService) GetAllUsers() ([]models.User, error) {
-	return s.repo.GetAllUsers()
+func (s *ChatService) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	return s.repo.GetAllUsers(ctx)
 }
 
-func (s *ChatService) VerifyUser(publicKey string) error {
-	return s.repo.VerifyUser(publicKey)
+func (s *ChatService) VerifyUser(ctx context.Context, publicKey string) error {
+	return s.repo.VerifyUser(ctx, publicKey)
 }
 
-func (s *ChatService) UnverifyUser(publicKey string) error {
-	return s.repo.UnverifyUser(publicKey)
+func (s *ChatService) UnverifyUser(ctx context.Context, publicKey string) error {
+	return s.repo.UnverifyUser(ctx, publicKey)
 }

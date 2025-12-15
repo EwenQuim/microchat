@@ -1,0 +1,43 @@
+-- name: CreateMessage :one
+INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING *;
+
+-- name: GetMessagesByRoom :many
+SELECT * FROM messages
+WHERE room = ?
+ORDER BY timestamp ASC;
+
+-- name: GetRoomsWithMessageCount :many
+SELECT room, COUNT(*) as message_count
+FROM messages
+GROUP BY room;
+
+-- name: GetMessageCountByRoom :one
+SELECT COUNT(*) as count
+FROM messages
+WHERE room = ?;
+
+-- name: CreateUser :one
+INSERT INTO users (public_key, verified, created_at, updated_at)
+VALUES (?, ?, ?, ?)
+RETURNING *;
+
+-- name: GetUserByPublicKey :one
+SELECT * FROM users
+WHERE public_key = ?;
+
+-- name: UserExistsByPublicKey :one
+SELECT COUNT(*) > 0 as user_exists FROM users WHERE public_key = ?;
+
+-- name: GetAllUsers :many
+SELECT * FROM users;
+
+-- name: UpdateUserVerified :exec
+UPDATE users
+SET verified = ?, updated_at = ?
+WHERE public_key = ?;
+
+-- name: GetUserVerified :one
+SELECT verified FROM users
+WHERE public_key = ?;

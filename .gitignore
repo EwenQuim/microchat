@@ -36,3 +36,9 @@ Thumbs.db
 
 # Generated
 doc/
+
+# Database
+data/
+*.db
+*.sqlite
+*.sqlite3

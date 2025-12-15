@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/EwenQuim/microchat/pkg/client"
@@ -36,17 +36,20 @@ func main() {
 	switch *command {
 	case "send":
 		if *message == "" || *user == "" {
-			log.Fatal("message and user are required for send command")
+			slog.Error("message and user are required for send command")
+			os.Exit(1)
 		}
 		if err := c.SendMessage(*room, *user, *message); err != nil {
-			log.Fatal(err)
+			slog.Error("Failed to send message", "error", err)
+			os.Exit(1)
 		}
 		fmt.Println("Message sent successfully")
 
 	case "list":
 		messages, err := c.GetMessages(*room)
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("Failed to get messages", "error", err)
+			os.Exit(1)
 		}
 		for _, msg := range messages {
 			fmt.Printf("[%s] %s: %s\n", msg.Timestamp, msg.User, msg.Content)
@@ -55,7 +58,8 @@ func main() {
 	case "rooms":
 		rooms, err := c.GetRooms()
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("Failed to get rooms", "error", err)
+			os.Exit(1)
 		}
 		fmt.Println("Available rooms:")
 		for _, room := range rooms {
@@ -63,6 +67,7 @@ func main() {
 		}
 
 	default:
-		log.Fatalf("Unknown command: %s", *command)
+		slog.Error("Unknown command", "command", *command)
+		os.Exit(1)
 	}
 }

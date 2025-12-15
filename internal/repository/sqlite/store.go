@@ -1,17 +1,19 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/EwenQuim/microchat/internal/models"
+	"github.com/EwenQuim/microchat/internal/repository/sqlite/sqlc"
 	"github.com/EwenQuim/microchat/internal/services"
 	"github.com/google/uuid"
 )
 
 type Store struct {
-	db *sql.DB
+	queries *sqlc.Queries
 }
 
 // Ensure Store implements the Repository interface
@@ -19,118 +21,97 @@ var _ services.Repository = (*Store)(nil)
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
-		db: db,
+		queries: sqlc.New(db),
 	}
 }
 
-func (s *Store) SaveMessage(room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
+func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
+
 	// Automatically create unverified user if pubkey is provided and user doesn't exist
 	if pubkey != "" {
-		var exists bool
-		err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE public_key = ?)", pubkey).Scan(&exists)
+		exists, err := s.queries.UserExistsByPublicKey(ctx, pubkey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check user existence: %w", err)
 		}
 
 		if !exists {
 			now := time.Now()
-			_, err = s.db.Exec(
-				"INSERT INTO users (public_key, verified, created_at, updated_at) VALUES (?, ?, ?, ?)",
-				pubkey, false, now, now,
-			)
+			_, err = s.queries.CreateUser(ctx, sqlc.CreateUserParams{
+				PublicKey: pubkey,
+				Verified:  false,
+				CreatedAt: now,
+				UpdatedAt: now,
+			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create user: %w", err)
 			}
 		}
 	}
 
-	msg := models.Message{
-		ID:              uuid.New().String(),
-		Room:            room,
-		User:            user,
-		Content:         content,
-		Timestamp:       time.Now(),
-		Signature:       signature,
-		Pubkey:          pubkey,
-		SignedTimestamp: signedTimestamp,
-	}
+	msgID := uuid.New().String()
+	timestamp := time.Now()
 
-	_, err := s.db.Exec(
-		"INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		msg.ID, msg.Room, msg.User, msg.Content, msg.Timestamp, msg.Signature, msg.Pubkey, msg.SignedTimestamp,
-	)
+	sqlcMsg, err := s.queries.CreateMessage(ctx, sqlc.CreateMessageParams{
+		ID:        msgID,
+		Room:      room,
+		User:      user,
+		Content:   content,
+		Timestamp: timestamp,
+		Signature: sql.NullString{
+			String: signature,
+			Valid:  signature != "",
+		},
+		Pubkey: sql.NullString{
+			String: pubkey,
+			Valid:  pubkey != "",
+		},
+		SignedTimestamp: sql.NullInt64{
+			Int64: signedTimestamp,
+			Valid: signedTimestamp != 0,
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to save message: %w", err)
 	}
 
-	return &msg, nil
+	return sqlcMessageToModel(sqlcMsg), nil
 }
 
-func (s *Store) GetMessages(room string) ([]models.Message, error) {
-	rows, err := s.db.Query(
-		"SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp FROM messages WHERE room = ? ORDER BY timestamp ASC",
-		room,
-	)
+func (s *Store) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
+
+	sqlcMessages, err := s.queries.GetMessagesByRoom(ctx, room)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query messages: %w", err)
-	}
-	defer rows.Close()
-
-	var messages []models.Message
-	for rows.Next() {
-		var msg models.Message
-		err := rows.Scan(&msg.ID, &msg.Room, &msg.User, &msg.Content, &msg.Timestamp, &msg.Signature, &msg.Pubkey, &msg.SignedTimestamp)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan message: %w", err)
-		}
-		messages = append(messages, msg)
+		return nil, fmt.Errorf("failed to get messages: %w", err)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating messages: %w", err)
-	}
-
-	if messages == nil {
-		return []models.Message{}, nil
+	messages := make([]models.Message, 0, len(sqlcMessages))
+	for _, msg := range sqlcMessages {
+		messages = append(messages, *sqlcMessageToModel(msg))
 	}
 
 	return messages, nil
 }
 
-func (s *Store) GetRooms() ([]models.Room, error) {
-	rows, err := s.db.Query(
-		"SELECT room, COUNT(*) as count FROM messages GROUP BY room",
-	)
+func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
+	rows, err := s.queries.GetRoomsWithMessageCount(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query rooms: %w", err)
-	}
-	defer rows.Close()
-
-	var rooms []models.Room
-	for rows.Next() {
-		var room models.Room
-		err := rows.Scan(&room.Name, &room.MessageCount)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan room: %w", err)
-		}
-		rooms = append(rooms, room)
+		return nil, fmt.Errorf("failed to get rooms: %w", err)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rooms: %w", err)
-	}
-
-	if rooms == nil {
-		return []models.Room{}, nil
+	rooms := make([]models.Room, 0, len(rows))
+	for _, row := range rows {
+		rooms = append(rooms, models.Room{
+			Name:         row.Room,
+			MessageCount: int(row.MessageCount),
+		})
 	}
 
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(name string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
 	// Check if room already exists (has messages)
-	var count int
-	err := s.db.QueryRow("SELECT COUNT(*) FROM messages WHERE room = ?", name).Scan(&count)
+	count, err := s.queries.GetMessageCountByRoom(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check room existence: %w", err)
 	}
@@ -139,18 +120,16 @@ func (s *Store) CreateRoom(name string) (*models.Room, error) {
 		return nil, fmt.Errorf("room already exists")
 	}
 
-	// SQLite doesn't require explicit room creation, but we can insert a marker if needed
-	// For now, we'll just return the room object
 	return &models.Room{
 		Name:         name,
 		MessageCount: 0,
 	}, nil
 }
 
-func (s *Store) RegisterUser(publicKey string) (*models.User, error) {
+func (s *Store) RegisterUser(ctx context.Context, publicKey string) (*models.User, error) {
+
 	// Check if public key is already registered
-	var exists bool
-	err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE public_key = ?)", publicKey).Scan(&exists)
+	exists, err := s.queries.UserExistsByPublicKey(ctx, publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check user existence: %w", err)
 	}
@@ -160,31 +139,22 @@ func (s *Store) RegisterUser(publicKey string) (*models.User, error) {
 	}
 
 	now := time.Now()
-	_, err = s.db.Exec(
-		"INSERT INTO users (public_key, verified, created_at, updated_at) VALUES (?, ?, ?, ?)",
-		publicKey, false, now, now,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to register user: %w", err)
-	}
-
-	user := &models.User{
+	sqlcUser, err := s.queries.CreateUser(ctx, sqlc.CreateUserParams{
 		PublicKey: publicKey,
 		Verified:  false,
 		CreatedAt: now,
 		UpdatedAt: now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to register user: %w", err)
 	}
 
-	return user, nil
+	return sqlcUserToModel(sqlcUser), nil
 }
 
-func (s *Store) GetUser(publicKey string) (*models.User, error) {
-	var user models.User
-	err := s.db.QueryRow(
-		"SELECT public_key, verified, created_at, updated_at FROM users WHERE public_key = ?",
-		publicKey,
-	).Scan(&user.PublicKey, &user.Verified, &user.CreatedAt, &user.UpdatedAt)
+func (s *Store) GetUser(ctx context.Context, publicKey string) (*models.User, error) {
 
+	sqlcUser, err := s.queries.GetUserByPublicKey(ctx, publicKey)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("user not found")
 	}
@@ -192,82 +162,75 @@ func (s *Store) GetUser(publicKey string) (*models.User, error) {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	return &user, nil
+	return sqlcUserToModel(sqlcUser), nil
 }
 
-func (s *Store) GetUserByPublicKey(publicKey string) (*models.User, error) {
-	// Same as GetUser since public_key is the identifier
-	return s.GetUser(publicKey)
+func (s *Store) GetUserByPublicKey(ctx context.Context, publicKey string) (*models.User, error) {
+	return s.GetUser(ctx, publicKey)
 }
 
-func (s *Store) GetAllUsers() ([]models.User, error) {
-	rows, err := s.db.Query(
-		"SELECT public_key, verified, created_at, updated_at FROM users",
-	)
+func (s *Store) GetAllUsers(ctx context.Context) ([]models.User, error) {
+
+	sqlcUsers, err := s.queries.GetAllUsers(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query users: %w", err)
-	}
-	defer rows.Close()
-
-	var users []models.User
-	for rows.Next() {
-		var user models.User
-		err := rows.Scan(&user.PublicKey, &user.Verified, &user.CreatedAt, &user.UpdatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan user: %w", err)
-		}
-		users = append(users, user)
+		return nil, fmt.Errorf("failed to get all users: %w", err)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating users: %w", err)
-	}
-
-	if users == nil {
-		return []models.User{}, nil
+	users := make([]models.User, 0, len(sqlcUsers))
+	for _, user := range sqlcUsers {
+		users = append(users, *sqlcUserToModel(user))
 	}
 
 	return users, nil
 }
 
-func (s *Store) VerifyUser(publicKey string) error {
-	result, err := s.db.Exec(
-		"UPDATE users SET verified = ?, updated_at = ? WHERE public_key = ?",
-		true, time.Now(), publicKey,
-	)
+func (s *Store) VerifyUser(ctx context.Context, publicKey string) error {
+
+	err := s.queries.UpdateUserVerified(ctx, sqlc.UpdateUserVerifiedParams{
+		Verified:  true,
+		UpdatedAt: time.Now(),
+		PublicKey: publicKey,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to verify user: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rows == 0 {
-		return fmt.Errorf("user not found")
 	}
 
 	return nil
 }
 
-func (s *Store) UnverifyUser(publicKey string) error {
-	result, err := s.db.Exec(
-		"UPDATE users SET verified = ?, updated_at = ? WHERE public_key = ?",
-		false, time.Now(), publicKey,
-	)
+func (s *Store) UnverifyUser(ctx context.Context, publicKey string) error {
+
+	err := s.queries.UpdateUserVerified(ctx, sqlc.UpdateUserVerifiedParams{
+		Verified:  false,
+		UpdatedAt: time.Now(),
+		PublicKey: publicKey,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to unverify user: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rows == 0 {
-		return fmt.Errorf("user not found")
-	}
-
 	return nil
+}
+
+// Helper functions to convert between sqlc and models types
+func sqlcMessageToModel(msg sqlc.Message) *models.Message {
+	return &models.Message{
+		ID:              msg.ID,
+		Room:            msg.Room,
+		User:            msg.User,
+		Content:         msg.Content,
+		Timestamp:       msg.Timestamp,
+		Signature:       msg.Signature.String,
+		Pubkey:          msg.Pubkey.String,
+		SignedTimestamp: msg.SignedTimestamp.Int64,
+	}
+}
+
+func sqlcUserToModel(user sqlc.User) *models.User {
+	return &models.User{
+		PublicKey: user.PublicKey,
+		Verified:  user.Verified,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
 }

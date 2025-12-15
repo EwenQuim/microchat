@@ -14,20 +14,20 @@ func RegisterUser(chatService *services.ChatService) func(c fuego.ContextWithBod
 			return nil, err
 		}
 
-		return chatService.RegisterUser(body.PublicKey)
+		return chatService.RegisterUser(c.Context(), body.PublicKey)
 	}
 }
 
 func GetUser(chatService *services.ChatService) func(c fuego.ContextNoBody) (*models.User, error) {
 	return func(c fuego.ContextNoBody) (*models.User, error) {
 		publicKey := c.PathParam("publicKey")
-		return chatService.GetUser(publicKey)
+		return chatService.GetUser(c.Context(), publicKey)
 	}
 }
 
 func GetAllUsers(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.User, error) {
 	return func(c fuego.ContextNoBody) ([]models.User, error) {
-		return chatService.GetAllUsers()
+		return chatService.GetAllUsers(c.Context())
 	}
 }
 
@@ -38,7 +38,7 @@ func VerifyUser(chatService *services.ChatService) func(c fuego.ContextWithBody[
 			return "", err
 		}
 
-		err = chatService.VerifyUser(body.PublicKey)
+		err = chatService.VerifyUser(c.Context(), body.PublicKey)
 		if err != nil {
 			return "", err
 		}
@@ -54,7 +54,7 @@ func UnverifyUser(chatService *services.ChatService) func(c fuego.ContextWithBod
 			return "", err
 		}
 
-		err = chatService.UnverifyUser(body.PublicKey)
+		err = chatService.UnverifyUser(c.Context(), body.PublicKey)
 		if err != nil {
 			return "", err
 		}

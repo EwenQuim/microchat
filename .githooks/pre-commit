@@ -1,0 +1,23 @@
+#!/bin/sh
+# Pre-commit hook for microchat
+# Runs linter and tests before allowing commit
+# Uses the same commands as CI for consistency
+
+echo "Running pre-commit checks..."
+
+# Run linter (matches CI lint workflow)
+echo "Running linter..."
+if ! make lint; then
+    echo "❌ Linting failed. Please fix the issues before committing."
+    exit 1
+fi
+
+# Run tests (matches CI test workflow)
+echo "Running tests..."
+if ! make test; then
+    echo "❌ Tests failed. Please fix the tests before committing."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

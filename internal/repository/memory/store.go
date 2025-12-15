@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -26,7 +27,7 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) SaveMessage(room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
+func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -58,7 +59,7 @@ func (s *Store) SaveMessage(room, user, content, signature, pubkey string, signe
 	return &msg, nil
 }
 
-func (s *Store) GetMessages(room string) ([]models.Message, error) {
+func (s *Store) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -70,7 +71,7 @@ func (s *Store) GetMessages(room string) ([]models.Message, error) {
 	return messages, nil
 }
 
-func (s *Store) GetRooms() ([]models.Room, error) {
+func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -85,7 +86,7 @@ func (s *Store) GetRooms() ([]models.Room, error) {
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(name string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -100,7 +101,7 @@ func (s *Store) CreateRoom(name string) (*models.Room, error) {
 	}, nil
 }
 
-func (s *Store) RegisterUser(publicKey string) (*models.User, error) {
+func (s *Store) RegisterUser(ctx context.Context, publicKey string) (*models.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -122,7 +123,7 @@ func (s *Store) RegisterUser(publicKey string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *Store) GetUser(publicKey string) (*models.User, error) {
+func (s *Store) GetUser(ctx context.Context, publicKey string) (*models.User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -134,7 +135,7 @@ func (s *Store) GetUser(publicKey string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *Store) GetUserByPublicKey(publicKey string) (*models.User, error) {
+func (s *Store) GetUserByPublicKey(ctx context.Context, publicKey string) (*models.User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -147,7 +148,7 @@ func (s *Store) GetUserByPublicKey(publicKey string) (*models.User, error) {
 	return nil, fmt.Errorf("user not found")
 }
 
-func (s *Store) GetAllUsers() ([]models.User, error) {
+func (s *Store) GetAllUsers(ctx context.Context) ([]models.User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -159,7 +160,7 @@ func (s *Store) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (s *Store) VerifyUser(publicKey string) error {
+func (s *Store) VerifyUser(ctx context.Context, publicKey string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -173,7 +174,7 @@ func (s *Store) VerifyUser(publicKey string) error {
 	return nil
 }
 
-func (s *Store) UnverifyUser(publicKey string) error {
+func (s *Store) UnverifyUser(ctx context.Context, publicKey string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

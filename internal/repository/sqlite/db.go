@@ -2,12 +2,18 @@ package sqlite
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
+
+	"github.com/pressly/goose/v3"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// InitDB initializes a SQLite database connection and creates the schema
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
+
+// InitDB initializes a SQLite database connection and runs migrations
 func InitDB(dbPath string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -16,50 +22,29 @@ func InitDB(dbPath string) (*sql.DB, error) {
 
 	// Test the connection
 	if err := db.Ping(); err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Create schema
-	if err := createSchema(db); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to create schema: %w", err)
+	// Run migrations
+	if err := runMigrations(db); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return db, nil
 }
 
-// createSchema creates the necessary tables for the application
-func createSchema(db *sql.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS messages (
-		id TEXT PRIMARY KEY,
-		room TEXT NOT NULL,
-		user TEXT NOT NULL,
-		content TEXT NOT NULL,
-		timestamp DATETIME NOT NULL,
-		signature TEXT,
-		pubkey TEXT,
-		signed_timestamp INTEGER,
-		FOREIGN KEY (pubkey) REFERENCES users(public_key)
-	);
+// runMigrations runs all pending migrations
+func runMigrations(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
 
-	CREATE INDEX IF NOT EXISTS idx_messages_room ON messages(room);
-	CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
-	CREATE INDEX IF NOT EXISTS idx_messages_pubkey ON messages(pubkey);
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return fmt.Errorf("failed to set goose dialect: %w", err)
+	}
 
-	CREATE TABLE IF NOT EXISTS users (
-		public_key TEXT PRIMARY KEY,
-		verified BOOLEAN NOT NULL DEFAULT 0,
-		created_at DATETIME NOT NULL,
-		updated_at DATETIME NOT NULL
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_users_verified ON users(verified);
-	`
-
-	_, err := db.Exec(schema)
-	if err != nil {
-		return fmt.Errorf("failed to execute schema: %w", err)
+	if err := goose.Up(db, "migrations"); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return nil
@@ -70,5 +55,35 @@ func Close(db *sql.DB) error {
 	if err := db.Close(); err != nil {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
+	return nil
+}
+
+// MigrateDown rolls back the last migration (useful for development)
+func MigrateDown(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	if err := goose.Down(db, "migrations"); err != nil {
+		return fmt.Errorf("failed to rollback migration: %w", err)
+	}
+
+	return nil
+}
+
+// MigrationStatus returns the current migration status
+func MigrationStatus(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	if err := goose.Status(db, "migrations"); err != nil {
+		return fmt.Errorf("failed to get migration status: %w", err)
+	}
+
 	return nil
 }

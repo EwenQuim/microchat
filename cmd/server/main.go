@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
 
 	"github.com/EwenQuim/microchat/internal/handlers"
-	"github.com/EwenQuim/microchat/internal/repository/memory"
+	"github.com/EwenQuim/microchat/internal/repository"
 	"github.com/EwenQuim/microchat/internal/services"
 
 	"github.com/go-fuego/fuego"
@@ -16,7 +16,11 @@ import (
 
 func main() {
 	// Initialize repository
-	repo := memory.NewStore()
+	repo, err := repository.NewRepository()
+	if err != nil {
+		slog.Error("Failed to initialize repository", "error", err)
+		os.Exit(1)
+	}
 
 	// Initialize services
 	chatService := services.NewChatService(repo)
@@ -36,7 +40,8 @@ func main() {
 	fuego.GetStd(s, "/*", spaHandler)
 
 	if err := s.Run(); err != nil {
-		log.Fatal(err)
+		slog.Error("Server failed to run", "error", err)
+		os.Exit(1)
 	}
 }
 

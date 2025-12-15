@@ -137,8 +137,7 @@ func BenchmarkVerifyMessageSignature(b *testing.B) {
 	signature := ecdsa.Sign(privateKey, eventHashBytes)
 	signatureHex := hex.EncodeToString(signature.Serialize())
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		VerifyMessageSignature(pubkeyHex, signatureHex, content, room, timestamp)
+	for b.Loop() {
+		_ = VerifyMessageSignature(pubkeyHex, signatureHex, content, room, timestamp)
 	}
 }

@@ -1,4 +1,4 @@
-.PHONY: help build-frontend build-server build-cli build dev run clean docker-build docker-up docker-down install
+.PHONY: help build-frontend build-server build-cli build dev run clean docker-build docker-up docker-down install lint test
 
 help:
 	@echo "Available commands:"
@@ -7,6 +7,8 @@ help:
 	@echo "  make build-frontend - Build frontend only"
 	@echo "  make build-server   - Build server only"
 	@echo "  make build-cli      - Build CLI only"
+	@echo "  make test           - Run all tests"
+	@echo "  make lint           - Run golangci-lint"
 	@echo "  make dev            - Run in development mode"
 	@echo "  make run            - Build and run server"
 	@echo "  make docker-build   - Build Docker image"
@@ -19,6 +21,9 @@ install:
 	go mod download
 	@echo "Installing frontend dependencies..."
 	cd app && npm install
+	@echo "Configuring git hooks..."
+	git config core.hooksPath .githooks
+	@echo "Git hooks configured to use .githooks directory"
 
 build-frontend:
 	@echo "Building frontend..."
@@ -58,6 +63,14 @@ docker-up:
 docker-down:
 	@echo "Stopping docker-compose..."
 	docker-compose down
+
+test:
+	@echo "Running tests..."
+	go test -v -race -coverprofile=coverage.out ./...
+
+lint:
+	@echo "Running golangci-lint..."
+	golangci-lint run --config .golangci.yml
 
 clean:
 	@echo "Cleaning build artifacts..."

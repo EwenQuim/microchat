@@ -9,7 +9,7 @@ import (
 
 func GetRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Room, error) {
 	return func(c fuego.ContextNoBody) ([]models.Room, error) {
-		return chatService.GetRooms()
+		return chatService.GetRooms(c.Context())
 	}
 }
 
@@ -19,6 +19,6 @@ func CreateRoom(chatService *services.ChatService) func(c fuego.ContextWithBody[
 		if err != nil {
 			return nil, err
 		}
-		return chatService.CreateRoom(body.Name)
+		return chatService.CreateRoom(c.Context(), body.Name)
 	}
 }

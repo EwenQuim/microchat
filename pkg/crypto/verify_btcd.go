@@ -35,10 +35,16 @@ func VerifyMessageSignatureBTCD(pubkeyHex, signatureHex, content, room string, t
 	}
 
 	// Parse compact signature: first 32 bytes are R, last 32 bytes are S
-	// btcd's ecdsa.ParseSignature expects DER, so we need to use ModNScalar
+	// Convert to ModNScalar - SetByteSlice expects big-endian bytes
 	var r, s btcec.ModNScalar
-	r.SetByteSlice(signatureBytes[:32])
-	s.SetByteSlice(signatureBytes[32:])
+	overflow := r.SetByteSlice(signatureBytes[:32])
+	if overflow {
+		return fmt.Errorf("signature R value overflows")
+	}
+	overflow = s.SetByteSlice(signatureBytes[32:])
+	if overflow {
+		return fmt.Errorf("signature S value overflows")
+	}
 	signature := ecdsa.NewSignature(&r, &s)
 
 	// Create the event hash
@@ -58,7 +64,7 @@ func VerifyMessageSignatureBTCD(pubkeyHex, signatureHex, content, room string, t
 
 // createEventHashBTCD creates the same event hash as the frontend
 func createEventHashBTCD(pubkey string, timestamp int64, content, room string) string {
-	event := []interface{}{
+	event := []any{
 		0,
 		pubkey,
 		timestamp,
