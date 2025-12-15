@@ -7,8 +7,8 @@
 		"build": "vite build && tsc",
 		"preview": "vite preview",
 		"test": "vitest run",
-		"format": "biome format",
-		"lint": "biome lint",
+		"format": "biome check --fix --error-on-warnings",
+		"lint": "biome check --error-on-warnings",
 		"check": "biome check",
 		"generate:api": "orval --config orval.config.ts"
 	},
