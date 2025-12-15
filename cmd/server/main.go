@@ -88,7 +88,10 @@ func createSPAHandler(staticFS fs.FS) http.HandlerFunc {
 				return
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Write(indexData)
+			_, err = w.Write(indexData)
+			if err != nil {
+				slog.Error("Cannot write static response", "err", err)
+			}
 			return
 		}
 
