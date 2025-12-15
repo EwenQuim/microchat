@@ -6,23 +6,42 @@ import (
 	"time"
 
 	"github.com/EwenQuim/microchat/internal/models"
+	"github.com/EwenQuim/microchat/internal/services"
 	"github.com/google/uuid"
 )
 
 type Store struct {
 	mu       sync.RWMutex
 	messages map[string][]models.Message
+	users    map[string]*models.User // username -> User
 }
+
+// Ensure Store implements the Repository interface
+var _ services.Repository = (*Store)(nil)
 
 func NewStore() *Store {
 	return &Store{
 		messages: make(map[string][]models.Message),
+		users:    make(map[string]*models.User),
 	}
 }
 
 func (s *Store) SaveMessage(room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Automatically create unverified user if pubkey is provided and user doesn't exist
+	if pubkey != "" {
+		if _, exists := s.users[pubkey]; !exists {
+			now := time.Now()
+			s.users[pubkey] = &models.User{
+				PublicKey: pubkey,
+				Verified:  false,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+		}
+	}
 
 	msg := models.Message{
 		ID:              uuid.New().String(),
@@ -79,4 +98,91 @@ func (s *Store) CreateRoom(name string) (*models.Room, error) {
 		Name:         name,
 		MessageCount: 0,
 	}, nil
+}
+
+func (s *Store) RegisterUser(publicKey string) (*models.User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check if public key is already registered
+	for _, user := range s.users {
+		if user.PublicKey == publicKey {
+			return nil, fmt.Errorf("public key already registered to user %s", publicKey)
+		}
+	}
+
+	now := time.Now()
+	user := &models.User{
+		PublicKey: publicKey,
+		Verified:  false,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	return user, nil
+}
+
+func (s *Store) GetUser(publicKey string) (*models.User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	user, exists := s.users[publicKey]
+	if !exists {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return user, nil
+}
+
+func (s *Store) GetUserByPublicKey(publicKey string) (*models.User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, user := range s.users {
+		if user.PublicKey == publicKey {
+			return user, nil
+		}
+	}
+
+	return nil, fmt.Errorf("user not found")
+}
+
+func (s *Store) GetAllUsers() ([]models.User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	users := make([]models.User, 0, len(s.users))
+	for _, user := range s.users {
+		users = append(users, *user)
+	}
+
+	return users, nil
+}
+
+func (s *Store) VerifyUser(publicKey string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, exists := s.users[publicKey]
+	if !exists {
+		return fmt.Errorf("user not found")
+	}
+
+	user.Verified = true
+	user.UpdatedAt = time.Now()
+	return nil
+}
+
+func (s *Store) UnverifyUser(publicKey string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, exists := s.users[publicKey]
+	if !exists {
+		return fmt.Errorf("user not found")
+	}
+
+	user.Verified = false
+	user.UpdatedAt = time.Now()
+	return nil
 }

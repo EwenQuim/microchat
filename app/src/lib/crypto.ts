@@ -87,7 +87,7 @@ export async function signMessage(params: {
 	const signatureHex = bytesToHex(signatureBytes);
 
 	// Self-verify the signature immediately
-	const selfVerify = await secp256k1.verify(
+	const selfVerify = secp256k1.verify(
 		signatureBytes,
 		eventHashBytes,
 		hexToBytes(params.publicKey),
