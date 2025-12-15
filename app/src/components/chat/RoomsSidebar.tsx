@@ -20,7 +20,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 
 	return (
 		<aside className={cn("border-r bg-muted/10", className)}>
-			<div className="flex flex-col h-full">
+			<div className="flex flex-col h-full w-full">
 				<div className="p-4 border-b">
 					<h2 className="font-semibold text-lg mb-2">Rooms</h2>
 					<Button

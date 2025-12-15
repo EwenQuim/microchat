@@ -3,8 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      cache_from:
+        - microchat:latest
+      args:
+        BUILDKIT_INLINE_CACHE: 1
     ports:
       - "9997:9997"
     environment:
       - ENV=production
+      - DOCKER_BUILDKIT=1
     restart: unless-stopped

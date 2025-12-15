@@ -1,3 +1,6 @@
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { cn } from "@/lib/utils";
@@ -11,6 +14,7 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ roomName, username, className }: ChatAreaProps) {
+	const navigate = useNavigate();
 	const { data: messages, isLoading } = useMessages(roomName);
 	const sendMessageMutation = useSendMessage(roomName || "");
 
@@ -20,6 +24,10 @@ export function ChatArea({ roomName, username, className }: ChatAreaProps) {
 			room: roomName,
 			data: { content, user: username },
 		});
+	};
+
+	const handleBack = () => {
+		navigate({ to: "/" });
 	};
 
 	if (!roomName) {
@@ -37,7 +45,17 @@ export function ChatArea({ roomName, username, className }: ChatAreaProps) {
 
 	return (
 		<div className={cn("flex flex-col", className)}>
-			<div className="p-4 border-b">
+			<div className="p-4 border-b flex items-center gap-3">
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					onClick={handleBack}
+					className="md:hidden"
+					aria-label="Back to rooms"
+				>
+					<ArrowLeft className="h-5 w-5" />
+				</Button>
 				<h2 className="font-semibold text-lg">#{roomName}</h2>
 			</div>
 

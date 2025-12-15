@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useUsername } from "@/hooks/useUsername";
+import { cn } from "@/lib/utils";
 import { ChatArea } from "./ChatArea";
 import { RoomsSidebar } from "./RoomsSidebar";
 
@@ -43,17 +44,23 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 
 	return (
 		<>
-			<div className="flex h-screen">
-				{/* Sidebar - Hidden on mobile when a room is selected */}
+			<div className="flex h-screen w-full">
+				{/* Sidebar - Full width on mobile, fixed width on desktop. Hidden on mobile when a room is selected */}
 				<RoomsSidebar
 					selectedRoom={roomName}
-					className={`w-64 shrink-0 ${roomName ? "hidden md:flex" : "flex"}`}
+					className={cn(
+						"w-full md:w-64 md:shrink-0",
+						roomName ? "hidden md:flex" : "flex",
+					)}
 				/>
-				{/* Chat Area - Hidden on mobile when no room is selected */}
+				{/* Chat Area - Full width on mobile when room selected, flex-1 on desktop. Hidden on mobile when no room is selected */}
 				<ChatArea
 					roomName={roomName}
 					username={username ?? ""}
-					className={`flex-1 ${!roomName ? "hidden md:flex" : "flex"}`}
+					className={cn(
+						"w-full md:flex-1",
+						!roomName ? "hidden md:flex" : "flex",
+					)}
 				/>
 			</div>
 
