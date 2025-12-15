@@ -6,9 +6,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-export function ChatLayout() {
+interface ChatLayoutProps {
+  roomName: string | null;
+}
+
+export function ChatLayout({ roomName }: ChatLayoutProps) {
   const { username, setUsername, isLoading } = useUsername();
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [tempUsername, setTempUsername] = useState('');
 
@@ -33,12 +36,11 @@ export function ChatLayout() {
     <>
       <div className="flex h-[calc(100vh-64px)]">
         <RoomsSidebar
-          selectedRoom={selectedRoom}
-          onSelectRoom={setSelectedRoom}
+          selectedRoom={roomName}
           className="w-64 flex-shrink-0"
         />
         <ChatArea
-          roomName={selectedRoom}
+          roomName={roomName}
           username={username!}
           className="flex-1"
         />

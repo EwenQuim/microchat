@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useRooms } from '@/hooks/useRooms';
 import { CreateRoomDialog } from './CreateRoomDialog';
 import { Button } from '@/components/ui/button';
@@ -9,13 +10,13 @@ import { cn } from '@/lib/utils';
 
 interface RoomsSidebarProps {
   selectedRoom: string | null;
-  onSelectRoom: (room: string) => void;
   className?: string;
 }
 
-export function RoomsSidebar({ selectedRoom, onSelectRoom, className }: RoomsSidebarProps) {
+export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
   const { data: rooms, isLoading, error } = useRooms();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <aside className={cn('border-r bg-muted/10', className)}>
@@ -51,9 +52,10 @@ export function RoomsSidebar({ selectedRoom, onSelectRoom, className }: RoomsSid
             {rooms?.map((room) => {
               const roomName = room.name || 'Unnamed Room';
               return (
-                <button
+                <Link
                   key={roomName}
-                  onClick={() => onSelectRoom(roomName)}
+                  to="/chat/$roomName"
+                  params={{ roomName }}
                   className={cn(
                     'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
                     'hover:bg-accent',
@@ -69,7 +71,7 @@ export function RoomsSidebar({ selectedRoom, onSelectRoom, className }: RoomsSid
                       {room.message_count}
                     </Badge>
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -79,7 +81,7 @@ export function RoomsSidebar({ selectedRoom, onSelectRoom, className }: RoomsSid
       <CreateRoomDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        onRoomCreated={(roomName) => onSelectRoom(roomName)}
+        onRoomCreated={(roomName) => navigate({ to: '/chat/$roomName', params: { roomName } })}
       />
     </aside>
   );

@@ -1,5 +1,10 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { ChatLayout } from '@/components/chat/ChatLayout'
 
 export const Route = createFileRoute('/')({
-  component: () => <Navigate to="/chat" />,
+  component: HomePage,
 })
+
+function HomePage() {
+  return <ChatLayout roomName={null} />
+}
