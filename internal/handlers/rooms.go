@@ -12,3 +12,13 @@ func GetRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]
 		return chatService.GetRooms()
 	}
 }
+
+func CreateRoom(chatService *services.ChatService) func(c fuego.ContextWithBody[models.CreateRoomRequest]) (*models.Room, error) {
+	return func(c fuego.ContextWithBody[models.CreateRoomRequest]) (*models.Room, error) {
+		body, err := c.Body()
+		if err != nil {
+			return nil, err
+		}
+		return chatService.CreateRoom(body.Name)
+	}
+}

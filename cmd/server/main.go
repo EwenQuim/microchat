@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/EwenQuim/microchat/internal/config"
 	"github.com/EwenQuim/microchat/internal/handlers"
 	"github.com/EwenQuim/microchat/internal/repository/memory"
 	"github.com/EwenQuim/microchat/internal/services"
@@ -13,8 +12,6 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
-
 	// Initialize repository
 	repo := memory.NewStore()
 
@@ -23,7 +20,7 @@ func main() {
 
 	// Create Fuego server with port
 	s := fuego.NewServer(
-		fuego.WithAddr("0.0.0.0:9999"),
+		fuego.WithAddr("0.0.0.0:9997"),
 	)
 
 	// API routes
@@ -35,7 +32,6 @@ func main() {
 	fuego.GetStd(s, "/", fs.ServeHTTP)
 	fuego.GetStd(s, "/*", fs.ServeHTTP)
 
-	log.Printf("Server starting on :%s", cfg.Port)
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
 	}

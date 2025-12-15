@@ -6,6 +6,7 @@ type Repository interface {
 	SaveMessage(room, user, content string) (*models.Message, error)
 	GetMessages(room string) ([]models.Message, error)
 	GetRooms() ([]models.Room, error)
+	CreateRoom(name string) (*models.Room, error)
 }
 
 type ChatService struct {
@@ -28,4 +29,8 @@ func (s *ChatService) GetMessages(room string) ([]models.Message, error) {
 
 func (s *ChatService) GetRooms() ([]models.Room, error) {
 	return s.repo.GetRooms()
+}
+
+func (s *ChatService) CreateRoom(name string) (*models.Room, error) {
+	return s.repo.CreateRoom(name)
 }

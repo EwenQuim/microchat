@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -60,4 +61,19 @@ func (s *Store) GetRooms() ([]models.Room, error) {
 	}
 
 	return rooms, nil
+}
+
+func (s *Store) CreateRoom(name string) (*models.Room, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.messages[name]; exists {
+		return nil, fmt.Errorf("room already exists")
+	}
+
+	s.messages[name] = []models.Message{}
+	return &models.Room{
+		Name:         name,
+		MessageCount: 0,
+	}, nil
 }
