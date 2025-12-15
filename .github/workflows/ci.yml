@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  test:
+  api:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,6 +32,9 @@ jobs:
       - name: Build CLI
         run: make build-cli
 
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
       - name: Run linter
         run: make lint
 
@@ -45,7 +48,7 @@ jobs:
           file: ./coverage.out
           fail_ci_if_error: false
 
-  build-frontend:
+  frontend:
     runs-on: ubuntu-latest
 
     steps:
