@@ -4,19 +4,24 @@ import (
 	"github.com/EwenQuim/microchat/internal/services"
 
 	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
 )
 
 func RegisterChatRoutes(s *fuego.Server, chatService *services.ChatService) {
+
 	// Room routes
-	fuego.Get(s, "/rooms", GetRooms(chatService))
-	fuego.Post(s, "/rooms", CreateRoom(chatService))
-	fuego.Get(s, "/rooms/{room}/messages", GetMessages(chatService))
-	fuego.Post(s, "/rooms/{room}/messages", SendMessage(chatService))
+	chatGroup := fuego.Group(s, "/rooms", option.Tags("chat"))
+	fuego.Get(chatGroup, "", GetRooms(chatService))
+	fuego.Post(chatGroup, "", CreateRoom(chatService))
+	fuego.Get(chatGroup, "/{room}/messages", GetMessages(chatService))
+	fuego.Post(chatGroup, "/{room}/messages", SendMessage(chatService))
 
 	// User routes
-	fuego.Post(s, "/users", RegisterUser(chatService))
-	fuego.Get(s, "/users", GetAllUsers(chatService))
-	fuego.Get(s, "/users/{publicKey}", GetUser(chatService))
-	fuego.Post(s, "/users/verify", VerifyUser(chatService))
-	fuego.Post(s, "/users/unverify", UnverifyUser(chatService))
+
+	userGroup := fuego.Group(s, "/users")
+	fuego.Post(userGroup, "", RegisterUser(chatService))
+	fuego.Get(userGroup, "", GetAllUsers(chatService))
+	fuego.Get(userGroup, "/{publicKey}", GetUser(chatService))
+	fuego.Post(userGroup, "/verify", VerifyUser(chatService))
+	fuego.Post(userGroup, "/unverify", UnverifyUser(chatService))
 }

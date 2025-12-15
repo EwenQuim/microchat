@@ -143,7 +143,7 @@ export type HTTPStatusCodes = HTTPStatusCode1xx | HTTPStatusCode2xx | HTTPStatus
 /**
  * #### Controller: 
 
-`net/http.Handler.ServeHTTP`
+`main.main.createSPAHandler.func4`
 
 #### Middlewares:
 
@@ -152,7 +152,7 @@ export type HTTPStatusCodes = HTTPStatusCode1xx | HTTPStatusCode2xx | HTTPStatus
 ---
 
 
- * @summary serve h t t p
+ * @summary func4
  */
 export type getResponse200 = {
   data: UnknownInterface
@@ -266,7 +266,7 @@ export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPErr
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary serve h t t p
+ * @summary func4
  */
 
 export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPError | void>(
@@ -289,7 +289,7 @@ export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPErr
 /**
  * #### Controller: 
 
-`net/http.Handler.ServeHTTP`
+`main.main.createSPAHandler.func4`
 
 #### Middlewares:
 
@@ -298,7 +298,7 @@ export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPErr
 ---
 
 
- * @summary serve h t t p
+ * @summary func4
  */
 export type getResponse200 = {
   data: UnknownInterface
@@ -412,7 +412,7 @@ export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPErr
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary serve h t t p
+ * @summary func4
  */
 
 export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = HTTPError | void>(

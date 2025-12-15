@@ -176,9 +176,22 @@ export interface HTTPError {
 export interface Message {
   content?: string;
   id?: string;
+  /** @nullable */
+  pubkey?: string | null;
   room?: string;
+  /** @nullable */
+  signature?: string | null;
+  /** @nullable */
+  signed_timestamp?: number | null;
   timestamp?: string;
   user?: string;
+}
+
+/**
+ * RegisterUserRequest schema
+ */
+export interface RegisterUserRequest {
+  public_key: string;
 }
 
 /**
@@ -194,11 +207,36 @@ export interface Room {
  */
 export interface SendMessageRequest {
   content: string;
+  /** @nullable */
+  pubkey?: string | null;
+  /** @nullable */
+  signature?: string | null;
+  /** @nullable */
+  timestamp?: number | null;
   user: string;
-  signature?: string;
-  pubkey?: string;
-  timestamp?: number;
 }
+
+/**
+ * User schema
+ */
+export interface User {
+  created_at?: string;
+  public_key?: string;
+  updated_at?: string;
+  verified?: boolean;
+}
+
+/**
+ * VerifyUserRequest schema
+ */
+export interface VerifyUserRequest {
+  public_key: string;
+}
+
+/**
+ * string schema
+ */
+export type String = string;
 
 /**
  * unknown-interface schema

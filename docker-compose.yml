@@ -9,7 +9,33 @@ services:
         BUILDKIT_INLINE_CACHE: 1
     ports:
       - "9997:9997"
+    volumes:
+      - ./doc:/app/doc
     environment:
       - ENV=production
       - DOCKER_BUILDKIT=1
     restart: unless-stopped
+    develop:
+      watch:
+        # Rebuild on Go source changes
+        - action: rebuild
+          path: .
+          target: /app
+          ignore:
+            - app/
+            - doc/
+            - bin/
+            - .git/
+            - "*.md"
+        # Rebuild on Go module changes
+        - action: rebuild
+          path: ./go.mod
+        - action: rebuild
+          path: ./go.sum
+        # Rebuild on frontend changes (embedded in binary)
+        - action: rebuild
+          path: ./app
+          ignore:
+            - app/node_modules/
+            - app/dist/
+            - app/.tanstack/

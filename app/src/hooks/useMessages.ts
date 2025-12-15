@@ -5,7 +5,7 @@ export function useMessages(roomName: string | null) {
 	return useGETApiRoomsRoomMessages<Message[]>(roomName ?? "", {
 		query: {
 			enabled: !!roomName,
-			refetchInterval: 3000, // Poll every 2 seconds
+			refetchInterval: 10000,
 			staleTime: 1000,
 			select: (response) => {
 				if (response.status === 200) {

@@ -33,6 +33,11 @@ func main() {
 	// Create Fuego server with port
 	s := fuego.NewServer(
 		fuego.WithAddr("0.0.0.0:9997"),
+		fuego.WithEngineOptions(
+			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
+				PrettyFormatJSON: true,
+			}),
+		),
 	)
 
 	// API routes

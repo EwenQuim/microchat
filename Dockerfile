@@ -28,11 +28,26 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Final stage
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+
+# Create non-root user and group
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Create doc directory with proper permissions
+RUN mkdir -p /app/doc && chown -R appuser:appuser /app
 
 # Copy Go binaries (static files are now embedded in the binary)
 COPY --from=go-builder /app/server .
 COPY --from=go-builder /app/cli .
+
+# Change ownership of binaries
+RUN chown appuser:appuser /app/server /app/cli
+
+# Switch to non-root user
+USER appuser
 
 # Run server
 CMD ["./server"]

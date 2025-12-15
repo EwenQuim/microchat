@@ -36,9 +36,6 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Generated
-doc/
-
 # Database
 data/
 *.db

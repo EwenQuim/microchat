@@ -9,6 +9,7 @@ export default defineConfig({
 			mode: "tags-split",
 			target: "./src/lib/api/generated",
 			client: "react-query",
+			clean: true,
 			baseUrl: "",
 			httpClient: "fetch",
 			biome: true,
