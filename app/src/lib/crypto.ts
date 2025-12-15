@@ -119,6 +119,7 @@ export async function signMessage(params: {
 /**
  * Verify a message signature
  * Returns true if the signature is valid
+ * @public
  */
 export async function verifySignature(params: {
 	publicKey: string;
@@ -153,6 +154,7 @@ export async function verifySignature(params: {
 /**
  * Get a shortened version of a public key for display
  * e.g., "npub1abc...xyz"
+ * @public
  */
 export function formatPublicKey(publicKey: string): string {
 	if (publicKey.length < 16) return publicKey;

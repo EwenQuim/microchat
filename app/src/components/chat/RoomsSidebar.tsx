@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus, User } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRooms } from "@/hooks/useRooms";
+import { useUsername } from "@/hooks/useUsername";
 import { cn } from "@/lib/utils";
 import { CreateRoomDialog } from "./CreateRoomDialog";
 
@@ -15,6 +16,7 @@ interface RoomsSidebarProps {
 
 export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const { data: rooms, isLoading, error } = useRooms();
+	const { username } = useUsername();
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const navigate = useNavigate();
 
@@ -80,6 +82,21 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 						})}
 					</div>
 				</ScrollArea>
+
+				{username && (
+					<div className="p-4 border-t">
+						<Link
+							to="/settings"
+							className={cn(
+								"w-full flex items-center gap-3 p-3 rounded-lg transition-colors",
+								"hover:bg-accent",
+							)}
+						>
+							<User className="h-4 w-4" />
+							<span className="font-medium">{username}</span>
+						</Link>
+					</div>
+				)}
 			</div>
 
 			<CreateRoomDialog

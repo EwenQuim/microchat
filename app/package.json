@@ -8,7 +8,7 @@
 		"preview": "vite preview",
 		"test": "vitest run",
 		"format": "biome check --fix --error-on-warnings",
-		"lint": "biome check --error-on-warnings",
+		"lint": "biome check --error-on-warnings && knip",
 		"check": "biome check",
 		"generate:api": "orval --config orval.config.ts"
 	},
@@ -47,6 +47,7 @@
 		"@vitejs/plugin-react": "^5.0.4",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"jsdom": "^27.0.0",
+		"knip": "^5.73.4",
 		"orval": "^7.17.0",
 		"typescript": "^5.7.2",
 		"vite": "^7.1.7",
