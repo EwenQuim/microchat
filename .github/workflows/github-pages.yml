@@ -37,7 +37,7 @@ jobs:
 
       - name: Build
         working-directory: ./app
-        run: npm run build -- --mode github-pages
+        run: npm run build:github-pages
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
