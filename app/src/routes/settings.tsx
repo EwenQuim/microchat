@@ -99,7 +99,7 @@ function Settings() {
 		<button
 			type="button"
 			onClick={() => setActiveTab(value)}
-			className={`px-6 py-3 font-medium transition-colors ${
+			className={`px-4 md:px-6 py-3 font-medium transition-colors whitespace-nowrap ${
 				activeTab === value
 					? "border-b-2 border-cyan-500 text-cyan-500"
 					: "text-gray-400 hover:text-white"
@@ -110,30 +110,30 @@ function Settings() {
 	);
 
 	return (
-		<div className="min-h-screen bg-gray-900 text-white p-8">
+		<div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
 			<div className="max-w-4xl mx-auto">
 				<div className="flex items-center gap-4 mb-8">
 					<Button
 						onClick={handleGoBack}
 						variant="ghost"
 						size="icon"
-						className="text-gray-400 hover:text-white"
+						className="text-gray-400 hover:text-white h-12 w-12 md:h-10 md:w-10"
 					>
-						<ArrowLeft size={24} />
+						<ArrowLeft className="h-6 w-6 md:h-5 md:w-5" />
 					</Button>
-					<h1 className="text-3xl font-bold">Settings</h1>
+					<h1 className="text-xl md:text-3xl font-bold">Settings</h1>
 				</div>
 
 				{/* Tabs */}
-				<div className="flex gap-2 mb-6 border-b border-gray-700">
+				<div className="flex gap-2 mb-6 border-b border-gray-700 overflow-x-auto -mx-4 md:-mx-8 px-4 md:px-8">
 					<TabButton value="user" label="User" />
 					<TabButton value="import" label="Import" />
 					<TabButton value="export" label="Export" />
-					<TabButton value="options" label="Options" />
+					{/* <TabButton value="options" label="Options" /> */}
 				</div>
 
 				{/* Tab Content */}
-				<div className="bg-gray-800 rounded-lg p-6">
+				<div className="bg-gray-800 rounded-lg p-4 md:p-6">
 					{activeTab === "user" && (
 						<div className="space-y-6">
 							<h2 className="text-2xl font-semibold mb-4">User Information</h2>
@@ -198,11 +198,12 @@ function Settings() {
 									<div className="flex items-start justify-between gap-4">
 										<div>
 											<h4 className="font-medium text-red-400 mb-1">
-												Delete Profile
+												Delete Identity
 											</h4>
 											<p className="text-sm text-gray-400">
-												Permanently delete your profile and all associated data.
-												This action cannot be undone.
+												Remove your identity from this device. Make sure to back
+												up your secret key first (use Export tab). This only
+												deletes the local data.
 											</p>
 										</div>
 										<Button
@@ -332,11 +333,13 @@ function Settings() {
 				<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 					<DialogContent className="bg-gray-800 border-gray-700 text-white">
 						<DialogHeader>
-							<DialogTitle className="text-red-500">Delete Profile</DialogTitle>
+							<DialogTitle className="text-red-500">
+								Delete Identity
+							</DialogTitle>
 							<DialogDescription className="text-gray-400">
-								Are you sure you want to delete your profile? This will
-								permanently remove your username and keys from this device. This
-								action cannot be undone.
+								Are you sure you want to delete your identity from this device?
+								This will remove your username and keys. Make sure you've backed
+								up your secret key if you want to restore this identity later.
 							</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
@@ -348,7 +351,7 @@ function Settings() {
 								Cancel
 							</Button>
 							<Button onClick={handleDeleteProfile} variant="destructive">
-								Delete Profile
+								Delete Identity
 							</Button>
 						</DialogFooter>
 					</DialogContent>
