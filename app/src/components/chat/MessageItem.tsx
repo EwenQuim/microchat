@@ -1,7 +1,16 @@
 import { formatDistanceToNow } from "date-fns";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
 import { cn } from "@/lib/utils";
+
+const generateColorFromPubkey = (pubkey: string): string => {
+	let hash = 0;
+	for (let i = 0; i < pubkey.length; i++) {
+		hash = pubkey.charCodeAt(i) + ((hash << 5) - hash);
+		hash = hash & hash;
+	}
+	const hue = Math.abs(hash) % 360;
+	return `hsl(${hue}, 70%, 55%)`;
+};
 
 interface MessageItemProps {
 	message: Message;
@@ -9,14 +18,14 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isOwn }: MessageItemProps) {
-	const getInitials = (name: string) => {
-		return name
-			.split(" ")
-			.map((n) => n[0])
-			.join("")
-			.toUpperCase()
-			.slice(0, 2);
+	const formatPubkey = (pubkey: string): string => {
+		if (pubkey.length <= 6) return pubkey;
+		return pubkey.slice(0, 6);
 	};
+
+	const pubkey = message.pubkey || "anonymous";
+	const displayPubkey = formatPubkey(pubkey);
+	const userColor = generateColorFromPubkey(pubkey);
 
 	const formattedTime = message.timestamp
 		? formatDistanceToNow(new Date(message.timestamp), {
@@ -26,16 +35,16 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 
 	return (
 		<div className={cn("flex gap-3", isOwn && "flex-row-reverse")}>
-			<Avatar className="h-8 w-8">
-				<AvatarFallback>
-					{getInitials(message.user || "Anonymous")}
-				</AvatarFallback>
-			</Avatar>
-
 			<div className={cn("flex flex-col", isOwn && "items-end")}>
 				<div className="flex items-center gap-2 mb-1">
-					<span className="text-sm font-semibold">
+					<span className="text-sm font-semibold" style={{ color: userColor }}>
 						{message.user || "Anonymous"}
+					</span>
+					<span
+						className="text-xs text-muted-foreground font-mono"
+						title={pubkey}
+					>
+						#{displayPubkey}
 					</span>
 					{formattedTime && (
 						<span className="text-xs text-muted-foreground">
@@ -49,7 +58,7 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 						isOwn ? "bg-primary text-primary-foreground" : "bg-muted",
 					)}
 				>
-					<p className="text-sm whitespace-pre-wrap break-words">
+					<p className="text-sm whitespace-pre-wrap wrap-break-word">
 						{message.content}
 					</p>
 				</div>

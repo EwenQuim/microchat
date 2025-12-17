@@ -84,7 +84,10 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				</ScrollArea>
 
 				{username && (
-					<div className="p-4 pb-safe border-t" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+					<div
+						className="p-4 pb-safe border-t"
+						style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+					>
 						<Link
 							to="/settings"
 							search={{ import: undefined }}
