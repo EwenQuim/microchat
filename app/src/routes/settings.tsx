@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useUsername } from "@/hooks/useUsername";
+import { hexToNpub, hexToNsec } from "@/lib/crypto";
 
 export const Route = createFileRoute("/settings")({
 	component: Settings,
@@ -65,7 +66,7 @@ function Settings() {
 									Public Key
 								</div>
 								<div className="bg-gray-700 px-4 py-3 rounded-lg text-white font-mono text-sm break-all">
-									{keys?.publicKey || "Not available"}
+									{keys?.publicKey ? hexToNpub(keys.publicKey) : "Not available"}
 								</div>
 							</div>
 
@@ -77,8 +78,10 @@ function Settings() {
 								<div className="relative">
 									<div className="bg-gray-700 px-4 py-3 rounded-lg text-white font-mono text-sm break-all pr-12">
 										{showPrivateKey
-											? keys?.privateKey || "Not available"
-											: "•".repeat(64)}
+											? keys?.privateKey
+												? hexToNsec(keys.privateKey)
+												: "Not available"
+											: "•".repeat(63)}
 									</div>
 									<button
 										type="button"

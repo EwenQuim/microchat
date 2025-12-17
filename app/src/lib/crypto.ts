@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import * as secp256k1 from "@noble/secp256k1";
+import { bech32 } from "@scure/base";
 
 /**
  * Nostr-style cryptographic utilities for message signing and verification
@@ -159,4 +160,36 @@ export async function verifySignature(params: {
 export function formatPublicKey(publicKey: string): string {
 	if (publicKey.length < 16) return publicKey;
 	return `npub1${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`;
+}
+
+/**
+ * Convert a hex public key to npub (Nostr bech32 format)
+ * @param hexPubKey - The hex-encoded public key (66 chars with 04 prefix or 64 chars without)
+ * @returns The bech32-encoded npub string
+ */
+export function hexToNpub(hexPubKey: string): string {
+	// Remove the 04 prefix if it exists (uncompressed public key indicator)
+	let cleanHex = hexPubKey;
+	if (hexPubKey.startsWith("04") && hexPubKey.length === 130) {
+		// For uncompressed keys, we only use the x-coordinate (first 32 bytes after 04)
+		cleanHex = hexPubKey.slice(2, 66);
+	} else if (hexPubKey.length === 66) {
+		// Remove any prefix (02, 03, 04)
+		cleanHex = hexPubKey.slice(2);
+	}
+
+	const bytes = hexToBytes(cleanHex);
+	const words = bech32.toWords(bytes);
+	return bech32.encode("npub", words, 5000);
+}
+
+/**
+ * Convert a hex private key to nsec (Nostr bech32 format)
+ * @param hexPrivKey - The hex-encoded private key
+ * @returns The bech32-encoded nsec string
+ */
+export function hexToNsec(hexPrivKey: string): string {
+	const bytes = hexToBytes(hexPrivKey);
+	const words = bech32.toWords(bytes);
+	return bech32.encode("nsec", words, 5000);
 }
