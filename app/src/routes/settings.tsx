@@ -1,47 +1,135 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Eye, EyeOff, QrCode, Trash2 } from "lucide-react";
+import QRCode from "qrcode";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useUsername } from "@/hooks/useUsername";
 import { hexToNpub, hexToNsec } from "@/lib/crypto";
 
 export const Route = createFileRoute("/settings")({
 	component: Settings,
+	validateSearch: (search: Record<string, unknown>) => {
+		return {
+			import: (search.import as string) || undefined,
+		};
+	},
 });
 
 function Settings() {
-	const [activeTab, setActiveTab] = useState<"user" | "options">("user");
+	const [activeTab, setActiveTab] = useState<
+		"user" | "import" | "export" | "options"
+	>("user");
 	const [showPrivateKey, setShowPrivateKey] = useState(false);
-	const { username, keys } = useUsername();
+	const [importNsec, setImportNsec] = useState("");
+	const [importUsername, setImportUsername] = useState("");
+	const [importError, setImportError] = useState("");
+	const [showQR, setShowQR] = useState(false);
+	const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const { username, keys, importProfile, clearUsername } = useUsername();
+	const navigate = useNavigate();
+	const searchParams = Route.useSearch();
+
+	// Handle URL import parameter
+	useEffect(() => {
+		if (searchParams.import) {
+			setActiveTab("import");
+			setImportNsec(searchParams.import);
+		}
+	}, [searchParams.import]);
+
+	// Generate QR code when needed
+	useEffect(() => {
+		if (showQR && keys?.privateKey) {
+			const nsec = hexToNsec(keys.privateKey);
+			const importUrl = `${window.location.origin}/settings?import=${nsec}`;
+			QRCode.toDataURL(importUrl, { width: 300, margin: 2 })
+				.then(setQrCodeDataUrl)
+				.catch(console.error);
+		}
+	}, [showQR, keys]);
+
+	const handleImport = () => {
+		setImportError("");
+		if (!importUsername.trim()) {
+			setImportError("Please enter a username");
+			return;
+		}
+		if (!importNsec.trim()) {
+			setImportError("Please enter an nsec key");
+			return;
+		}
+
+		try {
+			importProfile(importUsername.trim(), importNsec.trim());
+			navigate({ to: "/", search: {} });
+		} catch (error) {
+			setImportError(
+				error instanceof Error ? error.message : "Failed to import profile",
+			);
+		}
+	};
+
+	const handleDeleteProfile = () => {
+		clearUsername();
+		setShowDeleteDialog(false);
+		navigate({ to: "/", search: {} });
+	};
+
+	const handleGoBack = () => {
+		navigate({ to: "/", search: {} });
+	};
+
+	const TabButton = ({
+		value,
+		label,
+	}: {
+		value: typeof activeTab;
+		label: string;
+	}) => (
+		<button
+			type="button"
+			onClick={() => setActiveTab(value)}
+			className={`px-6 py-3 font-medium transition-colors ${
+				activeTab === value
+					? "border-b-2 border-cyan-500 text-cyan-500"
+					: "text-gray-400 hover:text-white"
+			}`}
+		>
+			{label}
+		</button>
+	);
 
 	return (
 		<div className="min-h-screen bg-gray-900 text-white p-8">
 			<div className="max-w-4xl mx-auto">
-				<h1 className="text-3xl font-bold mb-8">Settings</h1>
+				<div className="flex items-center gap-4 mb-8">
+					<Button
+						onClick={handleGoBack}
+						variant="ghost"
+						size="icon"
+						className="text-gray-400 hover:text-white"
+					>
+						<ArrowLeft size={24} />
+					</Button>
+					<h1 className="text-3xl font-bold">Settings</h1>
+				</div>
 
 				{/* Tabs */}
 				<div className="flex gap-2 mb-6 border-b border-gray-700">
-					<button
-						type="button"
-						onClick={() => setActiveTab("user")}
-						className={`px-6 py-3 font-medium transition-colors ${
-							activeTab === "user"
-								? "border-b-2 border-cyan-500 text-cyan-500"
-								: "text-gray-400 hover:text-white"
-						}`}
-					>
-						User
-					</button>
-					<button
-						type="button"
-						onClick={() => setActiveTab("options")}
-						className={`px-6 py-3 font-medium transition-colors ${
-							activeTab === "options"
-								? "border-b-2 border-cyan-500 text-cyan-500"
-								: "text-gray-400 hover:text-white"
-						}`}
-					>
-						Options
-					</button>
+					<TabButton value="user" label="User" />
+					<TabButton value="import" label="Import" />
+					<TabButton value="export" label="Export" />
+					<TabButton value="options" label="Options" />
 				</div>
 
 				{/* Tab Content */}
@@ -66,7 +154,9 @@ function Settings() {
 									Public Key
 								</div>
 								<div className="bg-gray-700 px-4 py-3 rounded-lg text-white font-mono text-sm break-all">
-									{keys?.publicKey ? hexToNpub(keys.publicKey) : "Not available"}
+									{keys?.publicKey
+										? hexToNpub(keys.publicKey)
+										: "Not available"}
 								</div>
 							</div>
 
@@ -98,6 +188,130 @@ function Settings() {
 									Keep your secret key safe. Never share it with anyone.
 								</p>
 							</div>
+
+							{/* Danger Zone */}
+							<div className="pt-6 mt-6 border-t border-red-500/20">
+								<h3 className="text-lg font-semibold text-red-500 mb-4">
+									Danger Zone
+								</h3>
+								<div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+									<div className="flex items-start justify-between gap-4">
+										<div>
+											<h4 className="font-medium text-red-400 mb-1">
+												Delete Profile
+											</h4>
+											<p className="text-sm text-gray-400">
+												Permanently delete your profile and all associated data.
+												This action cannot be undone.
+											</p>
+										</div>
+										<Button
+											onClick={() => setShowDeleteDialog(true)}
+											variant="destructive"
+											className="shrink-0"
+										>
+											<Trash2 size={16} className="mr-2" />
+											Delete
+										</Button>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{activeTab === "import" && (
+						<div className="space-y-6">
+							<h2 className="text-2xl font-semibold mb-4">Import Profile</h2>
+							<p className="text-sm text-gray-400">
+								Import an existing profile using your secret key (nsec). You'll
+								still need to choose a display name.
+							</p>
+
+							<div>
+								<label
+									htmlFor="import-username"
+									className="block text-sm font-medium text-gray-400 mb-2"
+								>
+									Username
+								</label>
+								<Input
+									id="import-username"
+									value={importUsername}
+									onChange={(e) => setImportUsername(e.target.value)}
+									placeholder="Choose your display name"
+									className="bg-gray-700 border-gray-600 text-white"
+								/>
+							</div>
+
+							<div>
+								<label
+									htmlFor="import-nsec"
+									className="block text-sm font-medium text-gray-400 mb-2"
+								>
+									Secret Key (nsec)
+								</label>
+								<Input
+									id="import-nsec"
+									value={importNsec}
+									onChange={(e) => setImportNsec(e.target.value)}
+									placeholder="nsec1..."
+									className="bg-gray-700 border-gray-600 text-white font-mono"
+								/>
+							</div>
+
+							{importError && (
+								<div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg text-sm">
+									{importError}
+								</div>
+							)}
+
+							<Button onClick={handleImport} className="w-full">
+								Import Profile
+							</Button>
+						</div>
+					)}
+
+					{activeTab === "export" && (
+						<div className="space-y-6">
+							<h2 className="text-2xl font-semibold mb-4">Export Profile</h2>
+							<p className="text-sm text-gray-400 mb-4">
+								Share your profile by displaying a QR code. Anyone scanning it
+								can import your identity on their device.
+							</p>
+
+							{keys?.privateKey ? (
+								<>
+									<Button
+										onClick={() => setShowQR(!showQR)}
+										className="w-full"
+										variant={showQR ? "outline" : "default"}
+									>
+										<QrCode className="mr-2" size={20} />
+										{showQR ? "Hide QR Code" : "Show QR Code"}
+									</Button>
+
+									{showQR && qrCodeDataUrl && (
+										<div className="flex flex-col items-center space-y-4">
+											<div className="bg-white p-4 rounded-lg">
+												<img
+													src={qrCodeDataUrl}
+													alt="Profile QR Code"
+													className="w-full max-w-xs"
+												/>
+											</div>
+											<p className="text-xs text-gray-500 text-center">
+												This QR code contains your secret key. Only share with
+												devices you own.
+											</p>
+										</div>
+									)}
+								</>
+							) : (
+								<div className="bg-yellow-500/10 border border-yellow-500 text-yellow-500 px-4 py-3 rounded-lg text-sm">
+									No keys available to export. Please create or import a profile
+									first.
+								</div>
+							)}
 						</div>
 					)}
 
@@ -113,6 +327,32 @@ function Settings() {
 						</div>
 					)}
 				</div>
+
+				{/* Delete Confirmation Dialog */}
+				<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+					<DialogContent className="bg-gray-800 border-gray-700 text-white">
+						<DialogHeader>
+							<DialogTitle className="text-red-500">Delete Profile</DialogTitle>
+							<DialogDescription className="text-gray-400">
+								Are you sure you want to delete your profile? This will
+								permanently remove your username and keys from this device. This
+								action cannot be undone.
+							</DialogDescription>
+						</DialogHeader>
+						<DialogFooter>
+							<Button
+								onClick={() => setShowDeleteDialog(false)}
+								variant="outline"
+								className="border-gray-600 text-white hover:bg-gray-700"
+							>
+								Cancel
+							</Button>
+							<Button onClick={handleDeleteProfile} variant="destructive">
+								Delete Profile
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 			</div>
 		</div>
 	);

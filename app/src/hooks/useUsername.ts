@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { generateKeyPair, type KeyPair } from "@/lib/crypto";
+import {
+	derivePublicKey,
+	generateKeyPair,
+	type KeyPair,
+	nsecToHex,
+} from "@/lib/crypto";
 import { storage } from "@/lib/storage";
 
 export function useUsername() {
@@ -29,11 +34,40 @@ export function useUsername() {
 		console.log("Public key:", newKeys.publicKey);
 	};
 
+	const importProfile = (name: string, nsec: string) => {
+		try {
+			// Convert nsec to hex and derive public key
+			const privateKey = nsecToHex(nsec);
+			const publicKey = derivePublicKey(privateKey);
+
+			const importedKeys: KeyPair = { privateKey, publicKey };
+
+			storage.setUsername(name);
+			storage.setKeys(importedKeys);
+
+			setUsernameState(name);
+			setKeysState(importedKeys);
+
+			console.log("🔑 Imported profile for user:", name);
+			console.log("Public key:", publicKey);
+		} catch (error) {
+			console.error("Failed to import profile:", error);
+			throw new Error("Invalid nsec key. Please check and try again.");
+		}
+	};
+
 	const clearUsername = () => {
 		storage.clearAll();
 		setUsernameState(null);
 		setKeysState(null);
 	};
 
-	return { username, keys, setUsername, clearUsername, isLoading };
+	return {
+		username,
+		keys,
+		setUsername,
+		importProfile,
+		clearUsername,
+		isLoading,
+	};
 }

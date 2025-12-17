@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 	const { username, keys, setUsername, isLoading } = useUsername();
 	const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 	const [tempUsername, setTempUsername] = useState("");
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!isLoading && !username) {
@@ -32,6 +34,11 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 			await setUsername(tempUsername.trim());
 			setShowUsernameDialog(false);
 		}
+	};
+
+	const handleImportProfile = () => {
+		setShowUsernameDialog(false);
+		navigate({ to: "/settings", search: { import: undefined } });
 	};
 
 	if (isLoading) {
@@ -81,7 +88,26 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 							onKeyDown={(e) => e.key === "Enter" && handleSaveUsername()}
 						/>
 						<Button onClick={handleSaveUsername} className="w-full">
-							Start Chatting
+							Create New Profile
+						</Button>
+
+						<div className="relative">
+							<div className="absolute inset-0 flex items-center">
+								<span className="w-full border-t" />
+							</div>
+							<div className="relative flex justify-center text-xs uppercase">
+								<span className="bg-background px-2 text-muted-foreground">
+									Or
+								</span>
+							</div>
+						</div>
+
+						<Button
+							onClick={handleImportProfile}
+							variant="outline"
+							className="w-full"
+						>
+							Import Existing Profile
 						</Button>
 					</div>
 				</DialogContent>

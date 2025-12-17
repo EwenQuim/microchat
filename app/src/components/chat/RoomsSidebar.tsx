@@ -87,6 +87,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 					<div className="p-4 border-t">
 						<Link
 							to="/settings"
+							search={{ import: undefined }}
 							className={cn(
 								"w-full flex items-center gap-3 p-3 rounded-lg transition-colors",
 								"hover:bg-accent",

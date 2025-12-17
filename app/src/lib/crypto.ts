@@ -193,3 +193,42 @@ export function hexToNsec(hexPrivKey: string): string {
 	const words = bech32.toWords(bytes);
 	return bech32.encode("nsec", words, 5000);
 }
+
+/**
+ * Convert an npub (Nostr bech32 format) to hex public key
+ * @param npub - The bech32-encoded npub string
+ * @returns The hex-encoded public key
+ */
+export function npubToHex(npub: string): string {
+	const decoded = bech32.decode(npub as `${string}1${string}`, 5000);
+	if (decoded.prefix !== "npub") {
+		throw new Error("Invalid npub format");
+	}
+	const bytes = bech32.fromWords(decoded.words);
+	return bytesToHex(new Uint8Array(bytes));
+}
+
+/**
+ * Convert an nsec (Nostr bech32 format) to hex private key
+ * @param nsec - The bech32-encoded nsec string
+ * @returns The hex-encoded private key
+ */
+export function nsecToHex(nsec: string): string {
+	const decoded = bech32.decode(nsec as `${string}1${string}`, 5000);
+	if (decoded.prefix !== "nsec") {
+		throw new Error("Invalid nsec format");
+	}
+	const bytes = bech32.fromWords(decoded.words);
+	return bytesToHex(new Uint8Array(bytes));
+}
+
+/**
+ * Derive public key from private key
+ * @param privateKeyHex - The hex-encoded private key
+ * @returns The hex-encoded public key
+ */
+export function derivePublicKey(privateKeyHex: string): string {
+	const privateKeyBytes = hexToBytes(privateKeyHex);
+	const publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes);
+	return bytesToHex(publicKeyBytes);
+}
