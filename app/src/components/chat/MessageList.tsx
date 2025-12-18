@@ -31,13 +31,13 @@ export function MessageList({
 		<ScrollArea className={cn("px-4", className)} onScroll={handleScroll}>
 			<div ref={scrollRef} className="pb-4">
 				{isLoading && messages.length === 0 && (
-					<div className="text-center text-muted-foreground">
+					<div className="text-center text-muted-foreground my-8">
 						Loading messages...
 					</div>
 				)}
 
 				{!isLoading && messages.length === 0 && (
-					<div className="text-center text-muted-foreground">
+					<div className="text-center text-muted-foreground my-8">
 						No messages yet. Be the first to say something!
 					</div>
 				)}

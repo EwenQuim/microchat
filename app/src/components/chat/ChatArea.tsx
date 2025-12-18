@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import { useSendMessage } from "@/hooks/useSendMessage";
@@ -54,6 +54,27 @@ export function ChatArea({
 		navigate({ to: "/" });
 	};
 
+	const handleShare = async () => {
+		const shareUrl = `${window.location.href}`;
+
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: `Join ${roomName} on MicroChat`,
+					text: `Join the conversation in ${window.location.host} #${roomName}`,
+					url: shareUrl,
+				});
+			} catch (err) {
+				// User cancelled or share failed
+				console.log("Share cancelled");
+			}
+		} else {
+			// Fallback: copy to clipboard
+			await navigator.clipboard.writeText(shareUrl);
+			// Could show a toast notification here
+		}
+	};
+
 	if (!roomName) {
 		return (
 			<div className={cn("flex items-center justify-center", className)}>
@@ -81,6 +102,16 @@ export function ChatArea({
 					<ArrowLeft className="h-5 w-5" />
 				</Button>
 				<h2 className="font-semibold text-lg">#{roomName}</h2>
+				<div className="flex-1" />
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					onClick={handleShare}
+					aria-label="Share room"
+				>
+					<Share2 className="h-5 w-5" />
+				</Button>
 			</div>
 
 			<MessageList

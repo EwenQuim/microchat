@@ -27,6 +27,25 @@ func NewStore(db *sql.DB) *Store {
 
 func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
 
+	// Automatically create room if it doesn't exist
+	roomExists, err := s.queries.RoomExists(ctx, room)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check room existence: %w", err)
+	}
+
+	if !roomExists {
+		now := time.Now()
+		_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
+			Name:      room,
+			Hidden:    false, // Default to visible
+			CreatedAt: now,
+			UpdatedAt: now,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create room: %w", err)
+		}
+	}
+
 	// Automatically create unverified user if pubkey is provided and user doesn't exist
 	if pubkey != "" {
 		exists, err := s.queries.UserExistsByPublicKey(ctx, pubkey)
@@ -101,8 +120,9 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 	rooms := make([]models.Room, 0, len(rows))
 	for _, row := range rows {
 		rooms = append(rooms, models.Room{
-			Name:         row.Room,
-			MessageCount: int(row.MessageCount),
+			Name:         row.Name,
+			MessageCount: int(row.MessageCount.(int64)),
+			Hidden:       row.Hidden,
 		})
 	}
 
@@ -110,19 +130,31 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 }
 
 func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
-	// Check if room already exists (has messages)
-	count, err := s.queries.GetMessageCountByRoom(ctx, name)
+	// Check if room already exists
+	exists, err := s.queries.RoomExists(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check room existence: %w", err)
 	}
 
-	if count > 0 {
+	if exists {
 		return nil, fmt.Errorf("room already exists")
+	}
+
+	now := time.Now()
+	_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
+		Name:      name,
+		Hidden:    false,
+		CreatedAt: now,
+		UpdatedAt: now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create room: %w", err)
 	}
 
 	return &models.Room{
 		Name:         name,
 		MessageCount: 0,
+		Hidden:       false,
 	}, nil
 }
 
@@ -258,4 +290,17 @@ func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*mo
 		UpdatedAt: row.UpdatedAt,
 		PostCount: postCount,
 	}, nil
+}
+
+func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error {
+	err := s.queries.UpdateRoomVisibility(ctx, sqlc.UpdateRoomVisibilityParams{
+		Hidden:    hidden,
+		UpdatedAt: time.Now(),
+		Name:      name,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update room visibility: %w", err)
+	}
+
+	return nil
 }

@@ -20,6 +20,13 @@ type Message struct {
 	SignedTimestamp sql.NullInt64  `json:"signed_timestamp"`
 }
 
+type Room struct {
+	Name      string    `json:"name"`
+	Hidden    bool      `json:"hidden"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type User struct {
 	PublicKey string    `json:"public_key"`
 	Verified  bool      `json:"verified"`

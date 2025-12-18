@@ -11,10 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type roomMetadata struct {
+	Hidden    bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type Store struct {
 	mu       sync.RWMutex
 	messages map[string][]models.Message
 	users    map[string]*models.User // username -> User
+	rooms    map[string]*roomMetadata
 }
 
 // Ensure Store implements the Repository interface
@@ -24,12 +31,24 @@ func NewStore() *Store {
 	return &Store{
 		messages: make(map[string][]models.Message),
 		users:    make(map[string]*models.User),
+		rooms:    make(map[string]*roomMetadata),
 	}
 }
 
 func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Automatically create room if it doesn't exist
+	if _, exists := s.rooms[room]; !exists {
+		now := time.Now()
+		s.rooms[room] = &roomMetadata{
+			Hidden:    false, // Default to visible
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		s.messages[room] = []models.Message{}
+	}
 
 	// Automatically create unverified user if pubkey is provided and user doesn't exist
 	if pubkey != "" {
@@ -75,11 +94,16 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rooms := make([]models.Room, 0, len(s.messages))
-	for name, messages := range s.messages {
+	rooms := make([]models.Room, 0, len(s.rooms))
+	for name, metadata := range s.rooms {
+		messageCount := 0
+		if messages, exists := s.messages[name]; exists {
+			messageCount = len(messages)
+		}
 		rooms = append(rooms, models.Room{
 			Name:         name,
-			MessageCount: len(messages),
+			MessageCount: messageCount,
+			Hidden:       metadata.Hidden,
 		})
 	}
 
@@ -90,14 +114,21 @@ func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, exists := s.messages[name]; exists {
+	if _, exists := s.rooms[name]; exists {
 		return nil, fmt.Errorf("room already exists")
 	}
 
+	now := time.Now()
+	s.rooms[name] = &roomMetadata{
+		Hidden:    false,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
 	s.messages[name] = []models.Message{}
 	return &models.Room{
 		Name:         name,
 		MessageCount: 0,
+		Hidden:       false,
 	}, nil
 }
 
@@ -214,4 +245,18 @@ func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*mo
 		UpdatedAt: user.UpdatedAt,
 		PostCount: postCount,
 	}, nil
+}
+
+func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	room, exists := s.rooms[name]
+	if !exists {
+		return fmt.Errorf("room not found")
+	}
+
+	room.Hidden = hidden
+	room.UpdatedAt = time.Now()
+	return nil
 }

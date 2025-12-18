@@ -53,6 +53,36 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 	return i, err
 }
 
+const createRoom = `-- name: CreateRoom :one
+INSERT INTO rooms (name, hidden, created_at, updated_at)
+VALUES (?, ?, ?, ?)
+RETURNING name, hidden, created_at, updated_at
+`
+
+type CreateRoomParams struct {
+	Name      string    `json:"name"`
+	Hidden    bool      `json:"hidden"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
+	row := q.db.QueryRowContext(ctx, createRoom,
+		arg.Name,
+		arg.Hidden,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i Room
+	err := row.Scan(
+		&i.Name,
+		&i.Hidden,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (public_key, verified, created_at, updated_at)
 VALUES (?, ?, ?, ?)
@@ -166,15 +196,36 @@ func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message
 	return items, nil
 }
 
+const getRoomByName = `-- name: GetRoomByName :one
+SELECT name, hidden, created_at, updated_at FROM rooms
+WHERE name = ?
+`
+
+func (q *Queries) GetRoomByName(ctx context.Context, name string) (Room, error) {
+	row := q.db.QueryRowContext(ctx, getRoomByName, name)
+	var i Room
+	err := row.Scan(
+		&i.Name,
+		&i.Hidden,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getRoomsWithMessageCount = `-- name: GetRoomsWithMessageCount :many
-SELECT room, COUNT(*) as message_count
-FROM messages
-GROUP BY room
+SELECT
+    r.name,
+    r.hidden,
+    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count
+FROM rooms r
+ORDER BY r.name
 `
 
 type GetRoomsWithMessageCountRow struct {
-	Room         string `json:"room"`
-	MessageCount int64  `json:"message_count"`
+	Name         string      `json:"name"`
+	Hidden       bool        `json:"hidden"`
+	MessageCount interface{} `json:"message_count"`
 }
 
 func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
@@ -186,7 +237,7 @@ func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithM
 	items := []GetRoomsWithMessageCountRow{}
 	for rows.Next() {
 		var i GetRoomsWithMessageCountRow
-		if err := rows.Scan(&i.Room, &i.MessageCount); err != nil {
+		if err := rows.Scan(&i.Name, &i.Hidden, &i.MessageCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -256,6 +307,34 @@ func (q *Queries) GetUserWithPostCount(ctx context.Context, publicKey string) (G
 		&i.PostCount,
 	)
 	return i, err
+}
+
+const roomExists = `-- name: RoomExists :one
+SELECT COUNT(*) > 0 as room_exists FROM rooms WHERE name = ?
+`
+
+func (q *Queries) RoomExists(ctx context.Context, name string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, roomExists, name)
+	var room_exists bool
+	err := row.Scan(&room_exists)
+	return room_exists, err
+}
+
+const updateRoomVisibility = `-- name: UpdateRoomVisibility :exec
+UPDATE rooms
+SET hidden = ?, updated_at = ?
+WHERE name = ?
+`
+
+type UpdateRoomVisibilityParams struct {
+	Hidden    bool      `json:"hidden"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Name      string    `json:"name"`
+}
+
+func (q *Queries) UpdateRoomVisibility(ctx context.Context, arg UpdateRoomVisibilityParams) error {
+	_, err := q.db.ExecContext(ctx, updateRoomVisibility, arg.Hidden, arg.UpdatedAt, arg.Name)
+	return err
 }
 
 const updateUserVerified = `-- name: UpdateUserVerified :exec

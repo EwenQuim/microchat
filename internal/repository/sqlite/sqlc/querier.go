@@ -10,14 +10,18 @@ import (
 
 type Querier interface {
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
+	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetAllUsers(ctx context.Context) ([]User, error)
 	GetMessageCountByRoom(ctx context.Context, room string) (int64, error)
 	GetMessagesByRoom(ctx context.Context, room string) ([]Message, error)
+	GetRoomByName(ctx context.Context, name string) (Room, error)
 	GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error)
 	GetUserByPublicKey(ctx context.Context, publicKey string) (User, error)
 	GetUserVerified(ctx context.Context, publicKey string) (bool, error)
 	GetUserWithPostCount(ctx context.Context, publicKey string) (GetUserWithPostCountRow, error)
+	RoomExists(ctx context.Context, name string) (bool, error)
+	UpdateRoomVisibility(ctx context.Context, arg UpdateRoomVisibilityParams) error
 	UpdateUserVerified(ctx context.Context, arg UpdateUserVerifiedParams) error
 	UserExistsByPublicKey(ctx context.Context, publicKey string) (bool, error)
 }

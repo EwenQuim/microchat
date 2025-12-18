@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/EwenQuim/microchat/internal/config"
 	"github.com/EwenQuim/microchat/internal/handlers"
 	"github.com/EwenQuim/microchat/internal/repository"
 	"github.com/EwenQuim/microchat/internal/services"
@@ -20,6 +21,9 @@ import (
 var staticFiles embed.FS
 
 func main() {
+	// Load configuration
+	cfg := config.Load()
+
 	// Initialize repository
 	repo, err := repository.NewRepository()
 	if err != nil {
@@ -42,7 +46,7 @@ func main() {
 
 	// API routes
 	apiGroup := fuego.Group(s, "/api")
-	handlers.RegisterChatRoutes(apiGroup, chatService)
+	handlers.RegisterChatRoutes(apiGroup, chatService, cfg)
 
 	// Serve static files with SPA fallback
 	staticFS, err := fs.Sub(staticFiles, "static")
