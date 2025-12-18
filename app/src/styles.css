@@ -4,6 +4,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  /* Support for dynamic viewport height on mobile (accounts for browser UI) */
+  height: 100vh;
+  /* Use dynamic viewport height when supported for better mobile keyboard handling */
+  height: 100dvh;
+}
+
 body {
   @apply m-0;
   font-family:
@@ -11,6 +18,11 @@ body {
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+}
+
+#app {
+  height: 100%;
 }
 
 code {
@@ -134,5 +146,18 @@ code {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Smooth scrolling on iOS */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent pull-to-refresh on mobile browsers */
+  body {
+    overscroll-behavior-y: none;
   }
 }

@@ -28,8 +28,8 @@ export function MessageList({
 	};
 
 	return (
-		<ScrollArea className={cn("p-4", className)} onScroll={handleScroll}>
-			<div ref={scrollRef}>
+		<ScrollArea className={cn("px-4", className)} onScroll={handleScroll}>
+			<div ref={scrollRef} className="pb-4">
 				{isLoading && messages.length === 0 && (
 					<div className="text-center text-muted-foreground">
 						Loading messages...
@@ -42,7 +42,7 @@ export function MessageList({
 					</div>
 				)}
 
-				<div className="space-y-4">
+				<div className="space-y-4 my-4">
 					{messages.map((message) => (
 						<MessageItem
 							key={message.id}

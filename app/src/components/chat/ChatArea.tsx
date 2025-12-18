@@ -68,8 +68,8 @@ export function ChatArea({
 	}
 
 	return (
-		<div className={cn("flex flex-col", className)}>
-			<div className="p-4 border-b flex items-center gap-3">
+		<div className={cn("flex flex-col h-screen", className)}>
+			<div className="p-4 border-b flex items-center gap-3 bg-background sticky top-0 z-10">
 				<Button
 					type="button"
 					variant="ghost"
@@ -87,13 +87,13 @@ export function ChatArea({
 				messages={messages || []}
 				isLoading={isLoading}
 				currentPubKey={currentPubKey}
-				className="flex-1"
+				className="flex-1 min-h-0"
 			/>
 
 			<MessageInput
 				onSend={handleSendMessage}
 				disabled={sendMessageMutation.isPending}
-				className="border-t"
+				className="border-t bg-background sticky bottom-0 z-10"
 			/>
 		</div>
 	);
