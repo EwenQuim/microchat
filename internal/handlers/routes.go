@@ -13,6 +13,7 @@ func RegisterChatRoutes(s *fuego.Server, chatService *services.ChatService, cfg 
 	// Room routes
 	chatGroup := fuego.Group(s, "/rooms", option.Tags("chat"))
 	fuego.Get(chatGroup, "", GetRooms(chatService))
+	fuego.Get(chatGroup, "/search", SearchRooms(chatService))
 	fuego.Post(chatGroup, "", CreateRoom(chatService))
 	fuego.Patch(chatGroup, "/{room}/visibility", UpdateRoomVisibility(chatService, cfg))
 	fuego.Get(chatGroup, "/{room}/messages", GetMessages(chatService))

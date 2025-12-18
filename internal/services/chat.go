@@ -10,6 +10,7 @@ type Repository interface {
 	SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
 	GetMessages(ctx context.Context, room string) ([]models.Message, error)
 	GetRooms(ctx context.Context) ([]models.Room, error)
+	SearchRooms(ctx context.Context, query string) ([]models.Room, error)
 	CreateRoom(ctx context.Context, name string) (*models.Room, error)
 	UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error
 
@@ -43,6 +44,10 @@ func (s *ChatService) GetMessages(ctx context.Context, room string) ([]models.Me
 
 func (s *ChatService) GetRooms(ctx context.Context) ([]models.Room, error) {
 	return s.repo.GetRooms(ctx)
+}
+
+func (s *ChatService) SearchRooms(ctx context.Context, query string) ([]models.Room, error) {
+	return s.repo.SearchRooms(ctx, query)
 }
 
 func (s *ChatService) CreateRoom(ctx context.Context, name string) (*models.Room, error) {

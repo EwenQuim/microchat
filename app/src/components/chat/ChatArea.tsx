@@ -64,7 +64,7 @@ export function ChatArea({
 					text: `Join the conversation in ${window.location.host} #${roomName}`,
 					url: shareUrl,
 				});
-			} catch (err) {
+			} catch (_e) {
 				// User cancelled or share failed
 				console.log("Share cancelled");
 			}

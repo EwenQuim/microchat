@@ -133,10 +133,52 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 			room.LastMessageUser = &row.LastMessageUser
 		}
 		// Check if timestamp is not the zero value (1970-01-01)
-		zeroTime := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-		if !row.LastMessageTimestamp.Equal(zeroTime) {
-			timestamp := row.LastMessageTimestamp.Format(time.RFC3339)
-			room.LastMessageTimestamp = &timestamp
+		if row.LastMessageTimestamp != "" && row.LastMessageTimestamp != "1970-01-01 00:00:00" {
+			// Parse the timestamp string
+			parsedTime, err := time.Parse("2006-01-02 15:04:05", row.LastMessageTimestamp)
+			if err == nil {
+				timestamp := parsedTime.Format(time.RFC3339)
+				room.LastMessageTimestamp = &timestamp
+			}
+		}
+
+		rooms = append(rooms, room)
+	}
+
+	return rooms, nil
+}
+
+func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, error) {
+	rows, err := s.queries.SearchRoomsByName(ctx, sql.NullString{
+		String: query,
+		Valid:  true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to search rooms: %w", err)
+	}
+
+	rooms := make([]models.Room, 0, len(rows))
+	for _, row := range rows {
+		room := models.Room{
+			Name:         row.Name,
+			MessageCount: int(row.MessageCount.(int64)),
+			Hidden:       row.Hidden,
+		}
+
+		if row.LastMessageContent != "" {
+			room.LastMessageContent = &row.LastMessageContent
+		}
+		if row.LastMessageUser != "" {
+			room.LastMessageUser = &row.LastMessageUser
+		}
+		// Check if timestamp is not the zero value (1970-01-01)
+		if row.LastMessageTimestamp != "" && row.LastMessageTimestamp != "1970-01-01 00:00:00" {
+			// Parse the timestamp string
+			parsedTime, err := time.Parse("2006-01-02 15:04:05", row.LastMessageTimestamp)
+			if err == nil {
+				timestamp := parsedTime.Format(time.RFC3339)
+				room.LastMessageTimestamp = &timestamp
+			}
 		}
 
 		rooms = append(rooms, room)

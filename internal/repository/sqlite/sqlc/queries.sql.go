@@ -115,6 +115,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const getAllUsers = `-- name: GetAllUsers :many
 SELECT public_key, verified, created_at, updated_at FROM users
+LIMIT 100
 `
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
@@ -162,6 +163,7 @@ const getMessagesByRoom = `-- name: GetMessagesByRoom :many
 SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp FROM messages
 WHERE room = ?
 ORDER BY timestamp ASC
+LIMIT 100
 `
 
 func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message, error) {
@@ -220,7 +222,10 @@ SELECT
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
-    COALESCE(last_msg.timestamp, datetime('1970-01-01 00:00:00')) as last_message_timestamp
+    CASE
+        WHEN last_msg.timestamp IS NULL THEN CAST('1970-01-01 00:00:00' AS TEXT)
+        ELSE CAST(last_msg.timestamp AS TEXT)
+    END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
     SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp
@@ -231,7 +236,8 @@ LEFT JOIN (
         GROUP BY room
     ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
 ) last_msg ON last_msg.room = r.name
-ORDER BY r.name
+ORDER BY last_msg.timestamp DESC, r.name ASC
+LIMIT 100
 `
 
 type GetRoomsWithMessageCountRow struct {
@@ -240,7 +246,7 @@ type GetRoomsWithMessageCountRow struct {
 	MessageCount         interface{} `json:"message_count"`
 	LastMessageContent   string      `json:"last_message_content"`
 	LastMessageUser      string      `json:"last_message_user"`
-	LastMessageTimestamp time.Time   `json:"last_message_timestamp"`
+	LastMessageTimestamp string      `json:"last_message_timestamp"`
 }
 
 func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
@@ -340,6 +346,71 @@ func (q *Queries) RoomExists(ctx context.Context, name string) (bool, error) {
 	var room_exists bool
 	err := row.Scan(&room_exists)
 	return room_exists, err
+}
+
+const searchRoomsByName = `-- name: SearchRoomsByName :many
+SELECT
+    r.name,
+    r.hidden,
+    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
+    COALESCE(last_msg.content, '') as last_message_content,
+    COALESCE(last_msg.user, '') as last_message_user,
+    CASE
+        WHEN last_msg.timestamp IS NULL THEN CAST('1970-01-01 00:00:00' AS TEXT)
+        ELSE CAST(last_msg.timestamp AS TEXT)
+    END as last_message_timestamp
+FROM rooms r
+LEFT JOIN (
+    SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp
+    FROM messages m
+    INNER JOIN (
+        SELECT room, MAX(timestamp) as max_timestamp
+        FROM messages
+        GROUP BY room
+    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+) last_msg ON last_msg.room = r.name
+WHERE r.name LIKE '%' || ? || '%'
+ORDER BY last_message_timestamp DESC, r.name ASC
+LIMIT 100
+`
+
+type SearchRoomsByNameRow struct {
+	Name                 string      `json:"name"`
+	Hidden               bool        `json:"hidden"`
+	MessageCount         interface{} `json:"message_count"`
+	LastMessageContent   string      `json:"last_message_content"`
+	LastMessageUser      string      `json:"last_message_user"`
+	LastMessageTimestamp string      `json:"last_message_timestamp"`
+}
+
+func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString) ([]SearchRoomsByNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchRoomsByName, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchRoomsByNameRow{}
+	for rows.Next() {
+		var i SearchRoomsByNameRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Hidden,
+			&i.MessageCount,
+			&i.LastMessageContent,
+			&i.LastMessageUser,
+			&i.LastMessageTimestamp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateRoomVisibility = `-- name: UpdateRoomVisibility :exec

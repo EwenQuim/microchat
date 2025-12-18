@@ -302,7 +302,7 @@ export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, 
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func2`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func3`
 
 #### Middlewares:
 
@@ -311,7 +311,7 @@ export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, 
 ---
 
 
- * @summary func2
+ * @summary func3
  */
 export type pOSTApiRoomsResponse200 = {
   data: Room
@@ -401,7 +401,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type POSTApiRoomsMutationError = HTTPError | void
 
     /**
- * @summary func2
+ * @summary func3
  */
 export const usePOSTApiRooms = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRooms>>, TError,{data: CreateRoomRequest}, TContext>, fetch?: RequestInit}
@@ -419,7 +419,7 @@ export const usePOSTApiRooms = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func4`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func2`
 
 #### Middlewares:
 
@@ -428,7 +428,153 @@ export const usePOSTApiRooms = <TError = HTTPError | void,
 ---
 
 
- * @summary func4
+ * @summary func2
+ */
+export type gETApiRoomsSearchResponse200 = {
+  data: Room[]
+  status: 200
+}
+
+export type gETApiRoomsSearchResponse400 = {
+  data: HTTPError
+  status: 400
+}
+
+export type gETApiRoomsSearchResponse500 = {
+  data: HTTPError
+  status: 500
+}
+
+export type gETApiRoomsSearchResponseDefault = {
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type gETApiRoomsSearchResponseSuccess = (gETApiRoomsSearchResponse200) & {
+  headers: Headers;
+};
+export type gETApiRoomsSearchResponseError = (gETApiRoomsSearchResponse400 | gETApiRoomsSearchResponse500 | gETApiRoomsSearchResponseDefault) & {
+  headers: Headers;
+};
+
+export type gETApiRoomsSearchResponse = (gETApiRoomsSearchResponseSuccess | gETApiRoomsSearchResponseError)
+
+export const getGETApiRoomsSearchUrl = () => {
+
+
+  
+
+  return `/api/rooms/search`
+}
+
+export const gETApiRoomsSearch = async ( options?: RequestInit): Promise<gETApiRoomsSearchResponse> => {
+  
+  const res = await fetch(getGETApiRoomsSearchUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: gETApiRoomsSearchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as gETApiRoomsSearchResponse
+}
+
+
+
+
+
+export const getGETApiRoomsSearchQueryKey = () => {
+    return [
+    `/api/rooms/search`
+    ] as const;
+    }
+
+    
+export const getGETApiRoomsSearchQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsSearchQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRoomsSearch>>> = ({ signal }) => gETApiRoomsSearch({ signal, ...fetchOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GETApiRoomsSearchQueryResult = NonNullable<Awaited<ReturnType<typeof gETApiRoomsSearch>>>
+export type GETApiRoomsSearchQueryError = HTTPError | void
+
+
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary func2
+ */
+
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGETApiRoomsSearchQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * #### Controller: 
+
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`
+
+#### Middlewares:
+
+- `github.com/go-fuego/fuego.defaultLogger.middleware`
+
+---
+
+
+ * @summary func5
  */
 export type gETApiRoomsRoomMessagesResponse200 = {
   data: Message[]
@@ -542,7 +688,7 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary func4
+ * @summary func5
  */
 
 export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
@@ -565,7 +711,7 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func5`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`
 
 #### Middlewares:
 
@@ -574,7 +720,7 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
 ---
 
 
- * @summary func5
+ * @summary func6
  */
 export type pOSTApiRoomsRoomMessagesResponse200 = {
   data: Message
@@ -665,7 +811,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type POSTApiRoomsRoomMessagesMutationError = HTTPError | void
 
     /**
- * @summary func5
+ * @summary func6
  */
 export const usePOSTApiRoomsRoomMessages = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>, TError,{room: string;data: SendMessageRequest}, TContext>, fetch?: RequestInit}
@@ -683,7 +829,7 @@ export const usePOSTApiRoomsRoomMessages = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UpdateRoomVisibility.func3`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UpdateRoomVisibility.func4`
 
 #### Middlewares:
 
@@ -692,7 +838,7 @@ export const usePOSTApiRoomsRoomMessages = <TError = HTTPError | void,
 ---
 
 
- * @summary func3
+ * @summary func4
  */
 export type pATCHApiRoomsRoomVisibilityResponse200 = {
   data: String
@@ -783,7 +929,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PATCHApiRoomsRoomVisibilityMutationError = HTTPError | void
 
     /**
- * @summary func3
+ * @summary func4
  */
 export const usePATCHApiRoomsRoomVisibility = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>, TError,{room: string;data: UpdateRoomVisibilityRequest}, TContext>, fetch?: RequestInit}
@@ -801,7 +947,7 @@ export const usePATCHApiRoomsRoomVisibility = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetAllUsers.func7`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetAllUsers.func8`
 
 #### Middlewares:
 
@@ -810,7 +956,7 @@ export const usePATCHApiRoomsRoomVisibility = <TError = HTTPError | void,
 ---
 
 
- * @summary func7
+ * @summary func8
  */
 export type gETApiUsersResponse200 = {
   data: User[]
@@ -924,7 +1070,7 @@ export function useGETApiUsers<TData = Awaited<ReturnType<typeof gETApiUsers>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary func7
+ * @summary func8
  */
 
 export function useGETApiUsers<TData = Awaited<ReturnType<typeof gETApiUsers>>, TError = HTTPError | void>(
@@ -947,7 +1093,7 @@ export function useGETApiUsers<TData = Awaited<ReturnType<typeof gETApiUsers>>, 
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.RegisterUser.func6`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.RegisterUser.func7`
 
 #### Middlewares:
 
@@ -956,7 +1102,7 @@ export function useGETApiUsers<TData = Awaited<ReturnType<typeof gETApiUsers>>, 
 ---
 
 
- * @summary func6
+ * @summary func7
  */
 export type pOSTApiUsersResponse200 = {
   data: User
@@ -1046,7 +1192,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type POSTApiUsersMutationError = HTTPError | void
 
     /**
- * @summary func6
+ * @summary func7
  */
 export const usePOSTApiUsers = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiUsers>>, TError,{data: RegisterUserRequest}, TContext>, fetch?: RequestInit}
@@ -1064,7 +1210,7 @@ export const usePOSTApiUsers = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UnverifyUser.func11`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UnverifyUser.func12`
 
 #### Middlewares:
 
@@ -1073,7 +1219,7 @@ export const usePOSTApiUsers = <TError = HTTPError | void,
 ---
 
 
- * @summary func11
+ * @summary func12
  */
 export type pOSTApiUsersUnverifyResponse200 = {
   data: String
@@ -1163,7 +1309,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type POSTApiUsersUnverifyMutationError = HTTPError | void
 
     /**
- * @summary func11
+ * @summary func12
  */
 export const usePOSTApiUsersUnverify = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiUsersUnverify>>, TError,{data: VerifyUserRequest}, TContext>, fetch?: RequestInit}
@@ -1181,7 +1327,7 @@ export const usePOSTApiUsersUnverify = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.VerifyUser.func10`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.VerifyUser.func11`
 
 #### Middlewares:
 
@@ -1190,7 +1336,7 @@ export const usePOSTApiUsersUnverify = <TError = HTTPError | void,
 ---
 
 
- * @summary func10
+ * @summary func11
  */
 export type pOSTApiUsersVerifyResponse200 = {
   data: String
@@ -1280,7 +1426,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type POSTApiUsersVerifyMutationError = HTTPError | void
 
     /**
- * @summary func10
+ * @summary func11
  */
 export const usePOSTApiUsersVerify = <TError = HTTPError | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiUsersVerify>>, TError,{data: VerifyUserRequest}, TContext>, fetch?: RequestInit}
@@ -1298,7 +1444,7 @@ export const usePOSTApiUsersVerify = <TError = HTTPError | void,
     /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func8`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func9`
 
 #### Middlewares:
 
@@ -1307,7 +1453,7 @@ export const usePOSTApiUsersVerify = <TError = HTTPError | void,
 ---
 
 
- * @summary func8
+ * @summary func9
  */
 export type gETApiUsersPublicKeyResponse200 = {
   data: User
@@ -1421,7 +1567,7 @@ export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApi
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary func8
+ * @summary func9
  */
 
 export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(
@@ -1444,7 +1590,7 @@ export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApi
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUserDetails.func9`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUserDetails.func10`
 
 #### Middlewares:
 
@@ -1453,7 +1599,7 @@ export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApi
 ---
 
 
- * @summary func9
+ * @summary func10
  */
 export type gETApiUsersPublicKeyDetailsResponse200 = {
   data: UserWithPostCount
@@ -1567,7 +1713,7 @@ export function useGETApiUsersPublicKeyDetails<TData = Awaited<ReturnType<typeof
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary func9
+ * @summary func10
  */
 
 export function useGETApiUsersPublicKeyDetails<TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>, TError = HTTPError | void>(

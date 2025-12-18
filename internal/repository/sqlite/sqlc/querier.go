@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
@@ -21,6 +22,7 @@ type Querier interface {
 	GetUserVerified(ctx context.Context, publicKey string) (bool, error)
 	GetUserWithPostCount(ctx context.Context, publicKey string) (GetUserWithPostCountRow, error)
 	RoomExists(ctx context.Context, name string) (bool, error)
+	SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString) ([]SearchRoomsByNameRow, error)
 	UpdateRoomVisibility(ctx context.Context, arg UpdateRoomVisibilityParams) error
 	UpdateUserVerified(ctx context.Context, arg UpdateUserVerifiedParams) error
 	UserExistsByPublicKey(ctx context.Context, publicKey string) (bool, error)

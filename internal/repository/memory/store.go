@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -105,6 +106,43 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 			MessageCount: messageCount,
 			Hidden:       metadata.Hidden,
 		})
+	}
+
+	return rooms, nil
+}
+
+func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	rooms := make([]models.Room, 0)
+	for name, metadata := range s.rooms {
+		// Simple case-insensitive substring search
+		if query == "" || containsCaseInsensitive(name, query) {
+			messageCount := 0
+			var lastMessage *models.Message
+			if messages, exists := s.messages[name]; exists {
+				messageCount = len(messages)
+				if messageCount > 0 {
+					lastMessage = &messages[messageCount-1]
+				}
+			}
+
+			room := models.Room{
+				Name:         name,
+				MessageCount: messageCount,
+				Hidden:       metadata.Hidden,
+			}
+
+			if lastMessage != nil {
+				room.LastMessageContent = &lastMessage.Content
+				room.LastMessageUser = &lastMessage.User
+				timestamp := lastMessage.Timestamp.Format(time.RFC3339)
+				room.LastMessageTimestamp = &timestamp
+			}
+
+			rooms = append(rooms, room)
+		}
 	}
 
 	return rooms, nil
@@ -259,4 +297,8 @@ func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bo
 	room.Hidden = hidden
 	room.UpdatedAt = time.Now()
 	return nil
+}
+
+func containsCaseInsensitive(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }

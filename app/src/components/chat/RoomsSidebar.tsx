@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, User } from "lucide-react";
+import { Plus, Search, User } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useRooms } from "@/hooks/useRooms";
 import { useUsername } from "@/hooks/useUsername";
 import { cn } from "@/lib/utils";
 import { CreateRoomDialog } from "./CreateRoomDialog";
+import { SearchCommand } from "./SearchCommand";
 
 interface RoomsSidebarProps {
 	selectedRoom: string | null;
@@ -18,13 +19,25 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const { data: rooms, isLoading, error } = useRooms();
 	const { username } = useUsername();
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
+	const [showSearch, setShowSearch] = useState(false);
 	const navigate = useNavigate();
 
 	return (
 		<aside className={cn("border-r bg-muted/10 relative", className)}>
 			<div className="flex flex-col h-full w-full">
-				<div className="p-4 shrink-0">
+				<div className="p-4 shrink-0 space-y-3">
 					<h2 className="font-semibold text-lg">Microchat</h2>
+					<button
+						type="button"
+						onClick={() => setShowSearch(true)}
+						className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground bg-muted/50 rounded-md hover:bg-muted transition-colors"
+					>
+						<Search className="h-4 w-4" />
+						<span>Search rooms...</span>
+						<kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+							<span className="text-xs">⌘</span>K
+						</kbd>
+					</button>
 				</div>
 
 				<ScrollArea className="flex-1 min-h-0">
@@ -73,7 +86,9 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 									{room.last_message_content && (
 										<div className="text-xs text-muted-foreground mt-1 truncate">
 											{room.last_message_user && (
-												<span className="font-medium">{room.last_message_user}: </span>
+												<span className="font-medium">
+													{room.last_message_user}:{" "}
+												</span>
 											)}
 											{room.last_message_content}
 										</div>
@@ -121,6 +136,8 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 					navigate({ to: "/chat/$roomName", params: { roomName } })
 				}
 			/>
+
+			<SearchCommand open={showSearch} onOpenChange={setShowSearch} />
 		</aside>
 	);
 }

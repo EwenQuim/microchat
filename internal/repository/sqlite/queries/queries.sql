@@ -6,7 +6,8 @@ RETURNING *;
 -- name: GetMessagesByRoom :many
 SELECT * FROM messages
 WHERE room = ?
-ORDER BY timestamp ASC;
+ORDER BY timestamp ASC
+LIMIT 100;
 
 -- name: GetRoomsWithMessageCount :many
 SELECT
@@ -15,7 +16,10 @@ SELECT
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
-    COALESCE(last_msg.timestamp, datetime('1970-01-01 00:00:00')) as last_message_timestamp
+    CASE
+        WHEN last_msg.timestamp IS NULL THEN CAST('1970-01-01 00:00:00' AS TEXT)
+        ELSE CAST(last_msg.timestamp AS TEXT)
+    END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
     SELECT m.*
@@ -26,7 +30,8 @@ LEFT JOIN (
         GROUP BY room
     ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
 ) last_msg ON last_msg.room = r.name
-ORDER BY r.name;
+ORDER BY last_msg.timestamp DESC, r.name ASC
+LIMIT 100;
 
 -- name: GetMessageCountByRoom :one
 SELECT COUNT(*) as count
@@ -46,7 +51,8 @@ WHERE public_key = ?;
 SELECT COUNT(*) > 0 as user_exists FROM users WHERE public_key = ?;
 
 -- name: GetAllUsers :many
-SELECT * FROM users;
+SELECT * FROM users
+LIMIT 100;
 
 -- name: UpdateUserVerified :exec
 UPDATE users
@@ -80,3 +86,28 @@ SELECT COUNT(*) > 0 as room_exists FROM rooms WHERE name = ?;
 UPDATE rooms
 SET hidden = ?, updated_at = ?
 WHERE name = ?;
+
+-- name: SearchRoomsByName :many
+SELECT
+    r.name,
+    r.hidden,
+    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
+    COALESCE(last_msg.content, '') as last_message_content,
+    COALESCE(last_msg.user, '') as last_message_user,
+    CASE
+        WHEN last_msg.timestamp IS NULL THEN CAST('1970-01-01 00:00:00' AS TEXT)
+        ELSE CAST(last_msg.timestamp AS TEXT)
+    END as last_message_timestamp
+FROM rooms r
+LEFT JOIN (
+    SELECT m.*
+    FROM messages m
+    INNER JOIN (
+        SELECT room, MAX(timestamp) as max_timestamp
+        FROM messages
+        GROUP BY room
+    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+) last_msg ON last_msg.room = r.name
+WHERE r.name LIKE '%' || ? || '%'
+ORDER BY last_message_timestamp DESC, r.name ASC
+LIMIT 100;

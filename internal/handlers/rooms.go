@@ -31,6 +31,26 @@ func GetRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]
 	}
 }
 
+func SearchRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Room, error) {
+	return func(c fuego.ContextNoBody) ([]models.Room, error) {
+		query := c.QueryParam("q")
+		allRooms, err := chatService.SearchRooms(c.Context(), query)
+		if err != nil {
+			return nil, err
+		}
+
+		// Filter out hidden rooms
+		visibleRooms := make([]models.Room, 0)
+		for _, room := range allRooms {
+			if !room.Hidden {
+				visibleRooms = append(visibleRooms, room)
+			}
+		}
+
+		return visibleRooms, nil
+	}
+}
+
 func CreateRoom(chatService *services.ChatService) func(c fuego.ContextWithBody[models.CreateRoomRequest]) (*models.Room, error) {
 	return func(c fuego.ContextWithBody[models.CreateRoomRequest]) (*models.Room, error) {
 		body, err := c.Body()
