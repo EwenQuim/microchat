@@ -17,6 +17,7 @@ type Querier interface {
 	GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error)
 	GetUserByPublicKey(ctx context.Context, publicKey string) (User, error)
 	GetUserVerified(ctx context.Context, publicKey string) (bool, error)
+	GetUserWithPostCount(ctx context.Context, publicKey string) (GetUserWithPostCountRow, error)
 	UpdateUserVerified(ctx context.Context, arg UpdateUserVerifiedParams) error
 	UserExistsByPublicKey(ctx context.Context, publicKey string) (bool, error)
 }

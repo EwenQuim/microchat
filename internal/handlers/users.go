@@ -62,3 +62,10 @@ func UnverifyUser(chatService *services.ChatService) func(c fuego.ContextWithBod
 		return "User verification removed successfully", nil
 	}
 }
+
+func GetUserDetails(chatService *services.ChatService) func(c fuego.ContextNoBody) (*models.UserWithPostCount, error) {
+	return func(c fuego.ContextNoBody) (*models.UserWithPostCount, error) {
+		publicKey := c.PathParam("publicKey")
+		return chatService.GetUserWithPostCount(c.Context(), publicKey)
+	}
+}

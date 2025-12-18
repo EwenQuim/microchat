@@ -1,5 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
+import { hexToNpub } from "@/lib/crypto";
 import { cn } from "@/lib/utils";
 
 const generateColorFromPubkey = (pubkey: string): string => {
@@ -19,12 +21,20 @@ interface MessageItemProps {
 
 export function MessageItem({ message, isOwn }: MessageItemProps) {
 	const formatPubkey = (pubkey: string): string => {
-		if (pubkey.length <= 6) return pubkey;
-		return pubkey.slice(0, 6);
+		if (pubkey === "anonymous" || !pubkey) return "anonymous";
+		try {
+			const npub = hexToNpub(pubkey);
+			// Display last 6 characters of npub
+			return npub.slice(-6);
+		} catch {
+			return pubkey.slice(-6);
+		}
 	};
 
 	const pubkey = message.pubkey || "anonymous";
 	const displayPubkey = formatPubkey(pubkey);
+	const fullNpub =
+		pubkey !== "anonymous" && pubkey ? hexToNpub(pubkey) : pubkey;
 	const userColor = generateColorFromPubkey(pubkey);
 
 	const formattedTime = message.timestamp
@@ -37,15 +47,22 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 		<div className={cn("flex gap-3", isOwn && "flex-row-reverse")}>
 			<div className={cn("flex flex-col", isOwn && "items-end")}>
 				<div className="flex items-center gap-2 mb-1">
-					<span className="text-sm font-semibold" style={{ color: userColor }}>
-						{message.user || "Anonymous"}
-					</span>
-					<span
-						className="text-xs text-muted-foreground font-mono"
-						title={pubkey}
+					<Link
+						to="/user/$pubkey"
+						params={{ pubkey }}
+						className="text-sm font-semibold hover:underline cursor-pointer"
+						style={{ color: userColor }}
 					>
-						#{displayPubkey}
-					</span>
+						{message.user || "Anonymous"}
+					</Link>
+					<Link
+						to="/user/$pubkey"
+						params={{ pubkey }}
+						className="text-xs text-muted-foreground font-mono hover:underline cursor-pointer"
+						title={fullNpub}
+					>
+						@{displayPubkey}
+					</Link>
 					{formattedTime && (
 						<span className="text-xs text-muted-foreground">
 							{formattedTime}

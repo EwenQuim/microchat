@@ -229,6 +229,35 @@ func (q *Queries) GetUserVerified(ctx context.Context, publicKey string) (bool, 
 	return verified, err
 }
 
+const getUserWithPostCount = `-- name: GetUserWithPostCount :one
+SELECT
+    u.public_key, u.verified, u.created_at, u.updated_at,
+    COALESCE((SELECT COUNT(*) FROM messages WHERE pubkey = u.public_key), 0) as post_count
+FROM users u
+WHERE u.public_key = ?
+`
+
+type GetUserWithPostCountRow struct {
+	PublicKey string      `json:"public_key"`
+	Verified  bool        `json:"verified"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	PostCount interface{} `json:"post_count"`
+}
+
+func (q *Queries) GetUserWithPostCount(ctx context.Context, publicKey string) (GetUserWithPostCountRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserWithPostCount, publicKey)
+	var i GetUserWithPostCountRow
+	err := row.Scan(
+		&i.PublicKey,
+		&i.Verified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PostCount,
+	)
+	return i, err
+}
+
 const updateUserVerified = `-- name: UpdateUserVerified :exec
 UPDATE users
 SET verified = ?, updated_at = ?

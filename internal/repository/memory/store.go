@@ -187,3 +187,31 @@ func (s *Store) UnverifyUser(ctx context.Context, publicKey string) error {
 	user.UpdatedAt = time.Now()
 	return nil
 }
+
+func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	user, exists := s.users[publicKey]
+	if !exists {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	// Count posts by this user
+	postCount := int64(0)
+	for _, messages := range s.messages {
+		for _, msg := range messages {
+			if msg.Pubkey == publicKey {
+				postCount++
+			}
+		}
+	}
+
+	return &models.UserWithPostCount{
+		PublicKey: user.PublicKey,
+		Verified:  user.Verified,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		PostCount: postCount,
+	}, nil
+}

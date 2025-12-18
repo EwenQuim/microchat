@@ -22,6 +22,7 @@ func RegisterChatRoutes(s *fuego.Server, chatService *services.ChatService) {
 	fuego.Post(userGroup, "", RegisterUser(chatService))
 	fuego.Get(userGroup, "", GetAllUsers(chatService))
 	fuego.Get(userGroup, "/{publicKey}", GetUser(chatService))
+	fuego.Get(userGroup, "/{publicKey}/details", GetUserDetails(chatService))
 	fuego.Post(userGroup, "/verify", VerifyUser(chatService))
 	fuego.Post(userGroup, "/unverify", UnverifyUser(chatService))
 }

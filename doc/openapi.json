@@ -181,6 +181,30 @@
 				},
 				"type": "object"
 			},
+			"UserWithPostCount": {
+				"description": "UserWithPostCount schema",
+				"properties": {
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"post_count": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"public_key": {
+						"type": "string"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"verified": {
+						"type": "boolean"
+					}
+				},
+				"type": "object"
+			},
 			"VerifyUserRequest": {
 				"description": "VerifyUserRequest schema",
 				"properties": {
@@ -810,7 +834,7 @@
 		},
 		"/api/users/unverify": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UnverifyUser.func9`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UnverifyUser.func10`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
 				"operationId": "POST_/api/users/unverify",
 				"parameters": [
 					{
@@ -882,7 +906,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func9",
+				"summary": "func10",
 				"tags": [
 					"api",
 					"users"
@@ -891,7 +915,7 @@
 		},
 		"/api/users/verify": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.VerifyUser.func8`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.VerifyUser.func9`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
 				"operationId": "POST_/api/users/verify",
 				"parameters": [
 					{
@@ -963,7 +987,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func8",
+				"summary": "func9",
 				"tags": [
 					"api",
 					"users"
@@ -1042,6 +1066,84 @@
 					}
 				},
 				"summary": "func7",
+				"tags": [
+					"api",
+					"users"
+				]
+			}
+		},
+		"/api/users/{publicKey}/details": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUserDetails.func8`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"operationId": "GET_/api/users/:publicKey/details",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "publicKey",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserWithPostCount"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/UserWithPostCount"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func8",
 				"tags": [
 					"api",
 					"users"

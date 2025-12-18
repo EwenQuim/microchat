@@ -20,10 +20,10 @@ COPY . .
 COPY --from=frontend-builder /app/frontend/dist ./cmd/server/static
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
+    GOOS=linux go build -o server ./cmd/server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -o cli ./cmd/cli
+    GOOS=linux go build -o cli ./cmd/cli
 
 # Final stage
 FROM alpine:latest
@@ -35,6 +35,9 @@ RUN addgroup -g 1000 appuser && \
 
 # Set working directory
 WORKDIR /app
+
+# Data folder for database and other files
+RUN mkdir -p /data && chown -R appuser:appuser /data
 
 # Create doc directory with proper permissions
 RUN mkdir -p /app/doc && chown -R appuser:appuser /app

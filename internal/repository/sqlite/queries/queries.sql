@@ -41,3 +41,10 @@ WHERE public_key = ?;
 -- name: GetUserVerified :one
 SELECT verified FROM users
 WHERE public_key = ?;
+
+-- name: GetUserWithPostCount :one
+SELECT
+    u.*,
+    COALESCE((SELECT COUNT(*) FROM messages WHERE pubkey = u.public_key), 0) as post_count
+FROM users u
+WHERE u.public_key = ?;

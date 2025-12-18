@@ -234,3 +234,28 @@ func sqlcUserToModel(user sqlc.User) *models.User {
 		UpdatedAt: user.UpdatedAt,
 	}
 }
+
+func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error) {
+	row, err := s.queries.GetUserWithPostCount(ctx, publicKey)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user with post count: %w", err)
+	}
+
+	postCount := int64(0)
+	if row.PostCount != nil {
+		if count, ok := row.PostCount.(int64); ok {
+			postCount = count
+		}
+	}
+
+	return &models.UserWithPostCount{
+		PublicKey: row.PublicKey,
+		Verified:  row.Verified,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+		PostCount: postCount,
+	}, nil
+}

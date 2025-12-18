@@ -16,6 +16,7 @@ type Repository interface {
 	RegisterUser(ctx context.Context, publicKey string) (*models.User, error)
 	GetUser(ctx context.Context, publicKey string) (*models.User, error)
 	GetUserByPublicKey(ctx context.Context, publicKey string) (*models.User, error)
+	GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error)
 	GetAllUsers(ctx context.Context) ([]models.User, error)
 	VerifyUser(ctx context.Context, publicKey string) error
 	UnverifyUser(ctx context.Context, publicKey string) error
@@ -69,4 +70,8 @@ func (s *ChatService) VerifyUser(ctx context.Context, publicKey string) error {
 
 func (s *ChatService) UnverifyUser(ctx context.Context, publicKey string) error {
 	return s.repo.UnverifyUser(ctx, publicKey)
+}
+
+func (s *ChatService) GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error) {
+	return s.repo.GetUserWithPostCount(ctx, publicKey)
 }

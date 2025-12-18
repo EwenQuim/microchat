@@ -64,6 +64,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 				<ChatArea
 					roomName={roomName}
 					username={username ?? ""}
+					currentPubKey={keys?.publicKey ?? ""}
 					keys={keys}
 					className={cn(
 						"w-full md:flex-1",

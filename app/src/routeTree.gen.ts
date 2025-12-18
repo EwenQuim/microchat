@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UserPubkeyRouteImport } from './routes/user.$pubkey'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as ChatRoomNameRouteImport } from './routes/chat.$roomName'
 
@@ -22,6 +23,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserPubkeyRoute = UserPubkeyRouteImport.update({
+  id: '/user/$pubkey',
+  path: '/user/$pubkey',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/user/$pubkey': typeof UserPubkeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/user/$pubkey': typeof UserPubkeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,18 +61,30 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/user/$pubkey': typeof UserPubkeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/chat/$roomName' | '/demo/tanstack-query'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/chat/$roomName'
+    | '/demo/tanstack-query'
+    | '/user/$pubkey'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/chat/$roomName' | '/demo/tanstack-query'
+  to:
+    | '/'
+    | '/settings'
+    | '/chat/$roomName'
+    | '/demo/tanstack-query'
+    | '/user/$pubkey'
   id:
     | '__root__'
     | '/'
     | '/settings'
     | '/chat/$roomName'
     | '/demo/tanstack-query'
+    | '/user/$pubkey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -72,6 +92,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ChatRoomNameRoute: typeof ChatRoomNameRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  UserPubkeyRoute: typeof UserPubkeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$pubkey': {
+      id: '/user/$pubkey'
+      path: '/user/$pubkey'
+      fullPath: '/user/$pubkey'
+      preLoaderRoute: typeof UserPubkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/tanstack-query': {
@@ -112,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ChatRoomNameRoute: ChatRoomNameRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  UserPubkeyRoute: UserPubkeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

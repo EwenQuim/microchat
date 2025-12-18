@@ -11,6 +11,7 @@ import { MessageList } from "./MessageList";
 interface ChatAreaProps {
 	roomName: string | null;
 	username: string;
+	currentPubKey: string;
 	keys: KeyPair | null;
 	className?: string;
 }
@@ -18,6 +19,7 @@ interface ChatAreaProps {
 export function ChatArea({
 	roomName,
 	username,
+	currentPubKey,
 	keys,
 	className,
 }: ChatAreaProps) {
@@ -84,7 +86,7 @@ export function ChatArea({
 			<MessageList
 				messages={messages || []}
 				isLoading={isLoading}
-				currentUsername={username}
+				currentPubKey={currentPubKey}
 				className="flex-1"
 			/>
 

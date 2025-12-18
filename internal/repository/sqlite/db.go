@@ -7,7 +7,7 @@ import (
 
 	"github.com/pressly/goose/v3"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed migrations/*.sql
@@ -15,7 +15,7 @@ var embedMigrations embed.FS
 
 // InitDB initializes a SQLite database connection and runs migrations
 func InitDB(dbPath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

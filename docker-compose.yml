@@ -11,9 +11,11 @@ services:
       - "9997:9997"
     volumes:
       - ./doc:/app/doc
+      - ./data:/data
     environment:
-      - ENV=production
-      - DOCKER_BUILDKIT=1
+      ENV: production
+      DOCKER_BUILDKIT: 1
+      DB_PATH: /data/db.sqlite3
     restart: unless-stopped
     develop:
       watch:

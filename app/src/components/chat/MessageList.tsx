@@ -7,14 +7,14 @@ import { MessageItem } from "./MessageItem";
 interface MessageListProps {
 	messages: Message[];
 	isLoading: boolean;
-	currentUsername: string;
+	currentPubKey: string;
 	className?: string;
 }
 
 export function MessageList({
 	messages,
 	isLoading,
-	currentUsername,
+	currentPubKey,
 	className,
 }: MessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,7 +47,7 @@ export function MessageList({
 						<MessageItem
 							key={message.id}
 							message={message}
-							isOwn={message.user === currentUsername}
+							isOwn={message.pubkey === currentPubKey}
 						/>
 					))}
 				</div>
