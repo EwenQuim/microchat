@@ -1,9 +1,12 @@
 package models
 
 type Room struct {
-	Name         string `json:"name"`
-	MessageCount int    `json:"message_count"`
-	Hidden       bool   `json:"hidden"`
+	Name                 string  `json:"name"`
+	MessageCount         int     `json:"message_count"`
+	Hidden               bool    `json:"hidden"`
+	LastMessageContent   *string `json:"last_message_content,omitempty"`
+	LastMessageUser      *string `json:"last_message_user,omitempty"`
+	LastMessageTimestamp *string `json:"last_message_timestamp,omitempty"`
 }
 
 type CreateRoomRequest struct {

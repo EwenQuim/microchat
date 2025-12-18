@@ -217,15 +217,30 @@ const getRoomsWithMessageCount = `-- name: GetRoomsWithMessageCount :many
 SELECT
     r.name,
     r.hidden,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count
+    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
+    COALESCE(last_msg.content, '') as last_message_content,
+    COALESCE(last_msg.user, '') as last_message_user,
+    COALESCE(last_msg.timestamp, datetime('1970-01-01 00:00:00')) as last_message_timestamp
 FROM rooms r
+LEFT JOIN (
+    SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp
+    FROM messages m
+    INNER JOIN (
+        SELECT room, MAX(timestamp) as max_timestamp
+        FROM messages
+        GROUP BY room
+    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+) last_msg ON last_msg.room = r.name
 ORDER BY r.name
 `
 
 type GetRoomsWithMessageCountRow struct {
-	Name         string      `json:"name"`
-	Hidden       bool        `json:"hidden"`
-	MessageCount interface{} `json:"message_count"`
+	Name                 string      `json:"name"`
+	Hidden               bool        `json:"hidden"`
+	MessageCount         interface{} `json:"message_count"`
+	LastMessageContent   string      `json:"last_message_content"`
+	LastMessageUser      string      `json:"last_message_user"`
+	LastMessageTimestamp time.Time   `json:"last_message_timestamp"`
 }
 
 func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
@@ -237,7 +252,14 @@ func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithM
 	items := []GetRoomsWithMessageCountRow{}
 	for rows.Next() {
 		var i GetRoomsWithMessageCountRow
-		if err := rows.Scan(&i.Name, &i.Hidden, &i.MessageCount); err != nil {
+		if err := rows.Scan(
+			&i.Name,
+			&i.Hidden,
+			&i.MessageCount,
+			&i.LastMessageContent,
+			&i.LastMessageUser,
+			&i.LastMessageTimestamp,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

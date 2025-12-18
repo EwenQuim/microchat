@@ -119,11 +119,27 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 
 	rooms := make([]models.Room, 0, len(rows))
 	for _, row := range rows {
-		rooms = append(rooms, models.Room{
+		room := models.Room{
 			Name:         row.Name,
 			MessageCount: int(row.MessageCount.(int64)),
 			Hidden:       row.Hidden,
-		})
+		}
+
+		// Only set last message fields if they exist (room has messages)
+		if row.LastMessageContent != "" {
+			room.LastMessageContent = &row.LastMessageContent
+		}
+		if row.LastMessageUser != "" {
+			room.LastMessageUser = &row.LastMessageUser
+		}
+		// Check if timestamp is not the zero value (1970-01-01)
+		zeroTime := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+		if !row.LastMessageTimestamp.Equal(zeroTime) {
+			timestamp := row.LastMessageTimestamp.Format(time.RFC3339)
+			room.LastMessageTimestamp = &timestamp
+		}
+
+		rooms = append(rooms, room)
 	}
 
 	return rooms, nil

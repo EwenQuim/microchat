@@ -12,8 +12,20 @@ ORDER BY timestamp ASC;
 SELECT
     r.name,
     r.hidden,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count
+    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
+    COALESCE(last_msg.content, '') as last_message_content,
+    COALESCE(last_msg.user, '') as last_message_user,
+    COALESCE(last_msg.timestamp, datetime('1970-01-01 00:00:00')) as last_message_timestamp
 FROM rooms r
+LEFT JOIN (
+    SELECT m.*
+    FROM messages m
+    INNER JOIN (
+        SELECT room, MAX(timestamp) as max_timestamp
+        FROM messages
+        GROUP BY room
+    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+) last_msg ON last_msg.room = r.name
 ORDER BY r.name;
 
 -- name: GetMessageCountByRoom :one

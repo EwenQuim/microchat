@@ -126,6 +126,18 @@
 					"hidden": {
 						"type": "boolean"
 					},
+					"last_message_content": {
+						"nullable": true,
+						"type": "string"
+					},
+					"last_message_timestamp": {
+						"nullable": true,
+						"type": "string"
+					},
+					"last_message_user": {
+						"nullable": true,
+						"type": "string"
+					},
 					"message_count": {
 						"type": "integer"
 					},

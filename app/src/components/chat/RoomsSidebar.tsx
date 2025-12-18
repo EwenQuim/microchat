@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { MessageSquare, Plus, User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,21 +21,13 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const navigate = useNavigate();
 
 	return (
-		<aside className={cn("border-r bg-muted/10", className)}>
+		<aside className={cn("border-r bg-muted/10 relative", className)}>
 			<div className="flex flex-col h-full w-full">
-				<div className="p-4 border-b">
-					<h2 className="font-semibold text-lg mb-2">Rooms</h2>
-					<Button
-						onClick={() => setShowCreateDialog(true)}
-						className="w-full"
-						size="sm"
-					>
-						<Plus className="mr-2 h-4 w-4" />
-						Create Room
-					</Button>
+				<div className="p-4 shrink-0">
+					<h2 className="font-semibold text-lg">Microchat</h2>
 				</div>
 
-				<ScrollArea className="flex-1">
+				<ScrollArea className="flex-1 min-h-0">
 					{isLoading && (
 						<div className="p-4 text-sm text-muted-foreground">
 							Loading rooms...
@@ -54,7 +46,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 						</div>
 					)}
 
-					<div className="p-2 space-y-1">
+					<div className="p-2 space-y-1 pb-24">
 						{rooms?.map((room) => {
 							const roomName = room.name || "Unnamed Room";
 							return (
@@ -63,19 +55,28 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 									to="/chat/$roomName"
 									params={{ roomName }}
 									className={cn(
-										"w-full flex items-center justify-between p-3 rounded-lg transition-colors",
+										"w-full flex flex-col p-3 rounded-lg transition-colors",
 										"hover:bg-accent",
 										selectedRoom === roomName && "bg-accent",
 									)}
 								>
-									<div className="flex items-center gap-2">
-										<MessageSquare className="h-4 w-4" />
-										<span className="font-medium">{roomName}</span>
+									<div className="flex items-center justify-between w-full">
+										<div className="flex items-center gap-2">
+											<span className="font-medium">{roomName}</span>
+										</div>
+										{room.message_count && room.message_count > 0 && (
+											<Badge variant="secondary" className="text-xs">
+												{room.message_count}
+											</Badge>
+										)}
 									</div>
-									{room.message_count && room.message_count > 0 && (
-										<Badge variant="secondary" className="text-xs">
-											{room.message_count}
-										</Badge>
+									{room.last_message_content && (
+										<div className="text-xs text-muted-foreground mt-1 truncate">
+											{room.last_message_user && (
+												<span className="font-medium">{room.last_message_user}: </span>
+											)}
+											{room.last_message_content}
+										</div>
 									)}
 								</Link>
 							);
@@ -83,9 +84,19 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 					</div>
 				</ScrollArea>
 
+				{/* Floating Create Button */}
+				<Button
+					onClick={() => setShowCreateDialog(true)}
+					size="lg"
+					className="absolute bottom-24 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
+				>
+					<Plus className="h-8 w-8" />
+				</Button>
+
+				{/* User name section - always visible */}
 				{username && (
 					<div
-						className="p-4 pb-safe border-t"
+						className="p-4 pb-safe border-t shrink-0 bg-background"
 						style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
 					>
 						<Link
@@ -97,7 +108,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 							)}
 						>
 							<User className="h-4 w-4" />
-							<span className="font-medium">{username}</span>
+							<span className="font-medium truncate">{username}</span>
 						</Link>
 					</div>
 				)}
