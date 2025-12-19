@@ -7,6 +7,7 @@
 		"build": "tsc && vite build",
 		"build:github-pages": "tsc && vite build --mode github-pages",
 		"preview": "vite preview",
+		"preview:pwa": "vite build && vite preview",
 		"test": "vitest run",
 		"format": "biome check --fix --error-on-warnings",
 		"lint": "biome check --error-on-warnings && knip",
@@ -56,6 +57,7 @@
 		"orval": "^7.17.0",
 		"typescript": "^5.7.2",
 		"vite": "^7.1.7",
+		"vite-plugin-pwa": "^1.2.0",
 		"vitest": "^3.0.5",
 		"web-vitals": "^5.1.0"
 	}

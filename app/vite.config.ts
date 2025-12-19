@@ -4,6 +4,7 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -20,6 +21,26 @@ export default defineConfig(({ mode }) => ({
 			},
 		}),
 		tailwindcss(),
+		VitePWA({
+			registerType: "autoUpdate",
+			includeAssets: [
+				"favicon.ico",
+				"logo192.png",
+				"logo512.png",
+				"logo1024.png",
+				"robots.txt",
+			],
+			manifest: false,
+			workbox: {
+				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+				navigateFallback: "/offline.html",
+				navigateFallbackDenylist: [/^\/api/],
+			},
+			devOptions: {
+				enabled: false,
+				type: "module",
+			},
+		}),
 	],
 	resolve: {
 		alias: {

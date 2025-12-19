@@ -48,3 +48,22 @@ if (rootElement && !rootElement.innerHTML) {
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+// Register service worker for PWA support
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+	window.addEventListener("load", () => {
+		navigator.serviceWorker
+			.register("/sw.js", { scope: "/" })
+			.then((registration) => {
+				console.log("SW registered:", registration);
+
+				// Check for updates periodically (every hour)
+				setInterval(() => {
+					registration.update();
+				}, 60 * 60 * 1000);
+			})
+			.catch((error) => {
+				console.log("SW registration failed:", error);
+			});
+	});
+}
