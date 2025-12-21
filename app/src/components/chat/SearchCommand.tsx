@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
 import { useSearchRooms } from "@/hooks/useSearchRooms";
 
@@ -15,6 +15,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 	const navigate = useNavigate();
 	const { data: searchResults } = useSearchRooms(search);
 	const { data: allRooms } = useRooms();
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const rooms = search.trim() ? searchResults : allRooms;
 
@@ -33,6 +34,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 		document.addEventListener("keydown", down);
 		return () => document.removeEventListener("keydown", down);
 	}, [open, onOpenChange]);
+
+	useEffect(() => {
+		if (open) {
+			setTimeout(() => {
+				inputRef.current?.focus();
+			}, 0);
+		}
+	}, [open]);
 
 	const handleSelect = (roomName: string) => {
 		navigate({ to: "/chat/$roomName", params: { roomName } });
@@ -56,6 +65,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 					<div className="flex items-center border-b px-3">
 						<Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 						<Command.Input
+							ref={inputRef}
 							placeholder="Search rooms..."
 							value={search}
 							onValueChange={setSearch}
@@ -75,25 +85,21 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 									onSelect={() => handleSelect(room.name || "")}
 									className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-3 text-sm outline-none hover:bg-accent data-[selected=true]:bg-accent"
 								>
-									<div className="flex flex-col flex-1">
+									<div className="flex flex-col flex-1 min-w-0">
 										<div className="flex items-center justify-between">
 											<span className="font-medium">{room.name}</span>
-											{room.message_count && room.message_count > 0 && (
-												<span className="text-xs text-muted-foreground ml-2">
-													{room.message_count} messages
+
+											{room.last_message_content && (
+												<span className="text-xs text-muted-foreground ml-2 text-right truncate">
+													{room.last_message_user && (
+														<span className="font-medium">
+															{room.last_message_user}:{" "}
+														</span>
+													)}
+													{room.last_message_content}
 												</span>
 											)}
 										</div>
-										{room.last_message_content && (
-											<div className="text-xs text-muted-foreground mt-1 truncate">
-												{room.last_message_user && (
-													<span className="font-medium">
-														{room.last_message_user}:{" "}
-													</span>
-												)}
-												{room.last_message_content}
-											</div>
-										)}
 									</div>
 								</Command.Item>
 							))}

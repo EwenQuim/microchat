@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Lock, Plus, Search, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +21,18 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showSearch, setShowSearch] = useState(false);
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		const down = (e: KeyboardEvent) => {
+			if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				setShowCreateDialog(true);
+			}
+		};
+
+		document.addEventListener("keydown", down);
+		return () => document.removeEventListener("keydown", down);
+	}, []);
 
 	return (
 		<aside className={cn("border-r bg-muted/10 relative", className)}>
