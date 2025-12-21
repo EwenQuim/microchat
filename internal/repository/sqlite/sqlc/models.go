@@ -21,10 +21,11 @@ type Message struct {
 }
 
 type Room struct {
-	Name      string    `json:"name"`
-	Hidden    bool      `json:"hidden"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Name         string         `json:"name"`
+	Hidden       bool           `json:"hidden"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	PasswordHash sql.NullString `json:"password_hash"`
 }
 
 type User struct {

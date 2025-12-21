@@ -2,11 +2,11 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
-  readonly PROD: boolean;
-  readonly DEV: boolean;
-  readonly MODE: string;
+	readonly PROD: boolean;
+	readonly DEV: boolean;
+	readonly MODE: string;
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv;
+	readonly env: ImportMetaEnv;
 }

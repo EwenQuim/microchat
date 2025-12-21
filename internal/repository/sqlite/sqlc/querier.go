@@ -17,6 +17,7 @@ type Querier interface {
 	GetMessageCountByRoom(ctx context.Context, room string) (int64, error)
 	GetMessagesByRoom(ctx context.Context, room string) ([]Message, error)
 	GetRoomByName(ctx context.Context, name string) (Room, error)
+	GetRoomPasswordHash(ctx context.Context, name string) (sql.NullString, error)
 	GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error)
 	GetUserByPublicKey(ctx context.Context, publicKey string) (User, error)
 	GetUserVerified(ctx context.Context, publicKey string) (bool, error)

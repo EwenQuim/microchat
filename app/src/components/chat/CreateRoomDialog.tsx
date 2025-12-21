@@ -9,6 +9,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useRoomPassword } from "@/hooks/useRoomPassword";
 import {
 	getGETApiRoomsQueryKey,
 	usePOSTApiRooms,
@@ -26,16 +27,23 @@ export function CreateRoomDialog({
 	onRoomCreated,
 }: CreateRoomDialogProps) {
 	const [roomName, setRoomName] = useState("");
+	const [password, setPassword] = useState("");
 	const queryClient = useQueryClient();
+	const { setPassword: storePassword } = useRoomPassword();
 
 	const createRoomMutation = usePOSTApiRooms({
 		mutation: {
 			onSuccess: (response) => {
 				queryClient.invalidateQueries({ queryKey: getGETApiRoomsQueryKey() });
 				if (response.status === 200 && response.data.name) {
+					// Store password if room was created with one
+					if (password) {
+						storePassword(response.data.name, password);
+					}
 					onRoomCreated(response.data.name);
 				}
 				setRoomName("");
+				setPassword("");
 				onOpenChange(false);
 			},
 		},
@@ -44,7 +52,12 @@ export function CreateRoomDialog({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (roomName.trim()) {
-			createRoomMutation.mutate({ data: { name: roomName.trim() } });
+			createRoomMutation.mutate({
+				data: {
+					name: roomName.trim(),
+					password: password || undefined,
+				},
+			});
 		}
 	};
 
@@ -56,12 +69,31 @@ export function CreateRoomDialog({
 				</DialogHeader>
 				<form onSubmit={handleSubmit}>
 					<div className="space-y-4">
-						<Input
-							value={roomName}
-							onChange={(e) => setRoomName(e.target.value)}
-							placeholder="Room name"
-							maxLength={50}
-						/>
+						<div>
+							<Input
+								value={roomName}
+								onChange={(e) => setRoomName(e.target.value)}
+								placeholder="Room name"
+								maxLength={50}
+							/>
+						</div>
+						<div>
+							<label htmlFor="room-password" className="text-sm font-medium">
+								Password (optional)
+							</label>
+							<Input
+								id="room-password"
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder="Leave empty for public room"
+								maxLength={72}
+								className="mt-1"
+							/>
+							<p className="text-xs text-muted-foreground mt-1">
+								Set a password to make this room private
+							</p>
+						</div>
 						{createRoomMutation.isError && (
 							<p className="text-sm text-destructive">
 								Failed to create room. It may already exist.

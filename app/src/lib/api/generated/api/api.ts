@@ -129,6 +129,7 @@ import type {
 
 import type {
   CreateRoomRequest,
+  GETApiRoomsRoomMessagesParams,
   HTTPError,
   Message,
   RegisterUserRequest,
@@ -605,17 +606,26 @@ export type gETApiRoomsRoomMessagesResponseError = (gETApiRoomsRoomMessagesRespo
 
 export type gETApiRoomsRoomMessagesResponse = (gETApiRoomsRoomMessagesResponseSuccess | gETApiRoomsRoomMessagesResponseError)
 
-export const getGETApiRoomsRoomMessagesUrl = (room: string,) => {
+export const getGETApiRoomsRoomMessagesUrl = (room: string,
+    params?: GETApiRoomsRoomMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/rooms/${room}/messages`
+  return stringifiedParams.length > 0 ? `/api/rooms/${room}/messages?${stringifiedParams}` : `/api/rooms/${room}/messages`
 }
 
-export const gETApiRoomsRoomMessages = async (room: string, options?: RequestInit): Promise<gETApiRoomsRoomMessagesResponse> => {
+export const gETApiRoomsRoomMessages = async (room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: RequestInit): Promise<gETApiRoomsRoomMessagesResponse> => {
   
-  const res = await fetch(getGETApiRoomsRoomMessagesUrl(room),
+  const res = await fetch(getGETApiRoomsRoomMessagesUrl(room,params),
   {      
     ...options,
     method: 'GET'
@@ -634,23 +644,25 @@ export const gETApiRoomsRoomMessages = async (room: string, options?: RequestIni
 
 
 
-export const getGETApiRoomsRoomMessagesQueryKey = (room?: string,) => {
+export const getGETApiRoomsRoomMessagesQueryKey = (room?: string,
+    params?: GETApiRoomsRoomMessagesParams,) => {
     return [
-    `/api/rooms/${room}/messages`
+    `/api/rooms/${room}/messages`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGETApiRoomsRoomMessagesQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(room: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
+export const getGETApiRoomsRoomMessagesQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsRoomMessagesQueryKey(room);
+  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsRoomMessagesQueryKey(room,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>> = ({ signal }) => gETApiRoomsRoomMessages(room, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>> = ({ signal }) => gETApiRoomsRoomMessages(room,params, { signal, ...fetchOptions });
 
       
 
@@ -664,7 +676,8 @@ export type GETApiRoomsRoomMessagesQueryError = HTTPError | void
 
 
 export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
- room: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
+ room: string,
+    params: undefined |  GETApiRoomsRoomMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
           TError,
@@ -674,7 +687,8 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
- room: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
           TError,
@@ -684,7 +698,8 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
- room: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -692,11 +707,12 @@ export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gET
  */
 
 export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
- room: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGETApiRoomsRoomMessagesQueryOptions(room,options)
+  const queryOptions = getGETApiRoomsRoomMessagesQueryOptions(room,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -54,22 +54,24 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 }
 
 const createRoom = `-- name: CreateRoom :one
-INSERT INTO rooms (name, hidden, created_at, updated_at)
-VALUES (?, ?, ?, ?)
-RETURNING name, hidden, created_at, updated_at
+INSERT INTO rooms (name, hidden, password_hash, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
+RETURNING name, hidden, created_at, updated_at, password_hash
 `
 
 type CreateRoomParams struct {
-	Name      string    `json:"name"`
-	Hidden    bool      `json:"hidden"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Name         string         `json:"name"`
+	Hidden       bool           `json:"hidden"`
+	PasswordHash sql.NullString `json:"password_hash"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
 	row := q.db.QueryRowContext(ctx, createRoom,
 		arg.Name,
 		arg.Hidden,
+		arg.PasswordHash,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -79,6 +81,7 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 		&i.Hidden,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PasswordHash,
 	)
 	return i, err
 }
@@ -199,7 +202,7 @@ func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message
 }
 
 const getRoomByName = `-- name: GetRoomByName :one
-SELECT name, hidden, created_at, updated_at FROM rooms
+SELECT name, hidden, created_at, updated_at, password_hash FROM rooms
 WHERE name = ?
 `
 
@@ -211,14 +214,27 @@ func (q *Queries) GetRoomByName(ctx context.Context, name string) (Room, error) 
 		&i.Hidden,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PasswordHash,
 	)
 	return i, err
+}
+
+const getRoomPasswordHash = `-- name: GetRoomPasswordHash :one
+SELECT password_hash FROM rooms WHERE name = ?
+`
+
+func (q *Queries) GetRoomPasswordHash(ctx context.Context, name string) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getRoomPasswordHash, name)
+	var password_hash sql.NullString
+	err := row.Scan(&password_hash)
+	return password_hash, err
 }
 
 const getRoomsWithMessageCount = `-- name: GetRoomsWithMessageCount :many
 SELECT
     r.name,
     r.hidden,
+    CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
@@ -243,6 +259,7 @@ LIMIT 100
 type GetRoomsWithMessageCountRow struct {
 	Name                 string      `json:"name"`
 	Hidden               bool        `json:"hidden"`
+	HasPassword          int64       `json:"has_password"`
 	MessageCount         interface{} `json:"message_count"`
 	LastMessageContent   string      `json:"last_message_content"`
 	LastMessageUser      string      `json:"last_message_user"`
@@ -261,6 +278,7 @@ func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithM
 		if err := rows.Scan(
 			&i.Name,
 			&i.Hidden,
+			&i.HasPassword,
 			&i.MessageCount,
 			&i.LastMessageContent,
 			&i.LastMessageUser,
@@ -352,6 +370,7 @@ const searchRoomsByName = `-- name: SearchRoomsByName :many
 SELECT
     r.name,
     r.hidden,
+    CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
@@ -377,6 +396,7 @@ LIMIT 100
 type SearchRoomsByNameRow struct {
 	Name                 string      `json:"name"`
 	Hidden               bool        `json:"hidden"`
+	HasPassword          int64       `json:"has_password"`
 	MessageCount         interface{} `json:"message_count"`
 	LastMessageContent   string      `json:"last_message_content"`
 	LastMessageUser      string      `json:"last_message_user"`
@@ -395,6 +415,7 @@ func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString
 		if err := rows.Scan(
 			&i.Name,
 			&i.Hidden,
+			&i.HasPassword,
 			&i.MessageCount,
 			&i.LastMessageContent,
 			&i.LastMessageUser,

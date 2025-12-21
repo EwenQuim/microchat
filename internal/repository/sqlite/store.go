@@ -9,6 +9,7 @@ import (
 	"github.com/EwenQuim/microchat/internal/models"
 	"github.com/EwenQuim/microchat/internal/repository/sqlite/sqlc"
 	"github.com/EwenQuim/microchat/internal/services"
+	"github.com/EwenQuim/microchat/pkg/crypto"
 	"github.com/google/uuid"
 )
 
@@ -36,10 +37,11 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	if !roomExists {
 		now := time.Now()
 		_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
-			Name:      room,
-			Hidden:    false, // Default to visible
-			CreatedAt: now,
-			UpdatedAt: now,
+			Name:         room,
+			Hidden:       false, // Default to visible
+			PasswordHash: sql.NullString{Valid: false}, // Auto-created rooms are always public
+			CreatedAt:    now,
+			UpdatedAt:    now,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create room: %w", err)
@@ -119,10 +121,13 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 
 	rooms := make([]models.Room, 0, len(rows))
 	for _, row := range rows {
+		hasPassword := row.HasPassword == 1
+
 		room := models.Room{
-			Name:         row.Name,
+			Name:        row.Name,
 			MessageCount: int(row.MessageCount.(int64)),
 			Hidden:       row.Hidden,
+			HasPassword: hasPassword,
 		}
 
 		// Only set last message fields if they exist (room has messages)
@@ -159,10 +164,13 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 
 	rooms := make([]models.Room, 0, len(rows))
 	for _, row := range rows {
+		hasPassword := row.HasPassword == 1
+
 		room := models.Room{
 			Name:         row.Name,
 			MessageCount: int(row.MessageCount.(int64)),
 			Hidden:       row.Hidden,
+			HasPassword:  hasPassword,
 		}
 
 		if row.LastMessageContent != "" {
@@ -187,7 +195,7 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error) {
 	// Check if room already exists
 	exists, err := s.queries.RoomExists(ctx, name)
 	if err != nil {
@@ -198,12 +206,26 @@ func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, erro
 		return nil, fmt.Errorf("room already exists")
 	}
 
+	var passwordHash sql.NullString
+	hasPassword := false
+
+	if password != nil && *password != "" {
+		// Hash the password
+		hash, err := crypto.HashPassword(*password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+		passwordHash = sql.NullString{String: hash, Valid: true}
+		hasPassword = true
+	}
+
 	now := time.Now()
 	_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
-		Name:      name,
-		Hidden:    false,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Name:         name,
+		Hidden:       false,
+		PasswordHash: passwordHash,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create room: %w", err)
@@ -213,6 +235,7 @@ func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, erro
 		Name:         name,
 		MessageCount: 0,
 		Hidden:       false,
+		HasPassword:  hasPassword,
 	}, nil
 }
 
@@ -361,4 +384,22 @@ func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bo
 	}
 
 	return nil
+}
+
+func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password string) error {
+	passwordHash, err := s.queries.GetRoomPasswordHash(ctx, roomName)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("room not found")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get room password hash: %w", err)
+	}
+
+	// If password_hash is NULL, room is public
+	if !passwordHash.Valid {
+		return nil
+	}
+
+	// Verify password
+	return crypto.VerifyPassword(password, passwordHash.String)
 }

@@ -57,7 +57,7 @@ func CreateRoom(chatService *services.ChatService) func(c fuego.ContextWithBody[
 		if err != nil {
 			return nil, err
 		}
-		return chatService.CreateRoom(c.Context(), body.Name)
+		return chatService.CreateRoom(c.Context(), body.Name, body.Password)
 	}
 }
 

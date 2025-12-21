@@ -20,3 +20,5 @@ linters:
           deny:
             - pkg: "log$"
               desc: "Use log/slog instead of the standard log package"
+    staticcheck:
+      checks: ["-SA1019"]

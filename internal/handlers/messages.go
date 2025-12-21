@@ -10,9 +10,34 @@ import (
 	"github.com/go-fuego/fuego"
 )
 
-func GetMessages(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Message, error) {
-	return func(c fuego.ContextNoBody) ([]models.Message, error) {
+type GetMessagesQuery struct {
+	Password string `query:"password"`
+}
+
+func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
+	return func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 		room := c.PathParam("room")
+		params, err := c.Params()
+		if err != nil {
+			return nil, err
+		}
+		password := params.Password
+
+		// Validate room password if provided
+		if password != "" {
+			err := chatService.ValidateRoomPassword(c.Context(), room, password)
+			if err != nil {
+				return nil, fmt.Errorf("invalid room password")
+			}
+		} else {
+			// Check if room requires password by attempting to validate with empty password
+			// This will fail if room has a password
+			err := chatService.ValidateRoomPassword(c.Context(), room, "")
+			if err != nil && err.Error() == "invalid password" {
+				return nil, fmt.Errorf("password required for this room")
+			}
+		}
+
 		return chatService.GetMessages(c.Context(), room)
 	}
 }
@@ -23,6 +48,23 @@ func SendMessage(chatService *services.ChatService) func(c fuego.ContextWithBody
 		body, err := c.Body()
 		if err != nil {
 			return nil, err
+		}
+
+		// Get password from header or query param
+		password := body.RoomPassword
+
+		// Validate room password if provided
+		if password != "" {
+			err := chatService.ValidateRoomPassword(c.Context(), room, password)
+			if err != nil {
+				return nil, fmt.Errorf("invalid room password")
+			}
+		} else {
+			// Check if room requires password
+			err := chatService.ValidateRoomPassword(c.Context(), room, "")
+			if err != nil && err.Error() == "invalid password" {
+				return nil, fmt.Errorf("password required for this room")
+			}
 		}
 
 		// Validate cryptographic signature if provided

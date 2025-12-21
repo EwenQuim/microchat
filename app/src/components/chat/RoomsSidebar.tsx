@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Search, User } from "lucide-react";
+import { Lock, Plus, Search, User } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,9 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 								>
 									<div className="flex items-center justify-between w-full">
 										<div className="flex items-center gap-2">
+											{room.has_password && (
+												<Lock className="h-3 w-3 text-muted-foreground" />
+											)}
 											<span className="font-medium">{roomName}</span>
 										</div>
 										{room.message_count && room.message_count > 0 && (

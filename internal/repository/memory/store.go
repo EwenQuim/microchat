@@ -13,9 +13,10 @@ import (
 )
 
 type roomMetadata struct {
-	Hidden    bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Hidden       bool
+	PasswordHash *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type Store struct {
@@ -40,13 +41,14 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Automatically create room if it doesn't exist
+	// Automatically create room if it doesn't exist (public rooms only)
 	if _, exists := s.rooms[room]; !exists {
 		now := time.Now()
 		s.rooms[room] = &roomMetadata{
-			Hidden:    false, // Default to visible
-			CreatedAt: now,
-			UpdatedAt: now,
+			Hidden:       false, // Default to visible
+			PasswordHash: nil,   // Auto-created rooms are always public
+			CreatedAt:    now,
+			UpdatedAt:    now,
 		}
 		s.messages[room] = []models.Message{}
 	}
@@ -105,6 +107,7 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 			Name:         name,
 			MessageCount: messageCount,
 			Hidden:       metadata.Hidden,
+			HasPassword:  metadata.PasswordHash != nil,
 		})
 	}
 
@@ -132,6 +135,7 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 				Name:         name,
 				MessageCount: messageCount,
 				Hidden:       metadata.Hidden,
+				HasPassword:  metadata.PasswordHash != nil,
 			}
 
 			if lastMessage != nil {
@@ -148,7 +152,7 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -158,15 +162,17 @@ func (s *Store) CreateRoom(ctx context.Context, name string) (*models.Room, erro
 
 	now := time.Now()
 	s.rooms[name] = &roomMetadata{
-		Hidden:    false,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Hidden:       false,
+		PasswordHash: password, // In-memory store doesn't hash for simplicity
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 	s.messages[name] = []models.Message{}
 	return &models.Room{
 		Name:         name,
 		MessageCount: 0,
 		Hidden:       false,
+		HasPassword:  password != nil && *password != "",
 	}, nil
 }
 
@@ -296,6 +302,28 @@ func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bo
 
 	room.Hidden = hidden
 	room.UpdatedAt = time.Now()
+	return nil
+}
+
+func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	room, exists := s.rooms[roomName]
+	if !exists {
+		return fmt.Errorf("room not found")
+	}
+
+	// If password_hash is nil, room is public
+	if room.PasswordHash == nil {
+		return nil
+	}
+
+	// In-memory store uses plain text comparison for simplicity
+	if *room.PasswordHash != password {
+		return fmt.Errorf("invalid password")
+	}
+
 	return nil
 }
 

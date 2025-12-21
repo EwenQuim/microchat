@@ -13,6 +13,7 @@ LIMIT 100;
 SELECT
     r.name,
     r.hidden,
+    CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
@@ -71,8 +72,8 @@ FROM users u
 WHERE u.public_key = ?;
 
 -- name: CreateRoom :one
-INSERT INTO rooms (name, hidden, created_at, updated_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO rooms (name, hidden, password_hash, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetRoomByName :one
@@ -91,6 +92,7 @@ WHERE name = ?;
 SELECT
     r.name,
     r.hidden,
+    CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
     COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
@@ -111,3 +113,6 @@ LEFT JOIN (
 WHERE r.name LIKE '%' || ? || '%'
 ORDER BY last_message_timestamp DESC, r.name ASC
 LIMIT 100;
+
+-- name: GetRoomPasswordHash :one
+SELECT password_hash FROM rooms WHERE name = ?;

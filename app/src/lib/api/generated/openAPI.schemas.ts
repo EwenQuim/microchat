@@ -117,6 +117,12 @@ export interface CreateRoomRequest {
    * @maxLength 50
    */
   name: string;
+  /**
+   * @minLength 4
+   * @maxLength 72
+   * @nullable
+   */
+  password?: string | null;
 }
 
 /**
@@ -198,6 +204,7 @@ export interface RegisterUserRequest {
  * Room schema
  */
 export interface Room {
+  has_password?: boolean;
   hidden?: boolean;
   /** @nullable */
   last_message_content?: string | null;
@@ -216,6 +223,8 @@ export interface SendMessageRequest {
   content: string;
   /** @nullable */
   pubkey?: string | null;
+  /** @nullable */
+  room_password?: string | null;
   /** @nullable */
   signature?: string | null;
   /** @nullable */
@@ -270,4 +279,8 @@ export type String = string;
  * unknown-interface schema
  */
 export interface UnknownInterface {}
+
+export type GETApiRoomsRoomMessagesParams = {
+password?: string;
+};
 

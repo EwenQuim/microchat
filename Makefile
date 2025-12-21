@@ -72,6 +72,7 @@ test:
 lint:
 	@echo "Running golangci-lint..."
 	golangci-lint run --config .golangci.yml
+	cd app && npm run format
 
 clean:
 	@echo "Cleaning build artifacts..."

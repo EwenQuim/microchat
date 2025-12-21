@@ -8,6 +8,12 @@
 						"maxLength": 50,
 						"minLength": 1,
 						"type": "string"
+					},
+					"password": {
+						"maxLength": 72,
+						"minLength": 4,
+						"nullable": true,
+						"type": "string"
 					}
 				},
 				"required": [
@@ -123,6 +129,9 @@
 			"Room": {
 				"description": "Room schema",
 				"properties": {
+					"has_password": {
+						"type": "boolean"
+					},
 					"hidden": {
 						"type": "boolean"
 					},
@@ -154,6 +163,10 @@
 						"type": "string"
 					},
 					"pubkey": {
+						"nullable": true,
+						"type": "string"
+					},
+					"room_password": {
 						"nullable": true,
 						"type": "string"
 					},
@@ -636,6 +649,13 @@
 						"in": "path",
 						"name": "room",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "password",
 						"schema": {
 							"type": "string"
 						}
