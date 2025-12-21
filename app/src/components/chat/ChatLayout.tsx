@@ -56,7 +56,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 				<RoomsSidebar
 					selectedRoom={roomName}
 					className={cn(
-						"w-full md:w-64 md:shrink-0",
+						"w-full md:w-80 md:shrink-0",
 						roomName ? "hidden md:flex" : "flex",
 					)}
 				/>

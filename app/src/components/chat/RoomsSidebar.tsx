@@ -104,7 +104,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 										)}
 									</div>
 									{room.last_message_content && (
-										<div className="text-xs text-muted-foreground mt-1 truncate min-w-0 max-w-5">
+										<div className="text-xs text-muted-foreground mt-1 truncate min-w-0 max-w-48">
 											{room.last_message_user && (
 												<span className="font-medium">
 													{room.last_message_user}:{" "}
