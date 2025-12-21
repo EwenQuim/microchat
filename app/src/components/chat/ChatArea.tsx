@@ -163,7 +163,7 @@ export function ChatArea({
 					>
 						<ArrowLeft className="h-5 w-5" />
 					</Button>
-					<h2 className="font-semibold text-lg">#{roomName}</h2>
+					<h2 className="font-semibold text-lg">{roomName}</h2>
 					<div className="flex-1" />
 					<Button
 						type="button"

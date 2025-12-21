@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/EwenQuim/microchat/internal/models"
@@ -24,6 +25,31 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{
 		queries: sqlc.New(db),
 	}
+}
+
+// parseTimestamp parses a timestamp string from SQLite, handling Go's time.Time.String() format
+// which includes monotonic clock readings (e.g., "2025-12-21 21:54:30.181698916 +0000 UTC m=+624.992804752")
+func parseTimestamp(ts string) (*string, error) {
+	if ts == "" || ts == "1970-01-01 00:00:00" {
+		return nil, nil
+	}
+
+	// Strip monotonic clock component if present
+	if idx := strings.Index(ts, " m="); idx != -1 {
+		ts = ts[:idx]
+	}
+
+	// Try nanosecond precision first, fallback to second precision
+	t, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", ts)
+	if err != nil {
+		t, err = time.Parse("2006-01-02 15:04:05", ts)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	result := t.Format(time.RFC3339)
+	return &result, nil
 }
 
 func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
@@ -137,14 +163,8 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 		if row.LastMessageUser != "" {
 			room.LastMessageUser = &row.LastMessageUser
 		}
-		// Check if timestamp is not the zero value (1970-01-01)
-		if row.LastMessageTimestamp != "" && row.LastMessageTimestamp != "1970-01-01 00:00:00" {
-			// Parse the timestamp string
-			parsedTime, err := time.Parse("2006-01-02 15:04:05", row.LastMessageTimestamp)
-			if err == nil {
-				timestamp := parsedTime.Format(time.RFC3339)
-				room.LastMessageTimestamp = &timestamp
-			}
+		if timestamp, err := parseTimestamp(row.LastMessageTimestamp); err == nil {
+			room.LastMessageTimestamp = timestamp
 		}
 
 		rooms = append(rooms, room)
@@ -179,14 +199,8 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 		if row.LastMessageUser != "" {
 			room.LastMessageUser = &row.LastMessageUser
 		}
-		// Check if timestamp is not the zero value (1970-01-01)
-		if row.LastMessageTimestamp != "" && row.LastMessageTimestamp != "1970-01-01 00:00:00" {
-			// Parse the timestamp string
-			parsedTime, err := time.Parse("2006-01-02 15:04:05", row.LastMessageTimestamp)
-			if err == nil {
-				timestamp := parsedTime.Format(time.RFC3339)
-				room.LastMessageTimestamp = &timestamp
-			}
+		if timestamp, err := parseTimestamp(row.LastMessageTimestamp); err == nil {
+			room.LastMessageTimestamp = timestamp
 		}
 
 		rooms = append(rooms, room)

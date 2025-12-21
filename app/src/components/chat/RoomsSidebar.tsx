@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { formatDistanceToNow } from "date-fns";
 import { Lock, Plus, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRooms } from "@/hooks/useRooms";
@@ -109,10 +109,15 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 											)}
 											<span className="font-medium truncate">{roomName}</span>
 										</div>
-										{(room.message_count ?? 0) > 0 && (
-											<Badge variant="secondary" className="text-xs shrink-0">
-												{room.message_count}
-											</Badge>
+										{room.last_message_timestamp && (
+											<span className="text-xs text-muted-foreground shrink-0">
+												{formatDistanceToNow(
+													new Date(room.last_message_timestamp),
+													{
+														addSuffix: true,
+													},
+												)}
+											</span>
 										)}
 									</div>
 									{room.last_message_content && (

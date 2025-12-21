@@ -52,7 +52,7 @@ export function RoomPasswordDialog({
 				<form onSubmit={handleSubmit}>
 					<div className="space-y-4">
 						<div>
-							<p className="text-sm font-medium mb-2">Room: #{roomName}</p>
+							<p className="text-sm font-medium mb-2">Room: {roomName}</p>
 							<Input
 								type="password"
 								value={password}
