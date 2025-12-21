@@ -4,6 +4,9 @@
 			"CreateRoomRequest": {
 				"description": "CreateRoomRequest schema",
 				"properties": {
+					"is_encrypted": {
+						"type": "boolean"
+					},
 					"name": {
 						"maxLength": 50,
 						"minLength": 1,
@@ -88,6 +91,13 @@
 					"id": {
 						"type": "string"
 					},
+					"is_encrypted": {
+						"type": "boolean"
+					},
+					"nonce": {
+						"nullable": true,
+						"type": "string"
+					},
 					"pubkey": {
 						"nullable": true,
 						"type": "string"
@@ -117,7 +127,14 @@
 			"Room": {
 				"description": "Room schema",
 				"properties": {
+					"encryption_salt": {
+						"nullable": true,
+						"type": "string"
+					},
 					"has_password": {
+						"type": "boolean"
+					},
+					"is_encrypted": {
 						"type": "boolean"
 					},
 					"last_message_content": {
@@ -142,6 +159,13 @@
 				"description": "SendMessageRequest schema",
 				"properties": {
 					"content": {
+						"type": "string"
+					},
+					"is_encrypted": {
+						"type": "boolean"
+					},
+					"nonce": {
+						"nullable": true,
 						"type": "string"
 					},
 					"pubkey": {

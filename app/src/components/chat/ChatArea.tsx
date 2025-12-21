@@ -1,14 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useDecryptedMessages } from "@/hooks/useDecryptedMessages";
+import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useMessages } from "@/hooks/useMessages";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
+import { useRooms } from "@/hooks/useRooms";
 import { getStoredPasswords } from "@/hooks/useSearchRooms";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { getGETApiRoomsQueryKey } from "@/lib/api/generated/chat/chat";
 import { type KeyPair, signMessage } from "@/lib/crypto";
+import { encryptMessage } from "@/lib/crypto/e2e";
 import { cn } from "@/lib/utils";
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList";
@@ -30,14 +35,25 @@ export function ChatArea({
 }: ChatAreaProps) {
 	const navigate = useNavigate();
 	const { password, setPassword } = useRoomPassword(roomName || undefined);
+	const { deriveAndStoreKey, getKey } = useEncryptionKeys();
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
 	const queryClient = useQueryClient();
-	const { data: messages, isLoading } = useMessages(roomName, password);
 
+	const { data: rooms } = useRooms();
+	const { data: messages, isLoading } = useMessages(roomName, password);
 	const sendMessageMutation = useSendMessage();
 
-	// Track successful room visits
+	// Get current room data
+	const currentRoom = rooms?.find((r) => r.name === roomName);
+
+	// Get encryption key for decrypting messages
+	const encryptionKey = roomName ? getKey(roomName) : undefined;
+
+	// Decrypt messages if room is encrypted
+	const decryptedMessages = useDecryptedMessages(messages, encryptionKey);
+
+	// Check if error indicates password required
 	useEffect(() => {
 		if (roomName) {
 			// Successfully accessed room - save to visited list
@@ -52,9 +68,19 @@ export function ChatArea({
 		}
 	}, [roomName, password, setPassword, queryClient]);
 
-	const handlePasswordSubmit = (newPassword: string) => {
+	const handlePasswordSubmit = async (newPassword: string) => {
 		if (roomName) {
 			setPassword(roomName, newPassword);
+
+			// Derive encryption key if room is encrypted
+			if (currentRoom?.is_encrypted && currentRoom?.encryption_salt) {
+				await deriveAndStoreKey(
+					roomName,
+					newPassword,
+					currentRoom.encryption_salt,
+				);
+			}
+
 			setShowPasswordDialog(false);
 			setPasswordError(undefined);
 		}
@@ -68,23 +94,43 @@ export function ChatArea({
 	const handleSendMessage = async (content: string) => {
 		if (!roomName || !keys) return;
 
-		// Sign the message using Nostr-style cryptography
+		let finalContent = content;
+		let isEncrypted = false;
+		let nonce: string | undefined;
+
+		// Encrypt message if room is encrypted
+		if (currentRoom?.is_encrypted) {
+			const encryptionKey = getKey(roomName);
+			if (!encryptionKey) {
+				console.error("No encryption key available for encrypted room");
+				return;
+			}
+
+			const encrypted = await encryptMessage(content, encryptionKey);
+			finalContent = encrypted.ciphertext;
+			nonce = encrypted.nonce;
+			isEncrypted = true;
+		}
+
+		// Sign the message using Nostr-style cryptography (sign encrypted content if encrypted)
 		const { signature, timestamp } = await signMessage({
 			privateKey: keys.privateKey,
 			publicKey: keys.publicKey,
-			content,
+			content: finalContent,
 			room: roomName,
 		});
 
 		sendMessageMutation.mutate({
 			room: roomName,
 			data: {
-				content,
+				content: finalContent,
 				user: username,
 				signature,
 				pubkey: keys.publicKey,
 				room_password: password,
 				timestamp,
+				is_encrypted: isEncrypted,
+				nonce,
 			},
 		});
 	};
@@ -142,6 +188,15 @@ export function ChatArea({
 						<ArrowLeft className="h-5 w-5" />
 					</Button>
 					<h2 className="font-semibold text-lg">{roomName}</h2>
+					{currentRoom?.is_encrypted && (
+						<Badge
+							variant="outline"
+							className="text-xs text-green-600 border-green-600 flex items-center gap-1"
+						>
+							<ShieldCheck className="h-3 w-3" />
+							Encrypted
+						</Badge>
+					)}
 					<div className="flex-1" />
 					<Button
 						type="button"
@@ -155,7 +210,7 @@ export function ChatArea({
 				</div>
 
 				<MessageList
-					messages={messages || []}
+					messages={decryptedMessages}
 					isLoading={isLoading}
 					currentPubKey={currentPubKey}
 					className="flex-1 min-h-0"

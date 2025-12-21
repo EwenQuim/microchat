@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -25,6 +26,7 @@ export function CreateRoomDialog({
 }: CreateRoomDialogProps) {
 	const [roomName, setRoomName] = useState("");
 	const [password, setPassword] = useState("");
+	const [isEncrypted, setIsEncrypted] = useState(false);
 	const queryClient = useQueryClient();
 	const { setPassword: storePassword } = useRoomPassword();
 
@@ -40,6 +42,7 @@ export function CreateRoomDialog({
 				}
 				setRoomName("");
 				setPassword("");
+				setIsEncrypted(false);
 				onOpenChange(false);
 			},
 			onSettled: () => queryClient.invalidateQueries(),
@@ -53,6 +56,7 @@ export function CreateRoomDialog({
 				data: {
 					name: roomName.trim(),
 					password: password || undefined,
+					is_encrypted: isEncrypted,
 				},
 			});
 		}
@@ -91,6 +95,29 @@ export function CreateRoomDialog({
 								Set a password to make this room private
 							</p>
 						</div>
+						{password && (
+							<div className="flex items-start space-x-2">
+								<Checkbox
+									id="enable-encryption"
+									checked={isEncrypted}
+									onCheckedChange={(checked) =>
+										setIsEncrypted(checked === true)
+									}
+								/>
+								<div className="grid gap-1.5 leading-none">
+									<label
+										htmlFor="enable-encryption"
+										className="text-sm font-medium cursor-pointer"
+									>
+										Enable end-to-end encryption
+									</label>
+									<p className="text-xs text-muted-foreground">
+										Messages will be encrypted on your device. Only users with
+										the password can read them.
+									</p>
+								</div>
+							</div>
+						)}
 						{createRoomMutation.isError && (
 							<p className="text-sm text-destructive">
 								Failed to create room. It may already exist.
