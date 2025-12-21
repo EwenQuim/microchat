@@ -65,6 +65,15 @@ export function ChatArea({
 		}
 	}, [sendMessageMutation.error]);
 
+	// Track successful room visits
+	useEffect(() => {
+		if (roomName && messages && !messagesError) {
+			// Successfully accessed room - save to visited list
+			// Store with current password (empty string for public rooms)
+			setPassword(roomName, password || "");
+		}
+	}, [roomName, messages, messagesError, password, setPassword]);
+
 	const handlePasswordSubmit = (newPassword: string) => {
 		if (roomName) {
 			setPassword(roomName, newPassword);

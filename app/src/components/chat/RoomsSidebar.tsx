@@ -26,7 +26,24 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 		<aside className={cn("border-r bg-muted/10 relative", className)}>
 			<div className="flex flex-col h-full w-full">
 				<div className="p-4 shrink-0 space-y-3">
-					<h2 className="font-semibold text-lg">Microchat</h2>
+					<div className="flex items-center justify-between">
+						<h2 className="font-semibold text-lg">Microchat</h2>
+						{username && (
+							<Link
+								to="/settings"
+								search={{ import: undefined }}
+								className={cn(
+									"flex items-center gap-2 px-2 py-1 rounded-lg transition-colors",
+									"hover:bg-accent",
+								)}
+							>
+								<User className="h-4 w-4" />
+								<span className="text-sm font-medium truncate max-w-24">
+									{username}
+								</span>
+							</Link>
+						)}
+					</div>
 					<button
 						type="button"
 						onClick={() => setShowSearch(true)}
@@ -73,21 +90,21 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 										selectedRoom === roomName && "bg-accent",
 									)}
 								>
-									<div className="flex items-center justify-between w-full">
-										<div className="flex items-center gap-2">
+									<div className="flex items-center justify-between w-full min-w-0">
+										<div className="flex items-center gap-2 min-w-0">
 											{room.has_password && (
-												<Lock className="h-3 w-3 text-muted-foreground" />
+												<Lock className="h-3 w-3 text-muted-foreground shrink-0" />
 											)}
-											<span className="font-medium">{roomName}</span>
+											<span className="font-medium truncate">{roomName}</span>
 										</div>
 										{(room.message_count ?? 0) > 0 && (
-											<Badge variant="secondary" className="text-xs">
+											<Badge variant="secondary" className="text-xs shrink-0">
 												{room.message_count}
 											</Badge>
 										)}
 									</div>
 									{room.last_message_content && (
-										<div className="text-xs text-muted-foreground mt-1 truncate">
+										<div className="text-xs text-muted-foreground mt-1 truncate min-w-0 max-w-5">
 											{room.last_message_user && (
 												<span className="font-medium">
 													{room.last_message_user}:{" "}
@@ -106,30 +123,10 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				<Button
 					onClick={() => setShowCreateDialog(true)}
 					size="lg"
-					className="absolute bottom-28 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
+					className="absolute bottom-4 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
 				>
 					<Plus className="h-8 w-8" />
 				</Button>
-
-				{/* User name section - always visible */}
-				{username && (
-					<div
-						className="p-4 pb-safe border-t shrink-0 bg-background"
-						style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
-					>
-						<Link
-							to="/settings"
-							search={{ import: undefined }}
-							className={cn(
-								"w-full flex items-center gap-3 p-3 rounded-lg transition-colors",
-								"hover:bg-accent",
-							)}
-						>
-							<User className="h-4 w-4" />
-							<span className="font-medium truncate">{username}</span>
-						</Link>
-					</div>
-				)}
 			</div>
 
 			<CreateRoomDialog
