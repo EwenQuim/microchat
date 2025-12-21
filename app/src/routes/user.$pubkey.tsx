@@ -75,7 +75,7 @@ function UserProfilePage() {
 
 					<div>
 						<div className="text-sm font-semibold text-muted-foreground">
-							Verified
+							Verified by {window.location.hostname} admins
 						</div>
 						<p className="mt-1">
 							{user.verified ? (
