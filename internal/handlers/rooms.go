@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/EwenQuim/microchat/internal/config"
 	"github.com/EwenQuim/microchat/internal/models"
@@ -12,39 +13,88 @@ import (
 	"github.com/go-fuego/fuego"
 )
 
-func GetRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Room, error) {
-	return func(c fuego.ContextNoBody) ([]models.Room, error) {
+type GetRoomsQuery struct {
+	Visited string `query:"visited"`
+}
+
+func GetRooms(chatService *services.ChatService) func(c fuego.ContextWithParams[GetRoomsQuery]) ([]models.Room, error) {
+	return func(c fuego.ContextWithParams[GetRoomsQuery]) ([]models.Room, error) {
 		allRooms, err := chatService.GetRooms(c.Context())
 		if err != nil {
 			return nil, err
 		}
 
-		// Filter out hidden rooms
+		params, err := c.Params()
+		if err != nil {
+			return nil, err
+		}
+		// Get list of visited rooms from query parameter (comma-separated)
+		visitedParam := params.Visited
+		visitedRooms := make(map[string]bool)
+		if visitedParam != "" {
+			for roomName := range strings.SplitSeq(visitedParam, ",") {
+				if roomName != "" {
+					visitedRooms[roomName] = true
+				}
+			}
+		}
+
+		// Filter out hidden rooms and password-protected rooms (unless visited)
 		visibleRooms := make([]models.Room, 0)
 		for _, room := range allRooms {
-			if !room.Hidden {
-				visibleRooms = append(visibleRooms, room)
+			if room.Hidden {
+				continue
 			}
+			// Hide password-protected rooms unless already visited
+			if room.HasPassword && !visitedRooms[room.Name] {
+				continue
+			}
+			visibleRooms = append(visibleRooms, room)
 		}
 
 		return visibleRooms, nil
 	}
 }
 
-func SearchRooms(chatService *services.ChatService) func(c fuego.ContextNoBody) ([]models.Room, error) {
-	return func(c fuego.ContextNoBody) ([]models.Room, error) {
-		query := c.QueryParam("q")
-		allRooms, err := chatService.SearchRooms(c.Context(), query)
+type SearchRoomsQuery struct {
+	Visited string `query:"visited"`
+	Q       string `query:"q"`
+}
+
+func SearchRooms(chatService *services.ChatService) func(c fuego.ContextWithParams[SearchRoomsQuery]) ([]models.Room, error) {
+	return func(c fuego.ContextWithParams[SearchRoomsQuery]) ([]models.Room, error) {
+		params, err := c.Params()
 		if err != nil {
 			return nil, err
 		}
 
-		// Filter out hidden rooms
+		allRooms, err := chatService.SearchRooms(c.Context(), params.Q)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get list of visited rooms from query parameter (comma-separated)
+		visitedParam := params.Visited
+		visitedRooms := make(map[string]bool)
+		if visitedParam != "" {
+			for roomName := range strings.SplitSeq(visitedParam, ",") {
+				if roomName != "" {
+					visitedRooms[roomName] = true
+				}
+			}
+		}
+
+		// Filter out hidden rooms and password-protected rooms (unless visited)
 		visibleRooms := make([]models.Room, 0)
 		for _, room := range allRooms {
-			if !room.Hidden {
-				visibleRooms = append(visibleRooms, room)
+			if room.Hidden {
+				continue
 			}
+			// Hide password-protected rooms unless already visited
+			if room.HasPassword && !visitedRooms[room.Name] {
+				continue
+			}
+			visibleRooms = append(visibleRooms, room)
 		}
 
 		return visibleRooms, nil

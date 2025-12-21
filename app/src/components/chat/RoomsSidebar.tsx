@@ -59,7 +59,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 						</div>
 					)}
 
-					<div className="p-2 space-y-1 pb-24">
+					<div className="p-2 space-y-1 pb-16">
 						{rooms?.map((room) => {
 							const roomName = room.name || "Unnamed Room";
 							return (
@@ -80,7 +80,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 											)}
 											<span className="font-medium">{roomName}</span>
 										</div>
-										{room.message_count && room.message_count > 0 && (
+										{(room.message_count ?? 0) > 0 && (
 											<Badge variant="secondary" className="text-xs">
 												{room.message_count}
 											</Badge>
@@ -106,7 +106,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				<Button
 					onClick={() => setShowCreateDialog(true)}
 					size="lg"
-					className="absolute bottom-24 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
+					className="absolute bottom-28 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
 				>
 					<Plus className="h-8 w-8" />
 				</Button>

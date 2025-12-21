@@ -410,6 +410,13 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"in": "query",
+						"name": "visited",
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"responses": {
@@ -564,6 +571,20 @@
 					{
 						"in": "header",
 						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "visited",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
 						"schema": {
 							"type": "string"
 						}

@@ -280,6 +280,15 @@ export type String = string;
  */
 export interface UnknownInterface {}
 
+export type GETApiRoomsParams = {
+visited?: string;
+};
+
+export type GETApiRoomsSearchParams = {
+visited?: string;
+q?: string;
+};
+
 export type GETApiRoomsRoomMessagesParams = {
 password?: string;
 };

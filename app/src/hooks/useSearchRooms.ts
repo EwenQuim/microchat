@@ -1,24 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
+import { useGETApiRoomsSearch } from "@/lib/api/generated/api/api";
 import type { Room } from "@/lib/api/generated/openAPI.schemas";
 
-export function useSearchRooms(query: string) {
-	return useQuery({
-		queryKey: ["rooms", "search", query],
-		queryFn: async () => {
-			if (!query.trim()) {
-				return [];
-			}
-			const url = new URL("/api/rooms/search", window.location.origin);
-			url.searchParams.set("q", query);
+export function getStoredPasswords(): Record<string, string> {
+	try {
+		const stored = sessionStorage.getItem("microchat_room_passwords");
+		return stored ? JSON.parse(stored) : {};
+	} catch {
+		return {};
+	}
+}
 
-			const response = await fetch(url.toString());
-			if (!response.ok) {
-				throw new Error("Failed to search rooms");
-			}
-			const data: Room[] = await response.json();
-			return data || [];
+export function useSearchRooms(query: string) {
+	const visitedRooms = Object.keys(getStoredPasswords()).join(",");
+
+	return useGETApiRoomsSearch<Room[]>(
+		{
+			q: query,
+			visited: visitedRooms || undefined,
 		},
-		enabled: query.trim().length > 0,
-		staleTime: 30_000,
-	});
+		{
+			query: {
+				enabled: query.trim().length > 0,
+				staleTime: 30_000,
+				select: (response) => {
+					if (response.status === 200) {
+						return response.data as Room[];
+					}
+					return [];
+				},
+			},
+		},
+	);
 }
