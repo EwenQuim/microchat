@@ -40,7 +40,7 @@ func main() {
 		fuego.WithEngineOptions(
 			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
 				PrettyFormatJSON: true,
-				DisableLocalSave: os.Getenv("ENV") != "dev",
+				Disabled:         os.Getenv("ENV") != "dev",
 			}),
 		),
 	)

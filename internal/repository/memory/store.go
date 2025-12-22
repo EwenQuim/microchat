@@ -13,7 +13,6 @@ import (
 )
 
 type roomMetadata struct {
-	Hidden       bool
 	PasswordHash *string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -45,8 +44,7 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	if _, exists := s.rooms[room]; !exists {
 		now := time.Now()
 		s.rooms[room] = &roomMetadata{
-			Hidden:       false, // Default to visible
-			PasswordHash: nil,   // Auto-created rooms are always public
+			PasswordHash: nil, // Auto-created rooms are always public
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
@@ -99,15 +97,9 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 
 	rooms := make([]models.Room, 0, len(s.rooms))
 	for name, metadata := range s.rooms {
-		messageCount := 0
-		if messages, exists := s.messages[name]; exists {
-			messageCount = len(messages)
-		}
 		rooms = append(rooms, models.Room{
-			Name:         name,
-			MessageCount: messageCount,
-			Hidden:       metadata.Hidden,
-			HasPassword:  metadata.PasswordHash != nil,
+			Name:        name,
+			HasPassword: metadata.PasswordHash != nil,
 		})
 	}
 
@@ -122,20 +114,17 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 	for name, metadata := range s.rooms {
 		// Simple case-insensitive substring search
 		if query == "" || containsCaseInsensitive(name, query) {
-			messageCount := 0
 			var lastMessage *models.Message
 			if messages, exists := s.messages[name]; exists {
-				messageCount = len(messages)
+				messageCount := len(messages)
 				if messageCount > 0 {
 					lastMessage = &messages[messageCount-1]
 				}
 			}
 
 			room := models.Room{
-				Name:         name,
-				MessageCount: messageCount,
-				Hidden:       metadata.Hidden,
-				HasPassword:  metadata.PasswordHash != nil,
+				Name:        name,
+				HasPassword: metadata.PasswordHash != nil,
 			}
 
 			if lastMessage != nil {
@@ -162,17 +151,14 @@ func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (
 
 	now := time.Now()
 	s.rooms[name] = &roomMetadata{
-		Hidden:       false,
 		PasswordHash: password, // In-memory store doesn't hash for simplicity
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
 	s.messages[name] = []models.Message{}
 	return &models.Room{
-		Name:         name,
-		MessageCount: 0,
-		Hidden:       false,
-		HasPassword:  password != nil && *password != "",
+		Name:        name,
+		HasPassword: password != nil && *password != "",
 	}, nil
 }
 
@@ -289,20 +275,6 @@ func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*mo
 		UpdatedAt: user.UpdatedAt,
 		PostCount: postCount,
 	}, nil
-}
-
-func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	room, exists := s.rooms[name]
-	if !exists {
-		return fmt.Errorf("room not found")
-	}
-
-	room.Hidden = hidden
-	room.UpdatedAt = time.Now()
-	return nil
 }
 
 func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password string) error {

@@ -12,9 +12,7 @@ LIMIT 100;
 -- name: GetRoomsWithMessageCount :many
 SELECT
     r.name,
-    r.hidden,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -72,8 +70,8 @@ FROM users u
 WHERE u.public_key = ?;
 
 -- name: CreateRoom :one
-INSERT INTO rooms (name, hidden, password_hash, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO rooms (name, password_hash, created_at, updated_at)
+VALUES (?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetRoomByName :one
@@ -83,17 +81,10 @@ WHERE name = ?;
 -- name: RoomExists :one
 SELECT COUNT(*) > 0 as room_exists FROM rooms WHERE name = ?;
 
--- name: UpdateRoomVisibility :exec
-UPDATE rooms
-SET hidden = ?, updated_at = ?
-WHERE name = ?;
-
 -- name: SearchRoomsByName :many
 SELECT
     r.name,
-    r.hidden,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE

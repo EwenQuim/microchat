@@ -12,7 +12,6 @@ type Repository interface {
 	GetRooms(ctx context.Context) ([]models.Room, error)
 	SearchRooms(ctx context.Context, query string) ([]models.Room, error)
 	CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error)
-	UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error
 	ValidateRoomPassword(ctx context.Context, roomName, password string) error
 
 	// User management
@@ -85,8 +84,4 @@ func (s *ChatService) UnverifyUser(ctx context.Context, publicKey string) error 
 
 func (s *ChatService) GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error) {
 	return s.repo.GetUserWithPostCount(ctx, publicKey)
-}
-
-func (s *ChatService) UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error {
-	return s.repo.UpdateRoomVisibility(ctx, name, hidden)
 }

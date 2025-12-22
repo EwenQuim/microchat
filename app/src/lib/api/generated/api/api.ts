@@ -108,80 +108,48 @@ func getAllPets(ctx fuego.ContextNoBody) (*MyResponse, error) {
 
  * OpenAPI spec version: 0.0.1
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
-	DataTag,
-	DefinedInitialDataOptions,
-	DefinedUseQueryResult,
-	MutationFunction,
-	QueryClient,
-	QueryFunction,
-	QueryKey,
-	UndefinedInitialDataOptions,
-	UseMutationOptions,
-	UseMutationResult,
-	UseQueryOptions,
-	UseQueryResult,
-} from "@tanstack/react-query";
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
-	CreateRoomRequest,
-	GETApiRoomsParams,
-	GETApiRoomsRoomMessagesParams,
-	GETApiRoomsSearchParams,
-	HTTPError,
-	Message,
-	RegisterUserRequest,
-	Room,
-	SendMessageRequest,
-	String,
-	UpdateRoomVisibilityRequest,
-	User,
-	UserWithPostCount,
-	VerifyUserRequest,
-} from "../openAPI.schemas";
+  CreateRoomRequest,
+  GETApiRoomsParams,
+  GETApiRoomsRoomMessagesParams,
+  GETApiRoomsSearchParams,
+  HTTPError,
+  Message,
+  Room,
+  SendMessageRequest,
+  User
+} from '../openAPI.schemas';
+
+
+
+
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
 export type HTTPStatusCode3xx = 300 | 301 | 302 | 303 | 304 | 305 | 307 | 308;
-export type HTTPStatusCode4xx =
-	| 400
-	| 401
-	| 402
-	| 403
-	| 404
-	| 405
-	| 406
-	| 407
-	| 408
-	| 409
-	| 410
-	| 411
-	| 412
-	| 413
-	| 414
-	| 415
-	| 416
-	| 417
-	| 418
-	| 419
-	| 420
-	| 421
-	| 422
-	| 423
-	| 424
-	| 426
-	| 428
-	| 429
-	| 431
-	| 451;
+export type HTTPStatusCode4xx = 400 | 401 | 402 | 403 | 404 | 405 | 406 | 407 | 408 | 409 | 410 | 411 | 412 | 413 | 414 | 415 | 416 | 417 | 418 | 419 | 420 | 421 | 422 | 423 | 424 | 426 | 428 | 429 | 431 | 451;
 export type HTTPStatusCode5xx = 500 | 501 | 502 | 503 | 504 | 505 | 507 | 511;
-export type HTTPStatusCodes =
-	| HTTPStatusCode1xx
-	| HTTPStatusCode2xx
-	| HTTPStatusCode3xx
-	| HTTPStatusCode4xx
-	| HTTPStatusCode5xx;
+export type HTTPStatusCodes = HTTPStatusCode1xx | HTTPStatusCode2xx | HTTPStatusCode3xx | HTTPStatusCode4xx | HTTPStatusCode5xx;
+
 
 /**
  * #### Controller: 
@@ -198,202 +166,143 @@ export type HTTPStatusCodes =
  * @summary func1
  */
 export type gETApiRoomsResponse200 = {
-	data: Room[];
-	status: 200;
-};
+  data: Room[]
+  status: 200
+}
 
 export type gETApiRoomsResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
+  data: HTTPError
+  status: 400
+}
 
 export type gETApiRoomsResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
+  data: HTTPError
+  status: 500
+}
 
 export type gETApiRoomsResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type gETApiRoomsResponseSuccess = (gETApiRoomsResponse200) & {
+  headers: Headers;
+};
+export type gETApiRoomsResponseError = (gETApiRoomsResponse400 | gETApiRoomsResponse500 | gETApiRoomsResponseDefault) & {
+  headers: Headers;
 };
 
-export type gETApiRoomsResponseSuccess = gETApiRoomsResponse200 & {
-	headers: Headers;
-};
-export type gETApiRoomsResponseError = (
-	| gETApiRoomsResponse400
-	| gETApiRoomsResponse500
-	| gETApiRoomsResponseDefault
-) & {
-	headers: Headers;
-};
+export type gETApiRoomsResponse = (gETApiRoomsResponseSuccess | gETApiRoomsResponseError)
 
-export type gETApiRoomsResponse =
-	| gETApiRoomsResponseSuccess
-	| gETApiRoomsResponseError;
+export const getGETApiRoomsUrl = (params?: GETApiRoomsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
-export const getGETApiRoomsUrl = (params?: GETApiRoomsParams) => {
-	const normalizedParams = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : value.toString());
-		}
-	});
+  const stringifiedParams = normalizedParams.toString();
 
-	const stringifiedParams = normalizedParams.toString();
+  return stringifiedParams.length > 0 ? `/api/rooms?${stringifiedParams}` : `/api/rooms`
+}
 
-	return stringifiedParams.length > 0
-		? `/api/rooms?${stringifiedParams}`
-		: `/api/rooms`;
-};
+export const gETApiRooms = async (params?: GETApiRoomsParams, options?: RequestInit): Promise<gETApiRoomsResponse> => {
+  
+  const res = await fetch(getGETApiRoomsUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
 
-export const gETApiRooms = async (
-	params?: GETApiRoomsParams,
-	options?: RequestInit,
-): Promise<gETApiRoomsResponse> => {
-	const res = await fetch(getGETApiRoomsUrl(params), {
-		...options,
-		method: "GET",
-	});
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: gETApiRoomsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as gETApiRoomsResponse
+}
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const data: gETApiRoomsResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiRoomsResponse;
-};
 
-export const getGETApiRoomsQueryKey = (params?: GETApiRoomsParams) => {
-	return [`/api/rooms`, ...(params ? [params] : [])] as const;
-};
 
-export const getGETApiRoomsQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiRooms>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
+
+export const getGETApiRoomsQueryKey = (params?: GETApiRoomsParams,) => {
+    return [
+    `/api/rooms`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGETApiRoomsQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRooms>>, TError = HTTPError | void>(params?: GETApiRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>>, fetch?: RequestInit}
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGETApiRoomsQueryKey(params);
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRooms>>> = ({
-		signal,
-	}) => gETApiRooms(params, { signal, ...fetchOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsQueryKey(params);
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiRooms>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GETApiRoomsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiRooms>>
->;
-export type GETApiRoomsQueryError = HTTPError | void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRooms>>> = ({ signal }) => gETApiRooms(params, { signal, ...fetchOptions });
 
-export function useGETApiRooms<
-	TData = Awaited<ReturnType<typeof gETApiRooms>>,
-	TError = HTTPError | void,
->(
-	params: undefined | GETApiRoomsParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRooms>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRooms>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRooms<
-	TData = Awaited<ReturnType<typeof gETApiRooms>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRooms>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRooms>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRooms<
-	TData = Awaited<ReturnType<typeof gETApiRooms>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GETApiRoomsQueryResult = NonNullable<Awaited<ReturnType<typeof gETApiRooms>>>
+export type GETApiRoomsQueryError = HTTPError | void
+
+
+export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, TError = HTTPError | void>(
+ params: undefined |  GETApiRoomsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRooms>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRooms>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, TError = HTTPError | void>(
+ params?: GETApiRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRooms>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRooms>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, TError = HTTPError | void>(
+ params?: GETApiRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary func1
  */
 
-export function useGETApiRooms<
-	TData = Awaited<ReturnType<typeof gETApiRooms>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiRoomsQueryOptions(params, options);
+export function useGETApiRooms<TData = Awaited<ReturnType<typeof gETApiRooms>>, TError = HTTPError | void>(
+ params?: GETApiRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRooms>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGETApiRoomsQueryOptions(params,options)
 
-	query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-	return query;
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
 }
+
+
+
 
 /**
  * #### Controller: 
@@ -410,134 +319,109 @@ export function useGETApiRooms<
  * @summary func3
  */
 export type pOSTApiRoomsResponse200 = {
-	data: Room;
-	status: 200;
-};
+  data: Room
+  status: 200
+}
 
 export type pOSTApiRoomsResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
+  data: HTTPError
+  status: 400
+}
 
 export type pOSTApiRoomsResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
+  data: HTTPError
+  status: 500
+}
 
 export type pOSTApiRoomsResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type pOSTApiRoomsResponseSuccess = (pOSTApiRoomsResponse200) & {
+  headers: Headers;
+};
+export type pOSTApiRoomsResponseError = (pOSTApiRoomsResponse400 | pOSTApiRoomsResponse500 | pOSTApiRoomsResponseDefault) & {
+  headers: Headers;
 };
 
-export type pOSTApiRoomsResponseSuccess = pOSTApiRoomsResponse200 & {
-	headers: Headers;
-};
-export type pOSTApiRoomsResponseError = (
-	| pOSTApiRoomsResponse400
-	| pOSTApiRoomsResponse500
-	| pOSTApiRoomsResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type pOSTApiRoomsResponse =
-	| pOSTApiRoomsResponseSuccess
-	| pOSTApiRoomsResponseError;
+export type pOSTApiRoomsResponse = (pOSTApiRoomsResponseSuccess | pOSTApiRoomsResponseError)
 
 export const getPOSTApiRoomsUrl = () => {
-	return `/api/rooms`;
-};
 
-export const pOSTApiRooms = async (
-	createRoomRequest: CreateRoomRequest,
-	options?: RequestInit,
-): Promise<pOSTApiRoomsResponse> => {
-	const res = await fetch(getPOSTApiRoomsUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(createRoomRequest),
-	});
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
 
-	const data: pOSTApiRoomsResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pOSTApiRoomsResponse;
-};
+  return `/api/rooms`
+}
 
-export const getPOSTApiRoomsMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pOSTApiRooms>>,
-		TError,
-		{ data: CreateRoomRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pOSTApiRooms>>,
-	TError,
-	{ data: CreateRoomRequest },
-	TContext
-> => {
-	const mutationKey = ["pOSTApiRooms"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+export const pOSTApiRooms = async (createRoomRequest: CreateRoomRequest, options?: RequestInit): Promise<pOSTApiRoomsResponse> => {
+  
+  const res = await fetch(getPOSTApiRoomsUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': '*/*', ...options?.headers },
+    body: JSON.stringify(
+      createRoomRequest,)
+  }
+)
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pOSTApiRooms>>,
-		{ data: CreateRoomRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: pOSTApiRoomsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as pOSTApiRoomsResponse
+}
 
-		return pOSTApiRooms(data, fetchOptions);
-	};
 
-	return { mutationFn, ...mutationOptions };
-};
 
-export type POSTApiRoomsMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pOSTApiRooms>>
->;
-export type POSTApiRoomsMutationBody = CreateRoomRequest;
-export type POSTApiRoomsMutationError = HTTPError | void;
 
-/**
+export const getPOSTApiRoomsMutationOptions = <TError = HTTPError | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRooms>>, TError,{data: CreateRoomRequest}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRooms>>, TError,{data: CreateRoomRequest}, TContext> => {
+
+const mutationKey = ['pOSTApiRooms'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pOSTApiRooms>>, {data: CreateRoomRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  pOSTApiRooms(data,fetchOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type POSTApiRoomsMutationResult = NonNullable<Awaited<ReturnType<typeof pOSTApiRooms>>>
+    export type POSTApiRoomsMutationBody = CreateRoomRequest
+    export type POSTApiRoomsMutationError = HTTPError | void
+
+    /**
  * @summary func3
  */
-export const usePOSTApiRooms = <TError = HTTPError | void, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pOSTApiRooms>>,
-			TError,
-			{ data: CreateRoomRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pOSTApiRooms>>,
-	TError,
-	{ data: CreateRoomRequest },
-	TContext
-> => {
-	const mutationOptions = getPOSTApiRoomsMutationOptions(options);
+export const usePOSTApiRooms = <TError = HTTPError | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRooms>>, TError,{data: CreateRoomRequest}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof pOSTApiRooms>>,
+        TError,
+        {data: CreateRoomRequest},
+        TContext
+      > => {
 
-	return useMutation(mutationOptions, queryClient);
-};
-/**
+      const mutationOptions = getPOSTApiRoomsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * #### Controller: 
 
 `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func2`
@@ -552,230 +436,148 @@ export const usePOSTApiRooms = <TError = HTTPError | void, TContext = unknown>(
  * @summary func2
  */
 export type gETApiRoomsSearchResponse200 = {
-	data: Room[];
-	status: 200;
-};
+  data: Room[]
+  status: 200
+}
 
 export type gETApiRoomsSearchResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
+  data: HTTPError
+  status: 400
+}
 
 export type gETApiRoomsSearchResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
+  data: HTTPError
+  status: 500
+}
 
 export type gETApiRoomsSearchResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type gETApiRoomsSearchResponseSuccess = (gETApiRoomsSearchResponse200) & {
+  headers: Headers;
+};
+export type gETApiRoomsSearchResponseError = (gETApiRoomsSearchResponse400 | gETApiRoomsSearchResponse500 | gETApiRoomsSearchResponseDefault) & {
+  headers: Headers;
 };
 
-export type gETApiRoomsSearchResponseSuccess = gETApiRoomsSearchResponse200 & {
-	headers: Headers;
-};
-export type gETApiRoomsSearchResponseError = (
-	| gETApiRoomsSearchResponse400
-	| gETApiRoomsSearchResponse500
-	| gETApiRoomsSearchResponseDefault
-) & {
-	headers: Headers;
-};
+export type gETApiRoomsSearchResponse = (gETApiRoomsSearchResponseSuccess | gETApiRoomsSearchResponseError)
 
-export type gETApiRoomsSearchResponse =
-	| gETApiRoomsSearchResponseSuccess
-	| gETApiRoomsSearchResponseError;
+export const getGETApiRoomsSearchUrl = (params?: GETApiRoomsSearchParams,) => {
+  const normalizedParams = new URLSearchParams();
 
-export const getGETApiRoomsSearchUrl = (params?: GETApiRoomsSearchParams) => {
-	const normalizedParams = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : value.toString());
-		}
-	});
+  const stringifiedParams = normalizedParams.toString();
 
-	const stringifiedParams = normalizedParams.toString();
+  return stringifiedParams.length > 0 ? `/api/rooms/search?${stringifiedParams}` : `/api/rooms/search`
+}
 
-	return stringifiedParams.length > 0
-		? `/api/rooms/search?${stringifiedParams}`
-		: `/api/rooms/search`;
-};
+export const gETApiRoomsSearch = async (params?: GETApiRoomsSearchParams, options?: RequestInit): Promise<gETApiRoomsSearchResponse> => {
+  
+  const res = await fetch(getGETApiRoomsSearchUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
 
-export const gETApiRoomsSearch = async (
-	params?: GETApiRoomsSearchParams,
-	options?: RequestInit,
-): Promise<gETApiRoomsSearchResponse> => {
-	const res = await fetch(getGETApiRoomsSearchUrl(params), {
-		...options,
-		method: "GET",
-	});
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: gETApiRoomsSearchResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as gETApiRoomsSearchResponse
+}
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const data: gETApiRoomsSearchResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiRoomsSearchResponse;
-};
 
-export const getGETApiRoomsSearchQueryKey = (
-	params?: GETApiRoomsSearchParams,
+
+
+export const getGETApiRoomsSearchQueryKey = (params?: GETApiRoomsSearchParams,) => {
+    return [
+    `/api/rooms/search`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGETApiRoomsSearchQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(params?: GETApiRoomsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
 ) => {
-	return [`/api/rooms/search`, ...(params ? [params] : [])] as const;
-};
 
-export const getGETApiRoomsSearchQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsSearchParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGETApiRoomsSearchQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsSearchQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof gETApiRoomsSearch>>
-	> = ({ signal }) => gETApiRoomsSearch(params, { signal, ...fetchOptions });
+  
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRoomsSearch>>> = ({ signal }) => gETApiRoomsSearch(params, { signal, ...fetchOptions });
 
-export type GETApiRoomsSearchQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiRoomsSearch>>
->;
-export type GETApiRoomsSearchQueryError = HTTPError | void;
+      
 
-export function useGETApiRoomsSearch<
-	TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-	TError = HTTPError | void,
->(
-	params: undefined | GETApiRoomsSearchParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRoomsSearch>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRoomsSearch<
-	TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsSearchParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRoomsSearch>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRoomsSearch<
-	TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsSearchParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GETApiRoomsSearchQueryResult = NonNullable<Awaited<ReturnType<typeof gETApiRoomsSearch>>>
+export type GETApiRoomsSearchQueryError = HTTPError | void
+
+
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+ params: undefined |  GETApiRoomsSearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+ params?: GETApiRoomsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsSearch>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+ params?: GETApiRoomsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary func2
  */
 
-export function useGETApiRoomsSearch<
-	TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-	TError = HTTPError | void,
->(
-	params?: GETApiRoomsSearchParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsSearch>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiRoomsSearchQueryOptions(params, options);
+export function useGETApiRoomsSearch<TData = Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError = HTTPError | void>(
+ params?: GETApiRoomsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsSearch>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGETApiRoomsSearchQueryOptions(params,options)
 
-	query.queryKey = queryOptions.queryKey;
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-	return query;
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
 }
+
+
+
 
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func4`
 
 #### Middlewares:
 
@@ -784,1639 +586,416 @@ export function useGETApiRoomsSearch<
 ---
 
 
- * @summary func5
+ * @summary func4
  */
 export type gETApiRoomsRoomMessagesResponse200 = {
-	data: Message[];
-	status: 200;
-};
+  data: Message[]
+  status: 200
+}
 
 export type gETApiRoomsRoomMessagesResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
+  data: HTTPError
+  status: 400
+}
 
 export type gETApiRoomsRoomMessagesResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
+  data: HTTPError
+  status: 500
+}
 
 export type gETApiRoomsRoomMessagesResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type gETApiRoomsRoomMessagesResponseSuccess = (gETApiRoomsRoomMessagesResponse200) & {
+  headers: Headers;
+};
+export type gETApiRoomsRoomMessagesResponseError = (gETApiRoomsRoomMessagesResponse400 | gETApiRoomsRoomMessagesResponse500 | gETApiRoomsRoomMessagesResponseDefault) & {
+  headers: Headers;
 };
 
-export type gETApiRoomsRoomMessagesResponseSuccess =
-	gETApiRoomsRoomMessagesResponse200 & {
-		headers: Headers;
-	};
-export type gETApiRoomsRoomMessagesResponseError = (
-	| gETApiRoomsRoomMessagesResponse400
-	| gETApiRoomsRoomMessagesResponse500
-	| gETApiRoomsRoomMessagesResponseDefault
-) & {
-	headers: Headers;
-};
+export type gETApiRoomsRoomMessagesResponse = (gETApiRoomsRoomMessagesResponseSuccess | gETApiRoomsRoomMessagesResponseError)
 
-export type gETApiRoomsRoomMessagesResponse =
-	| gETApiRoomsRoomMessagesResponseSuccess
-	| gETApiRoomsRoomMessagesResponseError;
+export const getGETApiRoomsRoomMessagesUrl = (room: string,
+    params?: GETApiRoomsRoomMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
-export const getGETApiRoomsRoomMessagesUrl = (
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/rooms/${room}/messages?${stringifiedParams}` : `/api/rooms/${room}/messages`
+}
+
+export const gETApiRoomsRoomMessages = async (room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: RequestInit): Promise<gETApiRoomsRoomMessagesResponse> => {
+  
+  const res = await fetch(getGETApiRoomsRoomMessagesUrl(room,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: gETApiRoomsRoomMessagesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as gETApiRoomsRoomMessagesResponse
+}
+
+
+
+
+
+export const getGETApiRoomsRoomMessagesQueryKey = (room?: string,
+    params?: GETApiRoomsRoomMessagesParams,) => {
+    return [
+    `/api/rooms/${room}/messages`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGETApiRoomsRoomMessagesQueryOptions = <TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
 ) => {
-	const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : value.toString());
-		}
-	});
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-	const stringifiedParams = normalizedParams.toString();
+  const queryKey =  queryOptions?.queryKey ?? getGETApiRoomsRoomMessagesQueryKey(room,params);
 
-	return stringifiedParams.length > 0
-		? `/api/rooms/${room}/messages?${stringifiedParams}`
-		: `/api/rooms/${room}/messages`;
-};
+  
 
-export const gETApiRoomsRoomMessages = async (
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
-	options?: RequestInit,
-): Promise<gETApiRoomsRoomMessagesResponse> => {
-	const res = await fetch(getGETApiRoomsRoomMessagesUrl(room, params), {
-		...options,
-		method: "GET",
-	});
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>> = ({ signal }) => gETApiRoomsRoomMessages(room,params, { signal, ...fetchOptions });
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+      
 
-	const data: gETApiRoomsRoomMessagesResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiRoomsRoomMessagesResponse;
-};
+      
 
-export const getGETApiRoomsRoomMessagesQueryKey = (
-	room?: string,
-	params?: GETApiRoomsRoomMessagesParams,
-) => {
-	return [`/api/rooms/${room}/messages`, ...(params ? [params] : [])] as const;
-};
+   return  { queryKey, queryFn, enabled: !!(room), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
-export const getGETApiRoomsRoomMessagesQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-	TError = HTTPError | void,
->(
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+export type GETApiRoomsRoomMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>>
+export type GETApiRoomsRoomMessagesQueryError = HTTPError | void
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGETApiRoomsRoomMessagesQueryKey(room, params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
-	> = ({ signal }) =>
-		gETApiRoomsRoomMessages(room, params, { signal, ...fetchOptions });
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!room,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GETApiRoomsRoomMessagesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
->;
-export type GETApiRoomsRoomMessagesQueryError = HTTPError | void;
-
-export function useGETApiRoomsRoomMessages<
-	TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-	TError = HTTPError | void,
->(
-	room: string,
-	params: undefined | GETApiRoomsRoomMessagesParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRoomsRoomMessages<
-	TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-	TError = HTTPError | void,
->(
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiRoomsRoomMessages<
-	TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-	TError = HTTPError | void,
->(
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
+ room: string,
+    params: undefined |  GETApiRoomsRoomMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @summary func4
+ */
+
+export function useGETApiRoomsRoomMessages<TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError = HTTPError | void>(
+ room: string,
+    params?: GETApiRoomsRoomMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGETApiRoomsRoomMessagesQueryOptions(room,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * #### Controller: 
+
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func5`
+
+#### Middlewares:
+
+- `github.com/go-fuego/fuego.defaultLogger.middleware`
+
+---
+
+
  * @summary func5
  */
-
-export function useGETApiRoomsRoomMessages<
-	TData = Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-	TError = HTTPError | void,
->(
-	room: string,
-	params?: GETApiRoomsRoomMessagesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiRoomsRoomMessages>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiRoomsRoomMessagesQueryOptions(
-		room,
-		params,
-		options,
-	);
-
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func6
- */
 export type pOSTApiRoomsRoomMessagesResponse200 = {
-	data: Message;
-	status: 200;
-};
+  data: Message
+  status: 200
+}
 
 export type pOSTApiRoomsRoomMessagesResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
+  data: HTTPError
+  status: 400
+}
 
 export type pOSTApiRoomsRoomMessagesResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
+  data: HTTPError
+  status: 500
+}
 
 export type pOSTApiRoomsRoomMessagesResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type pOSTApiRoomsRoomMessagesResponseSuccess = (pOSTApiRoomsRoomMessagesResponse200) & {
+  headers: Headers;
+};
+export type pOSTApiRoomsRoomMessagesResponseError = (pOSTApiRoomsRoomMessagesResponse400 | pOSTApiRoomsRoomMessagesResponse500 | pOSTApiRoomsRoomMessagesResponseDefault) & {
+  headers: Headers;
 };
 
-export type pOSTApiRoomsRoomMessagesResponseSuccess =
-	pOSTApiRoomsRoomMessagesResponse200 & {
-		headers: Headers;
-	};
-export type pOSTApiRoomsRoomMessagesResponseError = (
-	| pOSTApiRoomsRoomMessagesResponse400
-	| pOSTApiRoomsRoomMessagesResponse500
-	| pOSTApiRoomsRoomMessagesResponseDefault
-) & {
-	headers: Headers;
+export type pOSTApiRoomsRoomMessagesResponse = (pOSTApiRoomsRoomMessagesResponseSuccess | pOSTApiRoomsRoomMessagesResponseError)
+
+export const getPOSTApiRoomsRoomMessagesUrl = (room: string,) => {
+
+
+  
+
+  return `/api/rooms/${room}/messages`
+}
+
+export const pOSTApiRoomsRoomMessages = async (room: string,
+    sendMessageRequest: SendMessageRequest, options?: RequestInit): Promise<pOSTApiRoomsRoomMessagesResponse> => {
+  
+  const res = await fetch(getPOSTApiRoomsRoomMessagesUrl(room),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': '*/*', ...options?.headers },
+    body: JSON.stringify(
+      sendMessageRequest,)
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: pOSTApiRoomsRoomMessagesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as pOSTApiRoomsRoomMessagesResponse
+}
+
+
+
+
+export const getPOSTApiRoomsRoomMessagesMutationOptions = <TError = HTTPError | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>, TError,{room: string;data: SendMessageRequest}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>, TError,{room: string;data: SendMessageRequest}, TContext> => {
+
+const mutationKey = ['pOSTApiRoomsRoomMessages'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>, {room: string;data: SendMessageRequest}> = (props) => {
+          const {room,data} = props ?? {};
+
+          return  pOSTApiRoomsRoomMessages(room,data,fetchOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type POSTApiRoomsRoomMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>>
+    export type POSTApiRoomsRoomMessagesMutationBody = SendMessageRequest
+    export type POSTApiRoomsRoomMessagesMutationError = HTTPError | void
+
+    /**
+ * @summary func5
+ */
+export const usePOSTApiRoomsRoomMessages = <TError = HTTPError | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>, TError,{room: string;data: SendMessageRequest}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
+        TError,
+        {room: string;data: SendMessageRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getPOSTApiRoomsRoomMessagesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * #### Controller: 
+
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func6`
+
+#### Middlewares:
+
+- `github.com/go-fuego/fuego.defaultLogger.middleware`
+
+---
+
+
+ * @summary func6
+ */
+export type gETApiUsersPublicKeyResponse200 = {
+  data: User
+  status: 200
+}
+
+export type gETApiUsersPublicKeyResponse400 = {
+  data: HTTPError
+  status: 400
+}
+
+export type gETApiUsersPublicKeyResponse500 = {
+  data: HTTPError
+  status: 500
+}
+
+export type gETApiUsersPublicKeyResponseDefault = {
+  data: void
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 500>
+}
+    
+export type gETApiUsersPublicKeyResponseSuccess = (gETApiUsersPublicKeyResponse200) & {
+  headers: Headers;
+};
+export type gETApiUsersPublicKeyResponseError = (gETApiUsersPublicKeyResponse400 | gETApiUsersPublicKeyResponse500 | gETApiUsersPublicKeyResponseDefault) & {
+  headers: Headers;
 };
 
-export type pOSTApiRoomsRoomMessagesResponse =
-	| pOSTApiRoomsRoomMessagesResponseSuccess
-	| pOSTApiRoomsRoomMessagesResponseError;
+export type gETApiUsersPublicKeyResponse = (gETApiUsersPublicKeyResponseSuccess | gETApiUsersPublicKeyResponseError)
 
-export const getPOSTApiRoomsRoomMessagesUrl = (room: string) => {
-	return `/api/rooms/${room}/messages`;
-};
+export const getGETApiUsersPublicKeyUrl = (publicKey: string,) => {
 
-export const pOSTApiRoomsRoomMessages = async (
-	room: string,
-	sendMessageRequest: SendMessageRequest,
-	options?: RequestInit,
-): Promise<pOSTApiRoomsRoomMessagesResponse> => {
-	const res = await fetch(getPOSTApiRoomsRoomMessagesUrl(room), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(sendMessageRequest),
-	});
 
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
 
-	const data: pOSTApiRoomsRoomMessagesResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pOSTApiRoomsRoomMessagesResponse;
-};
+  return `/api/users/${publicKey}`
+}
 
-export const getPOSTApiRoomsRoomMessagesMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
-		TError,
-		{ room: string; data: SendMessageRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
-	TError,
-	{ room: string; data: SendMessageRequest },
-	TContext
-> => {
-	const mutationKey = ["pOSTApiRoomsRoomMessages"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+export const gETApiUsersPublicKey = async (publicKey: string, options?: RequestInit): Promise<gETApiUsersPublicKeyResponse> => {
+  
+  const res = await fetch(getGETApiUsersPublicKeyUrl(publicKey),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
-		{ room: string; data: SendMessageRequest }
-	> = (props) => {
-		const { room, data } = props ?? {};
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: gETApiUsersPublicKeyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as gETApiUsersPublicKeyResponse
+}
 
-		return pOSTApiRoomsRoomMessages(room, data, fetchOptions);
-	};
 
-	return { mutationFn, ...mutationOptions };
-};
 
-export type POSTApiRoomsRoomMessagesMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>
->;
-export type POSTApiRoomsRoomMessagesMutationBody = SendMessageRequest;
-export type POSTApiRoomsRoomMessagesMutationError = HTTPError | void;
 
+
+export const getGETApiUsersPublicKeyQueryKey = (publicKey?: string,) => {
+    return [
+    `/api/users/${publicKey}`
+    ] as const;
+    }
+
+    
+export const getGETApiUsersPublicKeyQueryOptions = <TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(publicKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGETApiUsersPublicKeyQueryKey(publicKey);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiUsersPublicKey>>> = ({ signal }) => gETApiUsersPublicKey(publicKey, { signal, ...fetchOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(publicKey), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GETApiUsersPublicKeyQueryResult = NonNullable<Awaited<ReturnType<typeof gETApiUsersPublicKey>>>
+export type GETApiUsersPublicKeyQueryError = HTTPError | void
+
+
+export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(
+ publicKey: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiUsersPublicKey>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(
+ publicKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+          TError,
+          Awaited<ReturnType<typeof gETApiUsersPublicKey>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(
+ publicKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary func6
  */
-export const usePOSTApiRoomsRoomMessages = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
-			TError,
-			{ room: string; data: SendMessageRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pOSTApiRoomsRoomMessages>>,
-	TError,
-	{ room: string; data: SendMessageRequest },
-	TContext
-> => {
-	const mutationOptions = getPOSTApiRoomsRoomMessagesMutationOptions(options);
 
-	return useMutation(mutationOptions, queryClient);
-};
-/**
- * #### Controller: 
+export function useGETApiUsersPublicKey<TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError = HTTPError | void>(
+ publicKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof gETApiUsersPublicKey>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UpdateRoomVisibility.func4`
+  const queryOptions = getGETApiUsersPublicKeyQueryOptions(publicKey,options)
 
-#### Middlewares:
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
+  query.queryKey = queryOptions.queryKey ;
 
----
-
-
- * @summary func4
- */
-export type pATCHApiRoomsRoomVisibilityResponse200 = {
-	data: String;
-	status: 200;
-};
-
-export type pATCHApiRoomsRoomVisibilityResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type pATCHApiRoomsRoomVisibilityResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type pATCHApiRoomsRoomVisibilityResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type pATCHApiRoomsRoomVisibilityResponseSuccess =
-	pATCHApiRoomsRoomVisibilityResponse200 & {
-		headers: Headers;
-	};
-export type pATCHApiRoomsRoomVisibilityResponseError = (
-	| pATCHApiRoomsRoomVisibilityResponse400
-	| pATCHApiRoomsRoomVisibilityResponse500
-	| pATCHApiRoomsRoomVisibilityResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type pATCHApiRoomsRoomVisibilityResponse =
-	| pATCHApiRoomsRoomVisibilityResponseSuccess
-	| pATCHApiRoomsRoomVisibilityResponseError;
-
-export const getPATCHApiRoomsRoomVisibilityUrl = (room: string) => {
-	return `/api/rooms/${room}/visibility`;
-};
-
-export const pATCHApiRoomsRoomVisibility = async (
-	room: string,
-	updateRoomVisibilityRequest: UpdateRoomVisibilityRequest,
-	options?: RequestInit,
-): Promise<pATCHApiRoomsRoomVisibilityResponse> => {
-	const res = await fetch(getPATCHApiRoomsRoomVisibilityUrl(room), {
-		...options,
-		method: "PATCH",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(updateRoomVisibilityRequest),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: pATCHApiRoomsRoomVisibilityResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pATCHApiRoomsRoomVisibilityResponse;
-};
-
-export const getPATCHApiRoomsRoomVisibilityMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>,
-		TError,
-		{ room: string; data: UpdateRoomVisibilityRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>,
-	TError,
-	{ room: string; data: UpdateRoomVisibilityRequest },
-	TContext
-> => {
-	const mutationKey = ["pATCHApiRoomsRoomVisibility"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>,
-		{ room: string; data: UpdateRoomVisibilityRequest }
-	> = (props) => {
-		const { room, data } = props ?? {};
-
-		return pATCHApiRoomsRoomVisibility(room, data, fetchOptions);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type PATCHApiRoomsRoomVisibilityMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>
->;
-export type PATCHApiRoomsRoomVisibilityMutationBody =
-	UpdateRoomVisibilityRequest;
-export type PATCHApiRoomsRoomVisibilityMutationError = HTTPError | void;
-
-/**
- * @summary func4
- */
-export const usePATCHApiRoomsRoomVisibility = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>,
-			TError,
-			{ room: string; data: UpdateRoomVisibilityRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pATCHApiRoomsRoomVisibility>>,
-	TError,
-	{ room: string; data: UpdateRoomVisibilityRequest },
-	TContext
-> => {
-	const mutationOptions =
-		getPATCHApiRoomsRoomVisibilityMutationOptions(options);
-
-	return useMutation(mutationOptions, queryClient);
-};
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetAllUsers.func8`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func8
- */
-export type gETApiUsersResponse200 = {
-	data: User[];
-	status: 200;
-};
-
-export type gETApiUsersResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type gETApiUsersResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type gETApiUsersResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type gETApiUsersResponseSuccess = gETApiUsersResponse200 & {
-	headers: Headers;
-};
-export type gETApiUsersResponseError = (
-	| gETApiUsersResponse400
-	| gETApiUsersResponse500
-	| gETApiUsersResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type gETApiUsersResponse =
-	| gETApiUsersResponseSuccess
-	| gETApiUsersResponseError;
-
-export const getGETApiUsersUrl = () => {
-	return `/api/users`;
-};
-
-export const gETApiUsers = async (
-	options?: RequestInit,
-): Promise<gETApiUsersResponse> => {
-	const res = await fetch(getGETApiUsersUrl(), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: gETApiUsersResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiUsersResponse;
-};
-
-export const getGETApiUsersQueryKey = () => {
-	return [`/api/users`] as const;
-};
-
-export const getGETApiUsersQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiUsers>>,
-	TError = HTTPError | void,
->(options?: {
-	query?: Partial<
-		UseQueryOptions<Awaited<ReturnType<typeof gETApiUsers>>, TError, TData>
-	>;
-	fetch?: RequestInit;
-}) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getGETApiUsersQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof gETApiUsers>>> = ({
-		signal,
-	}) => gETApiUsers({ signal, ...fetchOptions });
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiUsers>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GETApiUsersQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiUsers>>
->;
-export type GETApiUsersQueryError = HTTPError | void;
-
-export function useGETApiUsers<
-	TData = Awaited<ReturnType<typeof gETApiUsers>>,
-	TError = HTTPError | void,
->(
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiUsers>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsers>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsers>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsers<
-	TData = Awaited<ReturnType<typeof gETApiUsers>>,
-	TError = HTTPError | void,
->(
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiUsers>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsers>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsers>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsers<
-	TData = Awaited<ReturnType<typeof gETApiUsers>>,
-	TError = HTTPError | void,
->(
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiUsers>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary func8
- */
-
-export function useGETApiUsers<
-	TData = Awaited<ReturnType<typeof gETApiUsers>>,
-	TError = HTTPError | void,
->(
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof gETApiUsers>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiUsersQueryOptions(options);
-
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+  return query;
 }
 
-/**
- * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.RegisterUser.func7`
 
-#### Middlewares:
 
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func7
- */
-export type pOSTApiUsersResponse200 = {
-	data: User;
-	status: 200;
-};
-
-export type pOSTApiUsersResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type pOSTApiUsersResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type pOSTApiUsersResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type pOSTApiUsersResponseSuccess = pOSTApiUsersResponse200 & {
-	headers: Headers;
-};
-export type pOSTApiUsersResponseError = (
-	| pOSTApiUsersResponse400
-	| pOSTApiUsersResponse500
-	| pOSTApiUsersResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type pOSTApiUsersResponse =
-	| pOSTApiUsersResponseSuccess
-	| pOSTApiUsersResponseError;
-
-export const getPOSTApiUsersUrl = () => {
-	return `/api/users`;
-};
-
-export const pOSTApiUsers = async (
-	registerUserRequest: RegisterUserRequest,
-	options?: RequestInit,
-): Promise<pOSTApiUsersResponse> => {
-	const res = await fetch(getPOSTApiUsersUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(registerUserRequest),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: pOSTApiUsersResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pOSTApiUsersResponse;
-};
-
-export const getPOSTApiUsersMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pOSTApiUsers>>,
-		TError,
-		{ data: RegisterUserRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pOSTApiUsers>>,
-	TError,
-	{ data: RegisterUserRequest },
-	TContext
-> => {
-	const mutationKey = ["pOSTApiUsers"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pOSTApiUsers>>,
-		{ data: RegisterUserRequest }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return pOSTApiUsers(data, fetchOptions);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type POSTApiUsersMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pOSTApiUsers>>
->;
-export type POSTApiUsersMutationBody = RegisterUserRequest;
-export type POSTApiUsersMutationError = HTTPError | void;
-
-/**
- * @summary func7
- */
-export const usePOSTApiUsers = <TError = HTTPError | void, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pOSTApiUsers>>,
-			TError,
-			{ data: RegisterUserRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pOSTApiUsers>>,
-	TError,
-	{ data: RegisterUserRequest },
-	TContext
-> => {
-	const mutationOptions = getPOSTApiUsersMutationOptions(options);
-
-	return useMutation(mutationOptions, queryClient);
-};
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.UnverifyUser.func12`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func12
- */
-export type pOSTApiUsersUnverifyResponse200 = {
-	data: String;
-	status: 200;
-};
-
-export type pOSTApiUsersUnverifyResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type pOSTApiUsersUnverifyResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type pOSTApiUsersUnverifyResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type pOSTApiUsersUnverifyResponseSuccess =
-	pOSTApiUsersUnverifyResponse200 & {
-		headers: Headers;
-	};
-export type pOSTApiUsersUnverifyResponseError = (
-	| pOSTApiUsersUnverifyResponse400
-	| pOSTApiUsersUnverifyResponse500
-	| pOSTApiUsersUnverifyResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type pOSTApiUsersUnverifyResponse =
-	| pOSTApiUsersUnverifyResponseSuccess
-	| pOSTApiUsersUnverifyResponseError;
-
-export const getPOSTApiUsersUnverifyUrl = () => {
-	return `/api/users/unverify`;
-};
-
-export const pOSTApiUsersUnverify = async (
-	verifyUserRequest: VerifyUserRequest,
-	options?: RequestInit,
-): Promise<pOSTApiUsersUnverifyResponse> => {
-	const res = await fetch(getPOSTApiUsersUnverifyUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(verifyUserRequest),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: pOSTApiUsersUnverifyResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pOSTApiUsersUnverifyResponse;
-};
-
-export const getPOSTApiUsersUnverifyMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pOSTApiUsersUnverify>>,
-		TError,
-		{ data: VerifyUserRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pOSTApiUsersUnverify>>,
-	TError,
-	{ data: VerifyUserRequest },
-	TContext
-> => {
-	const mutationKey = ["pOSTApiUsersUnverify"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pOSTApiUsersUnverify>>,
-		{ data: VerifyUserRequest }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return pOSTApiUsersUnverify(data, fetchOptions);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type POSTApiUsersUnverifyMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pOSTApiUsersUnverify>>
->;
-export type POSTApiUsersUnverifyMutationBody = VerifyUserRequest;
-export type POSTApiUsersUnverifyMutationError = HTTPError | void;
-
-/**
- * @summary func12
- */
-export const usePOSTApiUsersUnverify = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pOSTApiUsersUnverify>>,
-			TError,
-			{ data: VerifyUserRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pOSTApiUsersUnverify>>,
-	TError,
-	{ data: VerifyUserRequest },
-	TContext
-> => {
-	const mutationOptions = getPOSTApiUsersUnverifyMutationOptions(options);
-
-	return useMutation(mutationOptions, queryClient);
-};
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.VerifyUser.func11`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func11
- */
-export type pOSTApiUsersVerifyResponse200 = {
-	data: String;
-	status: 200;
-};
-
-export type pOSTApiUsersVerifyResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type pOSTApiUsersVerifyResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type pOSTApiUsersVerifyResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type pOSTApiUsersVerifyResponseSuccess =
-	pOSTApiUsersVerifyResponse200 & {
-		headers: Headers;
-	};
-export type pOSTApiUsersVerifyResponseError = (
-	| pOSTApiUsersVerifyResponse400
-	| pOSTApiUsersVerifyResponse500
-	| pOSTApiUsersVerifyResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type pOSTApiUsersVerifyResponse =
-	| pOSTApiUsersVerifyResponseSuccess
-	| pOSTApiUsersVerifyResponseError;
-
-export const getPOSTApiUsersVerifyUrl = () => {
-	return `/api/users/verify`;
-};
-
-export const pOSTApiUsersVerify = async (
-	verifyUserRequest: VerifyUserRequest,
-	options?: RequestInit,
-): Promise<pOSTApiUsersVerifyResponse> => {
-	const res = await fetch(getPOSTApiUsersVerifyUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "*/*", ...options?.headers },
-		body: JSON.stringify(verifyUserRequest),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: pOSTApiUsersVerifyResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as pOSTApiUsersVerifyResponse;
-};
-
-export const getPOSTApiUsersVerifyMutationOptions = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof pOSTApiUsersVerify>>,
-		TError,
-		{ data: VerifyUserRequest },
-		TContext
-	>;
-	fetch?: RequestInit;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof pOSTApiUsersVerify>>,
-	TError,
-	{ data: VerifyUserRequest },
-	TContext
-> => {
-	const mutationKey = ["pOSTApiUsersVerify"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof pOSTApiUsersVerify>>,
-		{ data: VerifyUserRequest }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return pOSTApiUsersVerify(data, fetchOptions);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type POSTApiUsersVerifyMutationResult = NonNullable<
-	Awaited<ReturnType<typeof pOSTApiUsersVerify>>
->;
-export type POSTApiUsersVerifyMutationBody = VerifyUserRequest;
-export type POSTApiUsersVerifyMutationError = HTTPError | void;
-
-/**
- * @summary func11
- */
-export const usePOSTApiUsersVerify = <
-	TError = HTTPError | void,
-	TContext = unknown,
->(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof pOSTApiUsersVerify>>,
-			TError,
-			{ data: VerifyUserRequest },
-			TContext
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof pOSTApiUsersVerify>>,
-	TError,
-	{ data: VerifyUserRequest },
-	TContext
-> => {
-	const mutationOptions = getPOSTApiUsersVerifyMutationOptions(options);
-
-	return useMutation(mutationOptions, queryClient);
-};
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func9`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func9
- */
-export type gETApiUsersPublicKeyResponse200 = {
-	data: User;
-	status: 200;
-};
-
-export type gETApiUsersPublicKeyResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type gETApiUsersPublicKeyResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type gETApiUsersPublicKeyResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type gETApiUsersPublicKeyResponseSuccess =
-	gETApiUsersPublicKeyResponse200 & {
-		headers: Headers;
-	};
-export type gETApiUsersPublicKeyResponseError = (
-	| gETApiUsersPublicKeyResponse400
-	| gETApiUsersPublicKeyResponse500
-	| gETApiUsersPublicKeyResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type gETApiUsersPublicKeyResponse =
-	| gETApiUsersPublicKeyResponseSuccess
-	| gETApiUsersPublicKeyResponseError;
-
-export const getGETApiUsersPublicKeyUrl = (publicKey: string) => {
-	return `/api/users/${publicKey}`;
-};
-
-export const gETApiUsersPublicKey = async (
-	publicKey: string,
-	options?: RequestInit,
-): Promise<gETApiUsersPublicKeyResponse> => {
-	const res = await fetch(getGETApiUsersPublicKeyUrl(publicKey), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: gETApiUsersPublicKeyResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiUsersPublicKeyResponse;
-};
-
-export const getGETApiUsersPublicKeyQueryKey = (publicKey?: string) => {
-	return [`/api/users/${publicKey}`] as const;
-};
-
-export const getGETApiUsersPublicKeyQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGETApiUsersPublicKeyQueryKey(publicKey);
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof gETApiUsersPublicKey>>
-	> = ({ signal }) =>
-		gETApiUsersPublicKey(publicKey, { signal, ...fetchOptions });
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!publicKey,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GETApiUsersPublicKeyQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiUsersPublicKey>>
->;
-export type GETApiUsersPublicKeyQueryError = HTTPError | void;
-
-export function useGETApiUsersPublicKey<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsersPublicKey>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsersPublicKey<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsersPublicKey>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsersPublicKey<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary func9
- */
-
-export function useGETApiUsersPublicKey<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiUsersPublicKeyQueryOptions(publicKey, options);
-
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * #### Controller: 
-
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUserDetails.func10`
-
-#### Middlewares:
-
-- `github.com/go-fuego/fuego.defaultLogger.middleware`
-
----
-
-
- * @summary func10
- */
-export type gETApiUsersPublicKeyDetailsResponse200 = {
-	data: UserWithPostCount;
-	status: 200;
-};
-
-export type gETApiUsersPublicKeyDetailsResponse400 = {
-	data: HTTPError;
-	status: 400;
-};
-
-export type gETApiUsersPublicKeyDetailsResponse500 = {
-	data: HTTPError;
-	status: 500;
-};
-
-export type gETApiUsersPublicKeyDetailsResponseDefault = {
-	data: void;
-	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
-};
-
-export type gETApiUsersPublicKeyDetailsResponseSuccess =
-	gETApiUsersPublicKeyDetailsResponse200 & {
-		headers: Headers;
-	};
-export type gETApiUsersPublicKeyDetailsResponseError = (
-	| gETApiUsersPublicKeyDetailsResponse400
-	| gETApiUsersPublicKeyDetailsResponse500
-	| gETApiUsersPublicKeyDetailsResponseDefault
-) & {
-	headers: Headers;
-};
-
-export type gETApiUsersPublicKeyDetailsResponse =
-	| gETApiUsersPublicKeyDetailsResponseSuccess
-	| gETApiUsersPublicKeyDetailsResponseError;
-
-export const getGETApiUsersPublicKeyDetailsUrl = (publicKey: string) => {
-	return `/api/users/${publicKey}/details`;
-};
-
-export const gETApiUsersPublicKeyDetails = async (
-	publicKey: string,
-	options?: RequestInit,
-): Promise<gETApiUsersPublicKeyDetailsResponse> => {
-	const res = await fetch(getGETApiUsersPublicKeyDetailsUrl(publicKey), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: gETApiUsersPublicKeyDetailsResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as gETApiUsersPublicKeyDetailsResponse;
-};
-
-export const getGETApiUsersPublicKeyDetailsQueryKey = (publicKey?: string) => {
-	return [`/api/users/${publicKey}/details`] as const;
-};
-
-export const getGETApiUsersPublicKeyDetailsQueryOptions = <
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGETApiUsersPublicKeyDetailsQueryKey(publicKey);
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>
-	> = ({ signal }) =>
-		gETApiUsersPublicKeyDetails(publicKey, { signal, ...fetchOptions });
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!publicKey,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GETApiUsersPublicKeyDetailsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>
->;
-export type GETApiUsersPublicKeyDetailsQueryError = HTTPError | void;
-
-export function useGETApiUsersPublicKeyDetails<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsersPublicKeyDetails<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-					TError,
-					Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>
-				>,
-				"initialData"
-			>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGETApiUsersPublicKeyDetails<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary func10
- */
-
-export function useGETApiUsersPublicKeyDetails<
-	TData = Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-	TError = HTTPError | void,
->(
-	publicKey: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof gETApiUsersPublicKeyDetails>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGETApiUsersPublicKeyDetailsQueryOptions(
-		publicKey,
-		options,
-	);
-
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}

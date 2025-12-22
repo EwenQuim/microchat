@@ -54,14 +54,13 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 }
 
 const createRoom = `-- name: CreateRoom :one
-INSERT INTO rooms (name, hidden, password_hash, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
-RETURNING name, hidden, created_at, updated_at, password_hash
+INSERT INTO rooms (name, password_hash, created_at, updated_at)
+VALUES (?, ?, ?, ?)
+RETURNING name, created_at, updated_at, password_hash
 `
 
 type CreateRoomParams struct {
 	Name         string         `json:"name"`
-	Hidden       bool           `json:"hidden"`
 	PasswordHash sql.NullString `json:"password_hash"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
@@ -70,7 +69,6 @@ type CreateRoomParams struct {
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
 	row := q.db.QueryRowContext(ctx, createRoom,
 		arg.Name,
-		arg.Hidden,
 		arg.PasswordHash,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -78,7 +76,6 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 	var i Room
 	err := row.Scan(
 		&i.Name,
-		&i.Hidden,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PasswordHash,
@@ -202,7 +199,7 @@ func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message
 }
 
 const getRoomByName = `-- name: GetRoomByName :one
-SELECT name, hidden, created_at, updated_at, password_hash FROM rooms
+SELECT name, created_at, updated_at, password_hash FROM rooms
 WHERE name = ?
 `
 
@@ -211,7 +208,6 @@ func (q *Queries) GetRoomByName(ctx context.Context, name string) (Room, error) 
 	var i Room
 	err := row.Scan(
 		&i.Name,
-		&i.Hidden,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PasswordHash,
@@ -233,9 +229,7 @@ func (q *Queries) GetRoomPasswordHash(ctx context.Context, name string) (sql.Nul
 const getRoomsWithMessageCount = `-- name: GetRoomsWithMessageCount :many
 SELECT
     r.name,
-    r.hidden,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -257,13 +251,11 @@ LIMIT 100
 `
 
 type GetRoomsWithMessageCountRow struct {
-	Name                 string      `json:"name"`
-	Hidden               bool        `json:"hidden"`
-	HasPassword          int64       `json:"has_password"`
-	MessageCount         interface{} `json:"message_count"`
-	LastMessageContent   string      `json:"last_message_content"`
-	LastMessageUser      string      `json:"last_message_user"`
-	LastMessageTimestamp string      `json:"last_message_timestamp"`
+	Name                 string `json:"name"`
+	HasPassword          int64  `json:"has_password"`
+	LastMessageContent   string `json:"last_message_content"`
+	LastMessageUser      string `json:"last_message_user"`
+	LastMessageTimestamp string `json:"last_message_timestamp"`
 }
 
 func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
@@ -277,9 +269,7 @@ func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithM
 		var i GetRoomsWithMessageCountRow
 		if err := rows.Scan(
 			&i.Name,
-			&i.Hidden,
 			&i.HasPassword,
-			&i.MessageCount,
 			&i.LastMessageContent,
 			&i.LastMessageUser,
 			&i.LastMessageTimestamp,
@@ -369,9 +359,7 @@ func (q *Queries) RoomExists(ctx context.Context, name string) (bool, error) {
 const searchRoomsByName = `-- name: SearchRoomsByName :many
 SELECT
     r.name,
-    r.hidden,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
-    COALESCE((SELECT COUNT(*) FROM messages WHERE room = r.name), 0) as message_count,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -394,13 +382,11 @@ LIMIT 100
 `
 
 type SearchRoomsByNameRow struct {
-	Name                 string      `json:"name"`
-	Hidden               bool        `json:"hidden"`
-	HasPassword          int64       `json:"has_password"`
-	MessageCount         interface{} `json:"message_count"`
-	LastMessageContent   string      `json:"last_message_content"`
-	LastMessageUser      string      `json:"last_message_user"`
-	LastMessageTimestamp string      `json:"last_message_timestamp"`
+	Name                 string `json:"name"`
+	HasPassword          int64  `json:"has_password"`
+	LastMessageContent   string `json:"last_message_content"`
+	LastMessageUser      string `json:"last_message_user"`
+	LastMessageTimestamp string `json:"last_message_timestamp"`
 }
 
 func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString) ([]SearchRoomsByNameRow, error) {
@@ -414,9 +400,7 @@ func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString
 		var i SearchRoomsByNameRow
 		if err := rows.Scan(
 			&i.Name,
-			&i.Hidden,
 			&i.HasPassword,
-			&i.MessageCount,
 			&i.LastMessageContent,
 			&i.LastMessageUser,
 			&i.LastMessageTimestamp,
@@ -432,23 +416,6 @@ func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateRoomVisibility = `-- name: UpdateRoomVisibility :exec
-UPDATE rooms
-SET hidden = ?, updated_at = ?
-WHERE name = ?
-`
-
-type UpdateRoomVisibilityParams struct {
-	Hidden    bool      `json:"hidden"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
-}
-
-func (q *Queries) UpdateRoomVisibility(ctx context.Context, arg UpdateRoomVisibilityParams) error {
-	_, err := q.db.ExecContext(ctx, updateRoomVisibility, arg.Hidden, arg.UpdatedAt, arg.Name)
-	return err
 }
 
 const updateUserVerified = `-- name: UpdateUserVerified :exec

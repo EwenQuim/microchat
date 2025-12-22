@@ -194,25 +194,16 @@ export interface Message {
 }
 
 /**
- * RegisterUserRequest schema
- */
-export interface RegisterUserRequest {
-  public_key: string;
-}
-
-/**
  * Room schema
  */
 export interface Room {
   has_password?: boolean;
-  hidden?: boolean;
   /** @nullable */
   last_message_content?: string | null;
   /** @nullable */
   last_message_timestamp?: string | null;
   /** @nullable */
   last_message_user?: string | null;
-  message_count?: number;
   name?: string;
 }
 
@@ -233,16 +224,6 @@ export interface SendMessageRequest {
 }
 
 /**
- * UpdateRoomVisibilityRequest schema
- */
-export interface UpdateRoomVisibilityRequest {
-  hidden?: boolean;
-  pubkey: string;
-  signature: string;
-  timestamp: number;
-}
-
-/**
  * User schema
  */
 export interface User {
@@ -251,29 +232,6 @@ export interface User {
   updated_at?: string;
   verified?: boolean;
 }
-
-/**
- * UserWithPostCount schema
- */
-export interface UserWithPostCount {
-  created_at?: string;
-  post_count?: number;
-  public_key?: string;
-  updated_at?: string;
-  verified?: boolean;
-}
-
-/**
- * VerifyUserRequest schema
- */
-export interface VerifyUserRequest {
-  public_key: string;
-}
-
-/**
- * string schema
- */
-export type String = string;
 
 /**
  * unknown-interface schema

@@ -64,7 +64,6 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 		now := time.Now()
 		_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
 			Name:         room,
-			Hidden:       false, // Default to visible
 			PasswordHash: sql.NullString{Valid: false}, // Auto-created rooms are always public
 			CreatedAt:    now,
 			UpdatedAt:    now,
@@ -151,8 +150,6 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 
 		room := models.Room{
 			Name:        row.Name,
-			MessageCount: int(row.MessageCount.(int64)),
-			Hidden:       row.Hidden,
 			HasPassword: hasPassword,
 		}
 
@@ -187,10 +184,8 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 		hasPassword := row.HasPassword == 1
 
 		room := models.Room{
-			Name:         row.Name,
-			MessageCount: int(row.MessageCount.(int64)),
-			Hidden:       row.Hidden,
-			HasPassword:  hasPassword,
+			Name:        row.Name,
+			HasPassword: hasPassword,
 		}
 
 		if row.LastMessageContent != "" {
@@ -236,7 +231,6 @@ func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (
 	now := time.Now()
 	_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
 		Name:         name,
-		Hidden:       false,
 		PasswordHash: passwordHash,
 		CreatedAt:    now,
 		UpdatedAt:    now,
@@ -246,10 +240,8 @@ func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (
 	}
 
 	return &models.Room{
-		Name:         name,
-		MessageCount: 0,
-		Hidden:       false,
-		HasPassword:  hasPassword,
+		Name:        name,
+		HasPassword: hasPassword,
 	}, nil
 }
 
@@ -385,19 +377,6 @@ func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*mo
 		UpdatedAt: row.UpdatedAt,
 		PostCount: postCount,
 	}, nil
-}
-
-func (s *Store) UpdateRoomVisibility(ctx context.Context, name string, hidden bool) error {
-	err := s.queries.UpdateRoomVisibility(ctx, sqlc.UpdateRoomVisibilityParams{
-		Hidden:    hidden,
-		UpdatedAt: time.Now(),
-		Name:      name,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update room visibility: %w", err)
-	}
-
-	return nil
 }
 
 func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password string) error {

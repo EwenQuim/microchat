@@ -70,7 +70,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 							No rooms found.
 						</Command.Empty>
 						{rooms
-							?.filter((room) => !room.hidden)
+							?.filter((room) => !room.has_password)
 							.map((room) => (
 								<Command.Item
 									key={room.name}
