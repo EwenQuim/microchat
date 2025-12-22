@@ -38,6 +38,10 @@ services:
         - action: rebuild
           path: ./app
           ignore:
-            - app/node_modules/
-            - app/dist/
-            - app/.tanstack/
+            - node_modules/
+            - dist/
+            - .tanstack/
+            - .next/
+            - .turbo/
+            - coverage/
+            - build/

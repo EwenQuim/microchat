@@ -1,7 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import { Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRooms } from "@/hooks/useRooms";
 import { useSearchRooms } from "@/hooks/useSearchRooms";
 
@@ -15,33 +16,25 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 	const navigate = useNavigate();
 	const { data: searchResults } = useSearchRooms(search);
 	const { data: allRooms } = useRooms();
-	const inputRef = useRef<HTMLInputElement>(null);
 
 	const rooms = search.trim() ? searchResults : allRooms;
 
-	useEffect(() => {
-		const down = (e: KeyboardEvent) => {
-			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				onOpenChange(!open);
-			}
-			if (e.key === "Escape" && open) {
-				e.preventDefault();
-				onOpenChange(false);
-			}
-		};
-
-		document.addEventListener("keydown", down);
-		return () => document.removeEventListener("keydown", down);
-	}, [open, onOpenChange]);
-
-	useEffect(() => {
-		if (open) {
-			setTimeout(() => {
-				inputRef.current?.focus();
-			}, 0);
+	useKeyboardShortcut((e) => {
+		if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+			e.preventDefault();
+			onOpenChange(!open);
 		}
-	}, [open]);
+		if (e.key === "Escape" && open) {
+			e.preventDefault();
+			onOpenChange(false);
+		}
+	});
+
+	const inputCallbackRef = (node: HTMLInputElement | null) => {
+		if (node && open) {
+			setTimeout(() => node.focus(), 0);
+		}
+	};
 
 	const handleSelect = (roomName: string) => {
 		navigate({ to: "/chat/$roomName", params: { roomName } });
@@ -65,14 +58,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 					<div className="flex items-center border-b px-3">
 						<Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 						<Command.Input
-							ref={inputRef}
+							ref={inputCallbackRef}
 							placeholder="Search rooms..."
 							value={search}
 							onValueChange={setSearch}
 							className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
 						/>
 					</div>
-					<Command.List className="max-h-[300px] overflow-y-auto p-2">
+					<Command.List className="max-h-75 overflow-y-auto p-2">
 						<Command.Empty className="py-6 text-center text-sm text-muted-foreground">
 							No rooms found.
 						</Command.Empty>

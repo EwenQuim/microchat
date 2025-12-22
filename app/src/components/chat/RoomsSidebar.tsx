@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Lock, Plus, Search, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRooms } from "@/hooks/useRooms";
 import { useUsername } from "@/hooks/useUsername";
 import { cn } from "@/lib/utils";
@@ -22,17 +23,12 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const [showSearch, setShowSearch] = useState(false);
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		const down = (e: KeyboardEvent) => {
-			if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				setShowCreateDialog(true);
-			}
-		};
-
-		document.addEventListener("keydown", down);
-		return () => document.removeEventListener("keydown", down);
-	}, []);
+	useKeyboardShortcut((e) => {
+		if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
+			e.preventDefault();
+			setShowCreateDialog(true);
+		}
+	});
 
 	return (
 		<aside className={cn("border-r bg-muted/10 relative", className)}>
@@ -140,7 +136,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				<Button
 					onClick={() => setShowCreateDialog(true)}
 					size="lg"
-					className="absolute bottom-4 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10"
+					className="absolute bottom-4 right-4 rounded-full shadow-lg h-12 w-12 p-0 z-10 cursor-pointer active:scale-90"
 				>
 					<Plus className="h-8 w-8" />
 				</Button>

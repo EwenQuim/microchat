@@ -36,34 +36,30 @@ export function ChatArea({
 		isLoading,
 		error: messagesError,
 	} = useMessages(roomName, password);
-	const sendMessageMutation = useSendMessage(roomName || "");
+
+	const sendMessageMutation = useSendMessage();
 
 	// Check if error indicates password required
 	useEffect(() => {
-		if (messagesError) {
-			const errorMessage = String(messagesError);
-			if (
+		const checkPasswordError = (error: unknown) => {
+			if (!error) return false;
+			const errorMessage = String(error);
+			return (
 				errorMessage.includes("password required") ||
 				errorMessage.includes("invalid room password")
-			) {
-				setShowPasswordDialog(true);
-			}
-		}
-	}, [messagesError]);
+			);
+		};
 
-	// Check send message errors for password issues
-	useEffect(() => {
-		if (sendMessageMutation.error) {
-			const errorMessage = String(sendMessageMutation.error);
-			if (
-				errorMessage.includes("password required") ||
-				errorMessage.includes("invalid room password")
-			) {
-				setShowPasswordDialog(true);
+		if (
+			checkPasswordError(messagesError) ||
+			checkPasswordError(sendMessageMutation.error)
+		) {
+			setShowPasswordDialog(true);
+			if (sendMessageMutation.error) {
 				setPasswordError("Invalid password");
 			}
 		}
-	}, [sendMessageMutation.error]);
+	}, [messagesError, sendMessageMutation.error]);
 
 	// Track successful room visits
 	useEffect(() => {

@@ -10,10 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
-import {
-	getGETApiRoomsQueryKey,
-	usePOSTApiRooms,
-} from "@/lib/api/generated/api/api";
+import { usePOSTApiRooms } from "@/lib/api/generated/api/api";
 
 interface CreateRoomDialogProps {
 	open: boolean;
@@ -34,7 +31,6 @@ export function CreateRoomDialog({
 	const createRoomMutation = usePOSTApiRooms({
 		mutation: {
 			onSuccess: (response) => {
-				queryClient.invalidateQueries({ queryKey: getGETApiRoomsQueryKey() });
 				if (response.status === 200 && response.data.name) {
 					// Store password if room was created with one
 					if (password) {
@@ -46,6 +42,7 @@ export function CreateRoomDialog({
 				setPassword("");
 				onOpenChange(false);
 			},
+			onSettled: () => queryClient.invalidateQueries(),
 		},
 	});
 

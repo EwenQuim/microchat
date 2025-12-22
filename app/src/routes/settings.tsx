@@ -33,7 +33,7 @@ function Settings() {
 	const [importUsername, setImportUsername] = useState("");
 	const [importError, setImportError] = useState("");
 	const [showQR, setShowQR] = useState(false);
-	const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+	const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const { username, keys, importProfile, clearUsername } = useUsername();
 	const navigate = useNavigate();
@@ -47,16 +47,24 @@ function Settings() {
 		}
 	}, [searchParams.import]);
 
-	// Generate QR code when needed
-	useEffect(() => {
-		if (showQR && keys?.privateKey) {
+	const handleShowQR = async () => {
+		if (!showQR && keys?.privateKey) {
 			const nsec = hexToNsec(keys.privateKey);
 			const importUrl = `${window.location.origin}/settings?import=${nsec}`;
-			QRCode.toDataURL(importUrl, { width: 300, margin: 2 })
-				.then(setQrCodeDataUrl)
-				.catch(console.error);
+			try {
+				const url = await QRCode.toDataURL(importUrl, {
+					width: 300,
+					margin: 2,
+				});
+				setQrCodeDataUrl(url);
+				setShowQR(true);
+			} catch (error) {
+				console.error(error);
+			}
+		} else {
+			setShowQR(false);
 		}
-	}, [showQR, keys]);
+	};
 
 	const handleImport = () => {
 		setImportError("");
@@ -283,7 +291,7 @@ function Settings() {
 							{keys?.privateKey ? (
 								<>
 									<Button
-										onClick={() => setShowQR(!showQR)}
+										onClick={handleShowQR}
 										className="w-full"
 										variant={showQR ? "outline" : "default"}
 									>
