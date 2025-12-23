@@ -42,6 +42,10 @@ func GetRooms(chatService *services.ChatService) func(c fuego.ContextWithParams[
 			if room.HasPassword && !visitedRooms[room.Name] {
 				continue
 			}
+			err = room.OutTransform(c)
+			if err != nil {
+				return nil, err
+			}
 			visibleRooms = append(visibleRooms, room)
 		}
 
@@ -83,6 +87,10 @@ func SearchRooms(chatService *services.ChatService) func(c fuego.ContextWithPara
 			// Hide password-protected rooms unless already visited
 			if room.HasPassword && !visitedRooms[room.Name] {
 				continue
+			}
+			err = room.OutTransform(c)
+			if err != nil {
+				return nil, err
 			}
 			visibleRooms = append(visibleRooms, room)
 		}

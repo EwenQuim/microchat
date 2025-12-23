@@ -1,11 +1,30 @@
 package models
 
+import (
+	"context"
+
+	"github.com/go-fuego/fuego"
+)
+
 type Room struct {
 	Name                 string  `json:"name"`
 	HasPassword          bool    `json:"has_password"`
 	LastMessageContent   *string `json:"last_message_content,omitempty"`
 	LastMessageUser      *string `json:"last_message_user,omitempty"`
 	LastMessageTimestamp *string `json:"last_message_timestamp,omitempty"`
+}
+
+var _ fuego.OutTransformer = (*Room)(nil)
+
+// InTransform implements fuego.InTransformer.
+func (r *Room) OutTransform(context.Context) error {
+	if r.HasPassword {
+		r.LastMessageContent = nil
+		r.LastMessageUser = nil
+		r.LastMessageTimestamp = nil
+	}
+
+	return nil
 }
 
 type CreateRoomRequest struct {
