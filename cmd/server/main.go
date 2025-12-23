@@ -37,6 +37,7 @@ func main() {
 	// Create Fuego server with port
 	s := fuego.NewServer(
 		fuego.WithAddr("0.0.0.0:9997"),
+		fuego.WithoutAutoGroupTags(),
 		fuego.WithEngineOptions(
 			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
 				PrettyFormatJSON: true,
@@ -57,7 +58,6 @@ func main() {
 	}
 	spaHandler := createSPAHandler(staticFS)
 	fuego.GetStd(s, "/", spaHandler)
-	fuego.GetStd(s, "/*", spaHandler)
 
 	if err := s.Run(); err != nil {
 		slog.Error("Server failed to run", "error", err)

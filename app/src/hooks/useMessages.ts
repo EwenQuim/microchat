@@ -1,4 +1,4 @@
-import { useGETApiRoomsRoomMessages } from "@/lib/api/generated/api/api";
+import { useGETApiRoomsRoomMessages } from "@/lib/api/generated/chat/chat";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
 
 export function useMessages(roomName: string | null, password?: string) {

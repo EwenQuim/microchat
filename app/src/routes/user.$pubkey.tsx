@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { useGETApiUsersPublicKey } from "@/lib/api/generated/api/api";
+import { useGETApiUsersPublicKey } from "@/lib/api/generated/user/user";
 import { hexToNpub } from "@/lib/crypto";
 
 export const Route = createFileRoute("/user/$pubkey")({

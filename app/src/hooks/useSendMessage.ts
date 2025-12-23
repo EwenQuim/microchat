@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { usePOSTApiRoomsRoomMessages } from "@/lib/api/generated/api/api";
+import { usePOSTApiRoomsRoomMessages } from "@/lib/api/generated/chat/chat";
 
 export function useSendMessage() {
 	const queryClient = useQueryClient();

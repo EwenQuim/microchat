@@ -205,7 +205,7 @@
 	"paths": {
 		"/": {
 			"get": {
-				"description": "#### Controller: \n\n`main.main.createSPAHandler.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`main.main.createSPAHandler.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
 				"operationId": "GET_/",
 				"responses": {
 					"200": {
@@ -257,64 +257,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func4"
-			}
-		},
-		"/*": {
-			"get": {
-				"description": "#### Controller: \n\n`main.main.createSPAHandler.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
-				"operationId": "GET_/*",
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/unknown-interface"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/unknown-interface"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "func4"
+				"summary": "func5"
 			}
 		},
 		"/api/rooms": {
@@ -395,8 +338,6 @@
 				},
 				"summary": "func1",
 				"tags": [
-					"api",
-					"rooms",
 					"chat"
 				]
 			},
@@ -475,8 +416,6 @@
 				},
 				"summary": "func3",
 				"tags": [
-					"api",
-					"rooms",
 					"chat"
 				]
 			}
@@ -566,8 +505,6 @@
 				},
 				"summary": "func2",
 				"tags": [
-					"api",
-					"rooms",
 					"chat"
 				]
 			}
@@ -658,8 +595,6 @@
 				},
 				"summary": "func4",
 				"tags": [
-					"api",
-					"rooms",
 					"chat"
 				]
 			},
@@ -746,8 +681,6 @@
 				},
 				"summary": "func5",
 				"tags": [
-					"api",
-					"rooms",
 					"chat"
 				]
 			}
@@ -825,8 +758,7 @@
 				},
 				"summary": "func6",
 				"tags": [
-					"api",
-					"users"
+					"user"
 				]
 			}
 		}
@@ -839,16 +771,12 @@
 	],
 	"tags": [
 		{
-			"name": "api"
-		},
-		{
+			"description": "routes relative to rooms and messaging",
 			"name": "chat"
 		},
 		{
-			"name": "rooms"
-		},
-		{
-			"name": "users"
+			"description": "routes relative to users",
+			"name": "user"
 		}
 	]
 }

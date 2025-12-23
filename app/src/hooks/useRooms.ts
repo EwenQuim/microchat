@@ -1,4 +1,4 @@
-import { useGETApiRooms } from "@/lib/api/generated/api/api";
+import { useGETApiRooms } from "@/lib/api/generated/chat/chat";
 import type { Room } from "@/lib/api/generated/openAPI.schemas";
 import { getStoredPasswords } from "./useSearchRooms";
 

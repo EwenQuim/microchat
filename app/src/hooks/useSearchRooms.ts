@@ -1,4 +1,4 @@
-import { useGETApiRoomsSearch } from "@/lib/api/generated/api/api";
+import { useGETApiRoomsSearch } from "@/lib/api/generated/chat/chat";
 import type { Room } from "@/lib/api/generated/openAPI.schemas";
 
 export function getStoredPasswords(): Record<string, string> {

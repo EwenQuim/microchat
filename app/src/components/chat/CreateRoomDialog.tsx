@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
-import { usePOSTApiRooms } from "@/lib/api/generated/api/api";
+import { usePOSTApiRooms } from "@/lib/api/generated/chat/chat";
 
 interface CreateRoomDialogProps {
 	open: boolean;

@@ -112,142 +112,141 @@ func getAllPets(ctx fuego.ContextNoBody) (*MyResponse, error) {
  * CreateRoomRequest schema
  */
 export interface CreateRoomRequest {
-  /**
-   * @minLength 1
-   * @maxLength 50
-   */
-  name: string;
-  /**
-   * @minLength 4
-   * @maxLength 72
-   * @nullable
-   */
-  password?: string | null;
+	/**
+	 * @minLength 1
+	 * @maxLength 50
+	 */
+	name: string;
+	/**
+	 * @minLength 4
+	 * @maxLength 72
+	 * @nullable
+	 */
+	password?: string | null;
 }
 
 /**
  * Additional information about the error
  * @nullable
  */
-export type HTTPErrorErrorsItemMore = {[key: string]: unknown | null} | null;
+export type HTTPErrorErrorsItemMore = { [key: string]: unknown | null } | null;
 
 /**
  * @nullable
  */
 export type HTTPErrorErrorsItem = {
-  /**
-   * Additional information about the error
-   * @nullable
-   */
-  more?: HTTPErrorErrorsItemMore;
-  /** For example, name of the parameter that caused the error */
-  name?: string;
-  /** Human readable error message */
-  reason?: string;
+	/**
+	 * Additional information about the error
+	 * @nullable
+	 */
+	more?: HTTPErrorErrorsItemMore;
+	/** For example, name of the parameter that caused the error */
+	name?: string;
+	/** Human readable error message */
+	reason?: string;
 } | null;
 
 /**
  * HTTPError schema
  */
 export interface HTTPError {
-  /**
-   * Human readable error message
-   * @nullable
-   */
-  detail?: string | null;
-  /** @nullable */
-  errors?: HTTPErrorErrorsItem[] | null;
-  /** @nullable */
-  instance?: string | null;
-  /**
-   * HTTP status code
-   * @nullable
-   */
-  status?: number | null;
-  /**
-   * Short title of the error
-   * @nullable
-   */
-  title?: string | null;
-  /**
-   * URL of the error type. Can be used to lookup the error in a documentation
-   * @nullable
-   */
-  type?: string | null;
+	/**
+	 * Human readable error message
+	 * @nullable
+	 */
+	detail?: string | null;
+	/** @nullable */
+	errors?: HTTPErrorErrorsItem[] | null;
+	/** @nullable */
+	instance?: string | null;
+	/**
+	 * HTTP status code
+	 * @nullable
+	 */
+	status?: number | null;
+	/**
+	 * Short title of the error
+	 * @nullable
+	 */
+	title?: string | null;
+	/**
+	 * URL of the error type. Can be used to lookup the error in a documentation
+	 * @nullable
+	 */
+	type?: string | null;
 }
 
 /**
  * Message schema
  */
 export interface Message {
-  content?: string;
-  id?: string;
-  /** @nullable */
-  pubkey?: string | null;
-  room?: string;
-  /** @nullable */
-  signature?: string | null;
-  /** @nullable */
-  signed_timestamp?: number | null;
-  timestamp?: string;
-  user?: string;
+	content?: string;
+	id?: string;
+	/** @nullable */
+	pubkey?: string | null;
+	room?: string;
+	/** @nullable */
+	signature?: string | null;
+	/** @nullable */
+	signed_timestamp?: number | null;
+	timestamp?: string;
+	user?: string;
 }
 
 /**
  * Room schema
  */
 export interface Room {
-  has_password?: boolean;
-  /** @nullable */
-  last_message_content?: string | null;
-  /** @nullable */
-  last_message_timestamp?: string | null;
-  /** @nullable */
-  last_message_user?: string | null;
-  name?: string;
+	has_password?: boolean;
+	/** @nullable */
+	last_message_content?: string | null;
+	/** @nullable */
+	last_message_timestamp?: string | null;
+	/** @nullable */
+	last_message_user?: string | null;
+	name?: string;
 }
 
 /**
  * SendMessageRequest schema
  */
 export interface SendMessageRequest {
-  content: string;
-  /** @nullable */
-  pubkey?: string | null;
-  /** @nullable */
-  room_password?: string | null;
-  /** @nullable */
-  signature?: string | null;
-  /** @nullable */
-  timestamp?: number | null;
-  user: string;
+	content: string;
+	/** @nullable */
+	pubkey?: string | null;
+	/** @nullable */
+	room_password?: string | null;
+	/** @nullable */
+	signature?: string | null;
+	/** @nullable */
+	timestamp?: number | null;
+	user: string;
 }
 
 /**
  * User schema
  */
 export interface User {
-  created_at?: string;
-  public_key?: string;
-  updated_at?: string;
-  verified?: boolean;
+	created_at?: string;
+	public_key?: string;
+	updated_at?: string;
+	verified?: boolean;
 }
 
 /**
  * unknown-interface schema
  */
-export interface UnknownInterface {}
+export type UnknownInterface = {};
 
 export type GETApiRoomsParams = {
-visited?: string;
+	visited?: string;
 };
 
 export type GETApiRoomsSearchParams = {
-visited?: string;
-q?: string;
+	visited?: string;
+	q?: string;
 };
 
 export type GETApiRoomsRoomMessagesParams = {
-password?: string;
+	password?: string;
 };
-

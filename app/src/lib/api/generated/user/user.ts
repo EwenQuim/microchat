@@ -122,7 +122,7 @@ import type {
 } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
-import type { HTTPError, UnknownInterface } from "../openAPI.schemas";
+import type { HTTPError, User } from "../openAPI.schemas";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
@@ -169,7 +169,7 @@ export type HTTPStatusCodes =
 /**
  * #### Controller: 
 
-`main.main.createSPAHandler.func5`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func6`
 
 #### Middlewares:
 
@@ -178,101 +178,134 @@ export type HTTPStatusCodes =
 ---
 
 
- * @summary func5
+ * @summary func6
  */
-export type getResponse200 = {
-	data: UnknownInterface;
+export type gETApiUsersPublicKeyResponse200 = {
+	data: User;
 	status: 200;
 };
 
-export type getResponse400 = {
+export type gETApiUsersPublicKeyResponse400 = {
 	data: HTTPError;
 	status: 400;
 };
 
-export type getResponse500 = {
+export type gETApiUsersPublicKeyResponse500 = {
 	data: HTTPError;
 	status: 500;
 };
 
-export type getResponseDefault = {
+export type gETApiUsersPublicKeyResponseDefault = {
 	data: void;
 	status: Exclude<HTTPStatusCodes, 200 | 400 | 500>;
 };
 
-export type getResponseSuccess = getResponse200 & {
-	headers: Headers;
-};
-export type getResponseError = (
-	| getResponse400
-	| getResponse500
-	| getResponseDefault
+export type gETApiUsersPublicKeyResponseSuccess =
+	gETApiUsersPublicKeyResponse200 & {
+		headers: Headers;
+	};
+export type gETApiUsersPublicKeyResponseError = (
+	| gETApiUsersPublicKeyResponse400
+	| gETApiUsersPublicKeyResponse500
+	| gETApiUsersPublicKeyResponseDefault
 ) & {
 	headers: Headers;
 };
 
-export type getResponse = getResponseSuccess | getResponseError;
+export type gETApiUsersPublicKeyResponse =
+	| gETApiUsersPublicKeyResponseSuccess
+	| gETApiUsersPublicKeyResponseError;
 
-export const getGetUrl = () => {
-	return `/`;
+export const getGETApiUsersPublicKeyUrl = (publicKey: string) => {
+	return `/api/users/${publicKey}`;
 };
 
-export const get = async (options?: RequestInit): Promise<getResponse> => {
-	const res = await fetch(getGetUrl(), {
+export const gETApiUsersPublicKey = async (
+	publicKey: string,
+	options?: RequestInit,
+): Promise<gETApiUsersPublicKeyResponse> => {
+	const res = await fetch(getGETApiUsersPublicKeyUrl(publicKey), {
 		...options,
 		method: "GET",
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const data: getResponse["data"] = body ? JSON.parse(body) : {};
-	return { data, status: res.status, headers: res.headers } as getResponse;
+	const data: gETApiUsersPublicKeyResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as gETApiUsersPublicKeyResponse;
 };
 
-export const getGetQueryKey = () => {
-	return [`/`] as const;
+export const getGETApiUsersPublicKeyQueryKey = (publicKey?: string) => {
+	return [`/api/users/${publicKey}`] as const;
 };
 
-export const getGetQueryOptions = <
-	TData = Awaited<ReturnType<typeof get>>,
+export const getGETApiUsersPublicKeyQueryOptions = <
+	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 	TError = HTTPError | void,
->(options?: {
-	query?: Partial<
-		UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
-	>;
-	fetch?: RequestInit;
-}) => {
+>(
+	publicKey: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getGETApiUsersPublicKeyQueryKey(publicKey);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof get>>> = ({
-		signal,
-	}) => get({ signal, ...fetchOptions });
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof gETApiUsersPublicKey>>
+	> = ({ signal }) =>
+		gETApiUsersPublicKey(publicKey, { signal, ...fetchOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof get>>,
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!publicKey,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 		TError,
 		TData
 	> & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>;
-export type GetQueryError = HTTPError | void;
+export type GETApiUsersPublicKeyQueryResult = NonNullable<
+	Awaited<ReturnType<typeof gETApiUsersPublicKey>>
+>;
+export type GETApiUsersPublicKeyQueryError = HTTPError | void;
 
-export function useGet<
-	TData = Awaited<ReturnType<typeof get>>,
+export function useGETApiUsersPublicKey<
+	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 	TError = HTTPError | void,
 >(
+	publicKey: string,
 	options: {
 		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof get>>,
+					Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 					TError,
-					Awaited<ReturnType<typeof get>>
+					Awaited<ReturnType<typeof gETApiUsersPublicKey>>
 				>,
 				"initialData"
 			>;
@@ -282,19 +315,24 @@ export function useGet<
 ): DefinedUseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-	TData = Awaited<ReturnType<typeof get>>,
+export function useGETApiUsersPublicKey<
+	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 	TError = HTTPError | void,
 >(
+	publicKey: string,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof get>>,
+					Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 					TError,
-					Awaited<ReturnType<typeof get>>
+					Awaited<ReturnType<typeof gETApiUsersPublicKey>>
 				>,
 				"initialData"
 			>;
@@ -304,13 +342,18 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-	TData = Awaited<ReturnType<typeof get>>,
+export function useGETApiUsersPublicKey<
+	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 	TError = HTTPError | void,
 >(
+	publicKey: string,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -319,16 +362,21 @@ export function useGet<
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary func5
+ * @summary func6
  */
 
-export function useGet<
-	TData = Awaited<ReturnType<typeof get>>,
+export function useGETApiUsersPublicKey<
+	TData = Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
 	TError = HTTPError | void,
 >(
+	publicKey: string,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof gETApiUsersPublicKey>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -336,7 +384,7 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetQueryOptions(options);
+	const queryOptions = getGETApiUsersPublicKeyQueryOptions(publicKey, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
