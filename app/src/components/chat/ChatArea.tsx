@@ -21,7 +21,6 @@ interface ChatAreaProps {
 	keys: KeyPair | null;
 	className?: string;
 }
-
 export function ChatArea({
 	roomName,
 	username,
@@ -34,35 +33,9 @@ export function ChatArea({
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
 	const queryClient = useQueryClient();
-	const {
-		data: messages,
-		isLoading,
-		error: messagesError,
-	} = useMessages(roomName, password);
+	const { data: messages, isLoading } = useMessages(roomName, password);
 
 	const sendMessageMutation = useSendMessage();
-
-	// Check if error indicates password required
-	useEffect(() => {
-		const checkPasswordError = (error: unknown) => {
-			if (!error) return false;
-			const errorMessage = String(error);
-			return (
-				errorMessage.includes("password required") ||
-				errorMessage.includes("invalid room password")
-			);
-		};
-
-		if (
-			checkPasswordError(messagesError) ||
-			checkPasswordError(sendMessageMutation.error)
-		) {
-			setShowPasswordDialog(true);
-			if (sendMessageMutation.error) {
-				setPasswordError("Invalid password");
-			}
-		}
-	}, [messagesError, sendMessageMutation.error]);
 
 	// Track successful room visits
 	useEffect(() => {
@@ -186,6 +159,7 @@ export function ChatArea({
 					isLoading={isLoading}
 					currentPubKey={currentPubKey}
 					className="flex-1 min-h-0"
+					onRetryPassword={() => setShowPasswordDialog(true)}
 				/>
 
 				<MessageInput

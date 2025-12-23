@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
 import { cn } from "@/lib/utils";
@@ -9,6 +10,7 @@ interface MessageListProps {
 	isLoading: boolean;
 	currentPubKey: string;
 	className?: string;
+	onRetryPassword?: () => void;
 }
 
 export function MessageList({
@@ -16,6 +18,7 @@ export function MessageList({
 	isLoading,
 	currentPubKey,
 	className,
+	onRetryPassword,
 }: MessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const shouldAutoScroll = useRef(true);
@@ -38,7 +41,19 @@ export function MessageList({
 
 				{!isLoading && messages.length === 0 && (
 					<div className="text-center text-muted-foreground my-8">
-						No messages yet. Be the first to say something!
+						<p className="mb-4">
+							No messages yet, or incorrect password. Be the first to say
+							something!
+						</p>
+						{onRetryPassword && (
+							<Button
+								variant="outline"
+								onClick={onRetryPassword}
+								className="mt-2"
+							>
+								Enter another password
+							</Button>
+						)}
 					</div>
 				)}
 

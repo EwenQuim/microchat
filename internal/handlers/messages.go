@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/EwenQuim/microchat/internal/models"
 	"github.com/EwenQuim/microchat/internal/services"
@@ -23,19 +25,11 @@ func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithPara
 		}
 		password := params.Password
 
-		// Validate room password if provided
-		if password != "" {
-			err := chatService.ValidateRoomPassword(c.Context(), room, password)
-			if err != nil {
-				return nil, fmt.Errorf("invalid room password")
-			}
-		} else {
-			// Check if room requires password by attempting to validate with empty password
-			// This will fail if room has a password
-			err := chatService.ValidateRoomPassword(c.Context(), room, "")
-			if err != nil && err.Error() == "invalid password" {
-				return nil, fmt.Errorf("password required for this room")
-			}
+		err = chatService.ValidateRoomPassword(c.Context(), room, password)
+		if err != nil {
+			slog.Error("cannot validate password", "err", err)
+			time.Sleep(500 * time.Millisecond) // Mitigate brute-force attacks
+			return []models.Message{}, nil
 		}
 
 		return chatService.GetMessages(c.Context(), room)
