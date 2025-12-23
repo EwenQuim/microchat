@@ -9,7 +9,7 @@ WHERE room = ?
 ORDER BY timestamp ASC
 LIMIT 100;
 
--- name: GetRoomsWithMessageCount :many
+-- name: GetRoomsWithLasMessage :many
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
@@ -21,13 +21,13 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT m.*
-    FROM messages m
-    INNER JOIN (
-        SELECT room, MAX(timestamp) as max_timestamp
-        FROM messages
-        GROUP BY room
-    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+    SELECT *
+    FROM (
+        SELECT m.*,
+               ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
+        FROM messages m
+    )
+    WHERE rn = 1
 ) last_msg ON last_msg.room = r.name
 ORDER BY last_msg.timestamp DESC, r.name ASC
 LIMIT 100;
@@ -93,13 +93,13 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT m.*
-    FROM messages m
-    INNER JOIN (
-        SELECT room, MAX(timestamp) as max_timestamp
-        FROM messages
-        GROUP BY room
-    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+    SELECT *
+    FROM (
+        SELECT m.*,
+               ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
+        FROM messages m
+    )
+    WHERE rn = 1
 ) last_msg ON last_msg.room = r.name
 WHERE r.name LIKE '%' || ? || '%'
 ORDER BY last_message_timestamp DESC, r.name ASC

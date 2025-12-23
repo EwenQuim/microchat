@@ -27,7 +27,7 @@ func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithPara
 
 		err = chatService.ValidateRoomPassword(c.Context(), room, password)
 		if err != nil {
-			slog.Error("cannot validate password", "err", err)
+			slog.ErrorContext(c, "cannot validate password", "err", err)
 			time.Sleep(500 * time.Millisecond) // Mitigate brute-force attacks
 			return []models.Message{}, nil
 		}

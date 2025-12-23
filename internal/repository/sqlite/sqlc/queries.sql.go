@@ -226,7 +226,7 @@ func (q *Queries) GetRoomPasswordHash(ctx context.Context, name string) (sql.Nul
 	return password_hash, err
 }
 
-const getRoomsWithMessageCount = `-- name: GetRoomsWithMessageCount :many
+const GetRoomsWithLasMessage = `-- name: GetRoomsWithLasMessage :many
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
@@ -238,13 +238,13 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp
-    FROM messages m
-    INNER JOIN (
-        SELECT room, MAX(timestamp) as max_timestamp
-        FROM messages
-        GROUP BY room
-    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, rn
+    FROM (
+        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp,
+               ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
+        FROM messages m
+    )
+    WHERE rn = 1
 ) last_msg ON last_msg.room = r.name
 ORDER BY last_msg.timestamp DESC, r.name ASC
 LIMIT 100
@@ -258,8 +258,8 @@ type GetRoomsWithMessageCountRow struct {
 	LastMessageTimestamp string `json:"last_message_timestamp"`
 }
 
-func (q *Queries) GetRoomsWithMessageCount(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRoomsWithMessageCount)
+func (q *Queries) GetRoomsWithLasMessage(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, GetRoomsWithLasMessage)
 	if err != nil {
 		return nil, err
 	}
@@ -368,13 +368,13 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp
-    FROM messages m
-    INNER JOIN (
-        SELECT room, MAX(timestamp) as max_timestamp
-        FROM messages
-        GROUP BY room
-    ) latest ON m.room = latest.room AND m.timestamp = latest.max_timestamp
+    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, rn
+    FROM (
+        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp,
+               ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
+        FROM messages m
+    )
+    WHERE rn = 1
 ) last_msg ON last_msg.room = r.name
 WHERE r.name LIKE '%' || ? || '%'
 ORDER BY last_message_timestamp DESC, r.name ASC

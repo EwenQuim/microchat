@@ -139,7 +139,7 @@ func (s *Store) GetMessages(ctx context.Context, room string) ([]models.Message,
 }
 
 func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
-	rows, err := s.queries.GetRoomsWithMessageCount(ctx)
+	rows, err := s.queries.GetRoomsWithLasMessage(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rooms: %w", err)
 	}
