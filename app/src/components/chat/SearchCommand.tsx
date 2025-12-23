@@ -50,9 +50,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 			className="fixed inset-0 z-50 bg-black/50 cursor-default"
 			onClick={() => onOpenChange(false)}
 		>
-			<div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg mx-2">
+			<div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
 				<Command
-					className="bg-background rounded-lg border shadow-lg mx-2"
+					className="bg-background rounded-lg border shadow-lg mx-4"
 					onClick={(e) => e.stopPropagation()}
 				>
 					<div className="flex items-center border-b px-3">

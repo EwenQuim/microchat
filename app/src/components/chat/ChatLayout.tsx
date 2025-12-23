@@ -14,6 +14,7 @@ import { ChatArea } from "./ChatArea";
 import { RoomsSidebar } from "./RoomsSidebar";
 
 interface ChatLayoutProps {
+	/** null if in index page, equal to room list on mobile */
 	roomName: string | null;
 }
 
