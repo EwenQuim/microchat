@@ -1,10 +1,13 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
+import { getStoredPasswords } from "@/hooks/useSearchRooms";
 import { useSendMessage } from "@/hooks/useSendMessage";
+import { getGETApiRoomsQueryKey } from "@/lib/api/generated/chat/chat";
 import { type KeyPair, signMessage } from "@/lib/crypto";
 import { cn } from "@/lib/utils";
 import { MessageInput } from "./MessageInput";
@@ -30,7 +33,7 @@ export function ChatArea({
 	const { password, setPassword } = useRoomPassword(roomName || undefined);
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
-
+	const queryClient = useQueryClient();
 	const {
 		data: messages,
 		isLoading,
@@ -63,12 +66,18 @@ export function ChatArea({
 
 	// Track successful room visits
 	useEffect(() => {
-		if (roomName && messages && !messagesError) {
+		if (roomName) {
 			// Successfully accessed room - save to visited list
 			// Store with current password (empty string for public rooms)
 			setPassword(roomName, password || "");
+			const visitedRooms = Object.keys(getStoredPasswords())?.join(",");
+			queryClient.invalidateQueries({
+				queryKey: getGETApiRoomsQueryKey({
+					visited: visitedRooms || undefined,
+				}),
+			});
 		}
-	}, [roomName, messages, messagesError, password, setPassword]);
+	}, [roomName, password, setPassword, queryClient]);
 
 	const handlePasswordSubmit = (newPassword: string) => {
 		if (roomName) {

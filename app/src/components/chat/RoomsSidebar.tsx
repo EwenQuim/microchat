@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Lock, Plus, Search, User } from "lucide-react";
+import { Globe, Lock, Plus, Search, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -102,6 +102,9 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 										<div className="flex items-center gap-2 min-w-0">
 											{room.has_password && (
 												<Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+											)}
+											{!room.has_password && !room.visited && (
+												<Globe className="h-3 w-3 text-muted-foreground shrink-0" />
 											)}
 											<span className="font-medium truncate">{roomName}</span>
 										</div>

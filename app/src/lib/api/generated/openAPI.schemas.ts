@@ -205,6 +205,8 @@ export interface Room {
 	/** @nullable */
 	last_message_user?: string | null;
 	name?: string;
+	/** visited on local user */
+	visited?: boolean;
 }
 
 /**
