@@ -68,6 +68,26 @@ export function ChatArea({
 		}
 	}, [roomName, password, setPassword, queryClient]);
 
+	// Auto-derive encryption key if room is encrypted and we have password but no key
+	useEffect(() => {
+		const autoDerive = async () => {
+			if (
+				roomName &&
+				currentRoom?.is_encrypted &&
+				currentRoom?.encryption_salt &&
+				password !== undefined &&
+				!getKey(roomName)
+			) {
+				await deriveAndStoreKey(
+					roomName,
+					password,
+					currentRoom.encryption_salt,
+				);
+			}
+		};
+		autoDerive();
+	}, [roomName, currentRoom, password, deriveAndStoreKey, getKey]);
+
 	const handlePasswordSubmit = async (newPassword: string) => {
 		if (roomName) {
 			setPassword(roomName, newPassword);
@@ -103,6 +123,9 @@ export function ChatArea({
 			const encryptionKey = getKey(roomName);
 			if (!encryptionKey) {
 				console.error("No encryption key available for encrypted room");
+				// Prompt user to enter password
+				setPasswordError("Encryption key not available. Please enter the room password.");
+				setShowPasswordDialog(true);
 				return;
 			}
 
