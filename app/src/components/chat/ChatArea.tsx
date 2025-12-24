@@ -1,17 +1,16 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Share2, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDecryptedMessages } from "@/hooks/useDecryptedMessages";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useMessages } from "@/hooks/useMessages";
+import { useRoomEncryption } from "@/hooks/useRoomEncryption";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
 import { useRooms } from "@/hooks/useRooms";
-import { getStoredPasswords } from "@/hooks/useSearchRooms";
 import { useSendMessage } from "@/hooks/useSendMessage";
-import { getGETApiRoomsQueryKey } from "@/lib/api/generated/chat/chat";
+import { useTrackVisitedRoom } from "@/hooks/useTrackVisitedRoom";
 import { type KeyPair, signMessage } from "@/lib/crypto";
 import { encryptMessage } from "@/lib/crypto/e2e";
 import { cn } from "@/lib/utils";
@@ -35,10 +34,9 @@ export function ChatArea({
 }: ChatAreaProps) {
 	const navigate = useNavigate();
 	const { password, setPassword } = useRoomPassword(roomName || undefined);
-	const { deriveAndStoreKey, getKey } = useEncryptionKeys();
+	const { deriveAndStoreKey } = useEncryptionKeys();
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
-	const queryClient = useQueryClient();
 
 	const { data: rooms } = useRooms();
 	const { data: messages, isLoading } = useMessages(roomName, password);
@@ -47,46 +45,14 @@ export function ChatArea({
 	// Get current room data
 	const currentRoom = rooms?.find((r) => r.name === roomName);
 
-	// Get encryption key for decrypting messages
-	const encryptionKey = roomName ? getKey(roomName) : undefined;
+	// Automatically manage encryption key lifecycle (derives key when needed)
+	const encryptionKey = useRoomEncryption(roomName, currentRoom);
+
+	// Track visited rooms and update query cache
+	useTrackVisitedRoom(roomName, password, setPassword);
 
 	// Decrypt messages if room is encrypted
 	const decryptedMessages = useDecryptedMessages(messages, encryptionKey);
-
-	// Check if error indicates password required
-	useEffect(() => {
-		if (roomName) {
-			// Successfully accessed room - save to visited list
-			// Store with current password (empty string for public rooms)
-			setPassword(roomName, password || "");
-			const visitedRooms = Object.keys(getStoredPasswords())?.join(",");
-			queryClient.invalidateQueries({
-				queryKey: getGETApiRoomsQueryKey({
-					visited: visitedRooms || undefined,
-				}),
-			});
-		}
-	}, [roomName, password, setPassword, queryClient]);
-
-	// Auto-derive encryption key if room is encrypted and we have password but no key
-	useEffect(() => {
-		const autoDerive = async () => {
-			if (
-				roomName &&
-				currentRoom?.is_encrypted &&
-				currentRoom?.encryption_salt &&
-				password !== undefined &&
-				!getKey(roomName)
-			) {
-				await deriveAndStoreKey(
-					roomName,
-					password,
-					currentRoom.encryption_salt,
-				);
-			}
-		};
-		autoDerive();
-	}, [roomName, currentRoom, password, deriveAndStoreKey, getKey]);
 
 	const handlePasswordSubmit = async (newPassword: string) => {
 		if (roomName) {
@@ -120,11 +86,12 @@ export function ChatArea({
 
 		// Encrypt message if room is encrypted
 		if (currentRoom?.is_encrypted) {
-			const encryptionKey = getKey(roomName);
 			if (!encryptionKey) {
 				console.error("No encryption key available for encrypted room");
 				// Prompt user to enter password
-				setPasswordError("Encryption key not available. Please enter the room password.");
+				setPasswordError(
+					"Encryption key not available. Please enter the room password.",
+				);
 				setShowPasswordDialog(true);
 				return;
 			}

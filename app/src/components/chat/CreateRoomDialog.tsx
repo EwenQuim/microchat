@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -26,9 +25,11 @@ export function CreateRoomDialog({
 }: CreateRoomDialogProps) {
 	const [roomName, setRoomName] = useState("");
 	const [password, setPassword] = useState("");
-	const [isEncrypted, setIsEncrypted] = useState(false);
 	const queryClient = useQueryClient();
 	const { setPassword: storePassword } = useRoomPassword();
+
+	// If room has password, it MUST be E2E encrypted
+	const isEncrypted = Boolean(password);
 
 	const createRoomMutation = usePOSTApiRooms({
 		mutation: {
@@ -42,7 +43,6 @@ export function CreateRoomDialog({
 				}
 				setRoomName("");
 				setPassword("");
-				setIsEncrypted(false);
 				onOpenChange(false);
 			},
 			onSettled: () => queryClient.invalidateQueries(),
@@ -92,32 +92,9 @@ export function CreateRoomDialog({
 								className="mt-1"
 							/>
 							<p className="text-xs text-muted-foreground mt-1">
-								Set a password to make this room private
+								Password-protected rooms are automatically end-to-end encrypted
 							</p>
 						</div>
-						{password && (
-							<div className="flex items-start space-x-2">
-								<Checkbox
-									id="enable-encryption"
-									checked={isEncrypted}
-									onCheckedChange={(checked) =>
-										setIsEncrypted(checked === true)
-									}
-								/>
-								<div className="grid gap-1.5 leading-none">
-									<label
-										htmlFor="enable-encryption"
-										className="text-sm font-medium cursor-pointer"
-									>
-										Enable end-to-end encryption
-									</label>
-									<p className="text-xs text-muted-foreground">
-										Messages will be encrypted on your device. Only users with
-										the password can read them.
-									</p>
-								</div>
-							</div>
-						)}
 						{createRoomMutation.isError && (
 							<p className="text-sm text-destructive">
 								Failed to create room. It may already exist.
