@@ -112,6 +112,7 @@ func getAllPets(ctx fuego.ContextNoBody) (*MyResponse, error) {
  * CreateRoomRequest schema
  */
 export interface CreateRoomRequest {
+	is_encrypted?: boolean;
 	/**
 	 * @minLength 1
 	 * @maxLength 50
@@ -182,6 +183,9 @@ export interface HTTPError {
 export interface Message {
 	content?: string;
 	id?: string;
+	is_encrypted?: boolean;
+	/** @nullable */
+	nonce?: string | null;
 	/** @nullable */
 	pubkey?: string | null;
 	room?: string;
@@ -197,7 +201,10 @@ export interface Message {
  * Room schema
  */
 export interface Room {
+	/** @nullable */
+	encryption_salt?: string | null;
 	has_password?: boolean;
+	is_encrypted?: boolean;
 	/** @nullable */
 	last_message_content?: string | null;
 	/** @nullable */
@@ -205,8 +212,6 @@ export interface Room {
 	/** @nullable */
 	last_message_user?: string | null;
 	name?: string;
-	/** visited on local user */
-	visited?: boolean;
 }
 
 /**
@@ -214,6 +219,9 @@ export interface Room {
  */
 export interface SendMessageRequest {
 	content: string;
+	is_encrypted?: boolean;
+	/** @nullable */
+	nonce?: string | null;
 	/** @nullable */
 	pubkey?: string | null;
 	/** @nullable */
@@ -238,7 +246,7 @@ export interface User {
 /**
  * unknown-interface schema
  */
-export type UnknownInterface = {};
+export interface UnknownInterface {}
 
 export type GETApiRoomsParams = {
 	visited?: string;

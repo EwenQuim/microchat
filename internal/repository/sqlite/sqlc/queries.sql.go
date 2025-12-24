@@ -12,9 +12,9 @@ import (
 )
 
 const createMessage = `-- name: CreateMessage :one
-INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, room, user, content, timestamp, signature, pubkey, signed_timestamp
+INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce
 `
 
 type CreateMessageParams struct {
@@ -26,6 +26,8 @@ type CreateMessageParams struct {
 	Signature       sql.NullString `json:"signature"`
 	Pubkey          sql.NullString `json:"pubkey"`
 	SignedTimestamp sql.NullInt64  `json:"signed_timestamp"`
+	IsEncrypted     sql.NullBool   `json:"is_encrypted"`
+	Nonce           sql.NullString `json:"nonce"`
 }
 
 func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
@@ -38,6 +40,8 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 		arg.Signature,
 		arg.Pubkey,
 		arg.SignedTimestamp,
+		arg.IsEncrypted,
+		arg.Nonce,
 	)
 	var i Message
 	err := row.Scan(
@@ -49,27 +53,33 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 		&i.Signature,
 		&i.Pubkey,
 		&i.SignedTimestamp,
+		&i.IsEncrypted,
+		&i.Nonce,
 	)
 	return i, err
 }
 
 const createRoom = `-- name: CreateRoom :one
-INSERT INTO rooms (name, password_hash, created_at, updated_at)
-VALUES (?, ?, ?, ?)
-RETURNING name, created_at, updated_at, password_hash
+INSERT INTO rooms (name, password_hash, is_encrypted, encryption_salt, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING name, created_at, updated_at, password_hash, is_encrypted, encryption_salt
 `
 
 type CreateRoomParams struct {
-	Name         string         `json:"name"`
-	PasswordHash sql.NullString `json:"password_hash"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
+	Name           string         `json:"name"`
+	PasswordHash   sql.NullString `json:"password_hash"`
+	IsEncrypted    sql.NullBool   `json:"is_encrypted"`
+	EncryptionSalt sql.NullString `json:"encryption_salt"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
 	row := q.db.QueryRowContext(ctx, createRoom,
 		arg.Name,
 		arg.PasswordHash,
+		arg.IsEncrypted,
+		arg.EncryptionSalt,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -79,6 +89,8 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PasswordHash,
+		&i.IsEncrypted,
+		&i.EncryptionSalt,
 	)
 	return i, err
 }
@@ -160,7 +172,7 @@ func (q *Queries) GetMessageCountByRoom(ctx context.Context, room string) (int64
 }
 
 const getMessagesByRoom = `-- name: GetMessagesByRoom :many
-SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp FROM messages
+SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce FROM messages
 WHERE room = ?
 ORDER BY timestamp ASC
 LIMIT 100
@@ -184,6 +196,8 @@ func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message
 			&i.Signature,
 			&i.Pubkey,
 			&i.SignedTimestamp,
+			&i.IsEncrypted,
+			&i.Nonce,
 		); err != nil {
 			return nil, err
 		}
@@ -199,7 +213,7 @@ func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message
 }
 
 const getRoomByName = `-- name: GetRoomByName :one
-SELECT name, created_at, updated_at, password_hash FROM rooms
+SELECT name, created_at, updated_at, password_hash, is_encrypted, encryption_salt FROM rooms
 WHERE name = ?
 `
 
@@ -211,6 +225,8 @@ func (q *Queries) GetRoomByName(ctx context.Context, name string) (Room, error) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PasswordHash,
+		&i.IsEncrypted,
+		&i.EncryptionSalt,
 	)
 	return i, err
 }
@@ -226,10 +242,12 @@ func (q *Queries) GetRoomPasswordHash(ctx context.Context, name string) (sql.Nul
 	return password_hash, err
 }
 
-const GetRoomsWithLasMessage = `-- name: GetRoomsWithLasMessage :many
+const getRoomsWithLasMessage = `-- name: GetRoomsWithLasMessage :many
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
+    r.is_encrypted,
+    COALESCE(r.encryption_salt, '') as encryption_salt,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -238,9 +256,9 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, rn
+    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce, rn
     FROM (
-        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp,
+        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp, m.is_encrypted, m.nonce,
                ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
         FROM messages m
     )
@@ -250,26 +268,30 @@ ORDER BY last_msg.timestamp DESC, r.name ASC
 LIMIT 100
 `
 
-type GetRoomsWithMessageCountRow struct {
-	Name                 string `json:"name"`
-	HasPassword          int64  `json:"has_password"`
-	LastMessageContent   string `json:"last_message_content"`
-	LastMessageUser      string `json:"last_message_user"`
-	LastMessageTimestamp string `json:"last_message_timestamp"`
+type GetRoomsWithLasMessageRow struct {
+	Name                 string       `json:"name"`
+	HasPassword          int64        `json:"has_password"`
+	IsEncrypted          sql.NullBool `json:"is_encrypted"`
+	EncryptionSalt       string       `json:"encryption_salt"`
+	LastMessageContent   string       `json:"last_message_content"`
+	LastMessageUser      string       `json:"last_message_user"`
+	LastMessageTimestamp string       `json:"last_message_timestamp"`
 }
 
-func (q *Queries) GetRoomsWithLasMessage(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, GetRoomsWithLasMessage)
+func (q *Queries) GetRoomsWithLasMessage(ctx context.Context) ([]GetRoomsWithLasMessageRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRoomsWithLasMessage)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetRoomsWithMessageCountRow{}
+	items := []GetRoomsWithLasMessageRow{}
 	for rows.Next() {
-		var i GetRoomsWithMessageCountRow
+		var i GetRoomsWithLasMessageRow
 		if err := rows.Scan(
 			&i.Name,
 			&i.HasPassword,
+			&i.IsEncrypted,
+			&i.EncryptionSalt,
 			&i.LastMessageContent,
 			&i.LastMessageUser,
 			&i.LastMessageTimestamp,
@@ -360,6 +382,8 @@ const searchRoomsByName = `-- name: SearchRoomsByName :many
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
+    r.is_encrypted,
+    COALESCE(r.encryption_salt, '') as encryption_salt,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -368,9 +392,9 @@ SELECT
     END as last_message_timestamp
 FROM rooms r
 LEFT JOIN (
-    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, rn
+    SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce, rn
     FROM (
-        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp,
+        SELECT m.id, m.room, m.user, m.content, m.timestamp, m.signature, m.pubkey, m.signed_timestamp, m.is_encrypted, m.nonce,
                ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
         FROM messages m
     )
@@ -382,11 +406,13 @@ LIMIT 100
 `
 
 type SearchRoomsByNameRow struct {
-	Name                 string `json:"name"`
-	HasPassword          int64  `json:"has_password"`
-	LastMessageContent   string `json:"last_message_content"`
-	LastMessageUser      string `json:"last_message_user"`
-	LastMessageTimestamp string `json:"last_message_timestamp"`
+	Name                 string       `json:"name"`
+	HasPassword          int64        `json:"has_password"`
+	IsEncrypted          sql.NullBool `json:"is_encrypted"`
+	EncryptionSalt       string       `json:"encryption_salt"`
+	LastMessageContent   string       `json:"last_message_content"`
+	LastMessageUser      string       `json:"last_message_user"`
+	LastMessageTimestamp string       `json:"last_message_timestamp"`
 }
 
 func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString) ([]SearchRoomsByNameRow, error) {
@@ -401,6 +427,8 @@ func (q *Queries) SearchRoomsByName(ctx context.Context, dollar_1 sql.NullString
 		if err := rows.Scan(
 			&i.Name,
 			&i.HasPassword,
+			&i.IsEncrypted,
+			&i.EncryptionSalt,
 			&i.LastMessageContent,
 			&i.LastMessageUser,
 			&i.LastMessageTimestamp,

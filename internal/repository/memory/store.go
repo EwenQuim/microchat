@@ -13,9 +13,11 @@ import (
 )
 
 type roomMetadata struct {
-	PasswordHash *string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	PasswordHash   *string
+	IsEncrypted    bool
+	EncryptionSalt *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type Store struct {
@@ -36,7 +38,7 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
+func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64, isEncrypted bool, nonce string) (*models.Message, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -44,9 +46,11 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	if _, exists := s.rooms[room]; !exists {
 		now := time.Now()
 		s.rooms[room] = &roomMetadata{
-			PasswordHash: nil, // Auto-created rooms are always public
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			PasswordHash:   nil, // Auto-created rooms are always public
+			IsEncrypted:    false,
+			EncryptionSalt: nil,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 		s.messages[room] = []models.Message{}
 	}
@@ -73,6 +77,8 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 		Signature:       signature,
 		Pubkey:          pubkey,
 		SignedTimestamp: signedTimestamp,
+		IsEncrypted:     isEncrypted,
+		Nonce:           nonce,
 	}
 
 	s.messages[room] = append(s.messages[room], msg)
@@ -98,8 +104,10 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 	rooms := make([]models.Room, 0, len(s.rooms))
 	for name, metadata := range s.rooms {
 		rooms = append(rooms, models.Room{
-			Name:        name,
-			HasPassword: metadata.PasswordHash != nil,
+			Name:           name,
+			HasPassword:    metadata.PasswordHash != nil,
+			IsEncrypted:    metadata.IsEncrypted,
+			EncryptionSalt: metadata.EncryptionSalt,
 		})
 	}
 
@@ -123,8 +131,10 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 			}
 
 			room := models.Room{
-				Name:        name,
-				HasPassword: metadata.PasswordHash != nil,
+				Name:           name,
+				HasPassword:    metadata.PasswordHash != nil,
+				IsEncrypted:    metadata.IsEncrypted,
+				EncryptionSalt: metadata.EncryptionSalt,
 			}
 
 			if lastMessage != nil {
@@ -141,7 +151,7 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string, password *string, isEncrypted bool, encryptionSalt *string) (*models.Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -151,14 +161,18 @@ func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (
 
 	now := time.Now()
 	s.rooms[name] = &roomMetadata{
-		PasswordHash: password, // In-memory store doesn't hash for simplicity
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		PasswordHash:   password, // In-memory store doesn't hash for simplicity
+		IsEncrypted:    isEncrypted,
+		EncryptionSalt: encryptionSalt,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 	s.messages[name] = []models.Message{}
 	return &models.Room{
-		Name:        name,
-		HasPassword: password != nil && *password != "",
+		Name:           name,
+		HasPassword:    password != nil && *password != "",
+		IsEncrypted:    isEncrypted,
+		EncryptionSalt: encryptionSalt,
 	}, nil
 }
 

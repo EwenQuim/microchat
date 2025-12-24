@@ -1,6 +1,6 @@
 -- name: CreateMessage :one
-INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, signed_timestamp, is_encrypted, nonce)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetMessagesByRoom :many
@@ -13,6 +13,8 @@ LIMIT 100;
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
+    r.is_encrypted,
+    COALESCE(r.encryption_salt, '') as encryption_salt,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE
@@ -70,8 +72,8 @@ FROM users u
 WHERE u.public_key = ?;
 
 -- name: CreateRoom :one
-INSERT INTO rooms (name, password_hash, created_at, updated_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO rooms (name, password_hash, is_encrypted, encryption_salt, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetRoomByName :one
@@ -85,6 +87,8 @@ SELECT COUNT(*) > 0 as room_exists FROM rooms WHERE name = ?;
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
+    r.is_encrypted,
+    COALESCE(r.encryption_salt, '') as encryption_salt,
     COALESCE(last_msg.content, '') as last_message_content,
     COALESCE(last_msg.user, '') as last_message_user,
     CASE

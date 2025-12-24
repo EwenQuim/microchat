@@ -5,6 +5,7 @@ import (
 
 	"github.com/EwenQuim/microchat/internal/models"
 	"github.com/EwenQuim/microchat/internal/services"
+	"github.com/EwenQuim/microchat/pkg/crypto"
 
 	"github.com/go-fuego/fuego"
 )
@@ -105,6 +106,14 @@ func CreateRoom(chatService *services.ChatService) func(c fuego.ContextWithBody[
 		if err != nil {
 			return nil, err
 		}
-		return chatService.CreateRoom(c.Context(), body.Name, body.Password)
+
+		// Generate encryption salt if encryption is enabled
+		var encryptionSalt *string
+		if body.IsEncrypted {
+			salt := crypto.GenerateRandomHex(32) // 32 bytes for salt
+			encryptionSalt = &salt
+		}
+
+		return chatService.CreateRoom(c.Context(), body.Name, body.Password, body.IsEncrypted, encryptionSalt)
 	}
 }

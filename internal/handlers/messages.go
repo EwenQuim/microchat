@@ -75,6 +75,6 @@ func SendMessage(chatService *services.ChatService) func(c fuego.ContextWithBody
 			}
 		}
 
-		return chatService.SendMessage(c.Context(), room, body.User, body.Content, body.Signature, body.Pubkey, body.Timestamp)
+		return chatService.SendMessage(c.Context(), room, body.User, body.Content, body.Signature, body.Pubkey, body.Timestamp, body.IsEncrypted, body.Nonce)
 	}
 }

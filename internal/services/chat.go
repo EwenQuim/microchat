@@ -7,11 +7,11 @@ import (
 )
 
 type Repository interface {
-	SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
+	SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64, isEncrypted bool, nonce string) (*models.Message, error)
 	GetMessages(ctx context.Context, room string) ([]models.Message, error)
 	GetRooms(ctx context.Context) ([]models.Room, error)
 	SearchRooms(ctx context.Context, query string) ([]models.Room, error)
-	CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error)
+	CreateRoom(ctx context.Context, name string, password *string, isEncrypted bool, encryptionSalt *string) (*models.Room, error)
 	ValidateRoomPassword(ctx context.Context, roomName, password string) error
 
 	// User management
@@ -34,8 +34,8 @@ func NewChatService(repo Repository) *ChatService {
 	}
 }
 
-func (s *ChatService) SendMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error) {
-	return s.repo.SaveMessage(ctx, room, user, content, signature, pubkey, timestamp)
+func (s *ChatService) SendMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64, isEncrypted bool, nonce string) (*models.Message, error) {
+	return s.repo.SaveMessage(ctx, room, user, content, signature, pubkey, timestamp, isEncrypted, nonce)
 }
 
 func (s *ChatService) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
@@ -50,8 +50,8 @@ func (s *ChatService) SearchRooms(ctx context.Context, query string) ([]models.R
 	return s.repo.SearchRooms(ctx, query)
 }
 
-func (s *ChatService) CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error) {
-	return s.repo.CreateRoom(ctx, name, password)
+func (s *ChatService) CreateRoom(ctx context.Context, name string, password *string, isEncrypted bool, encryptionSalt *string) (*models.Room, error) {
+	return s.repo.CreateRoom(ctx, name, password, isEncrypted, encryptionSalt)
 }
 
 func (s *ChatService) ValidateRoomPassword(ctx context.Context, roomName, password string) error {

@@ -52,7 +52,7 @@ func parseTimestamp(ts string) (*string, error) {
 	return &result, nil
 }
 
-func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64) (*models.Message, error) {
+func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, signedTimestamp int64, isEncrypted bool, nonce string) (*models.Message, error) {
 
 	// Automatically create room if it doesn't exist
 	roomExists, err := s.queries.RoomExists(ctx, room)
@@ -63,10 +63,12 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	if !roomExists {
 		now := time.Now()
 		_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
-			Name:         room,
-			PasswordHash: sql.NullString{Valid: false}, // Auto-created rooms are always public
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			Name:           room,
+			PasswordHash:   sql.NullString{Valid: false}, // Auto-created rooms are always public
+			IsEncrypted:    sql.NullBool{Valid: false},
+			EncryptionSalt: sql.NullString{Valid: false},
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create room: %w", err)
@@ -115,6 +117,14 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 			Int64: signedTimestamp,
 			Valid: signedTimestamp != 0,
 		},
+		IsEncrypted: sql.NullBool{
+			Bool:  isEncrypted,
+			Valid: true,
+		},
+		Nonce: sql.NullString{
+			String: nonce,
+			Valid:  nonce != "",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to save message: %w", err)
@@ -151,6 +161,11 @@ func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {
 		room := models.Room{
 			Name:        row.Name,
 			HasPassword: hasPassword,
+			IsEncrypted: row.IsEncrypted.Bool,
+		}
+
+		if row.EncryptionSalt != "" {
+			room.EncryptionSalt = &row.EncryptionSalt
 		}
 
 		// Only set last message fields if they exist (room has messages)
@@ -186,6 +201,11 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 		room := models.Room{
 			Name:        row.Name,
 			HasPassword: hasPassword,
+			IsEncrypted: row.IsEncrypted.Bool,
+		}
+
+		if row.EncryptionSalt != "" {
+			room.EncryptionSalt = &row.EncryptionSalt
 		}
 
 		if row.LastMessageContent != "" {
@@ -204,7 +224,7 @@ func (s *Store) SearchRooms(ctx context.Context, query string) ([]models.Room, e
 	return rooms, nil
 }
 
-func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error) {
+func (s *Store) CreateRoom(ctx context.Context, name string, password *string, isEncrypted bool, encryptionSalt *string) (*models.Room, error) {
 	// Check if room already exists
 	exists, err := s.queries.RoomExists(ctx, name)
 	if err != nil {
@@ -228,20 +248,29 @@ func (s *Store) CreateRoom(ctx context.Context, name string, password *string) (
 		hasPassword = true
 	}
 
+	var salt sql.NullString
+	if encryptionSalt != nil && *encryptionSalt != "" {
+		salt = sql.NullString{String: *encryptionSalt, Valid: true}
+	}
+
 	now := time.Now()
 	_, err = s.queries.CreateRoom(ctx, sqlc.CreateRoomParams{
-		Name:         name,
-		PasswordHash: passwordHash,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Name:           name,
+		PasswordHash:   passwordHash,
+		IsEncrypted:    sql.NullBool{Bool: isEncrypted, Valid: true},
+		EncryptionSalt: salt,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create room: %w", err)
 	}
 
 	return &models.Room{
-		Name:        name,
-		HasPassword: hasPassword,
+		Name:           name,
+		HasPassword:    hasPassword,
+		IsEncrypted:    isEncrypted,
+		EncryptionSalt: encryptionSalt,
 	}, nil
 }
 
@@ -342,6 +371,8 @@ func sqlcMessageToModel(msg sqlc.Message) *models.Message {
 		Signature:       msg.Signature.String,
 		Pubkey:          msg.Pubkey.String,
 		SignedTimestamp: msg.SignedTimestamp.Int64,
+		IsEncrypted:     msg.IsEncrypted.Bool,
+		Nonce:           msg.Nonce.String,
 	}
 }
 
