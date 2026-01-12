@@ -5,7 +5,6 @@
 	"scripts": {
 		"dev": "vite --port 3000",
 		"build": "tsc && vite build",
-		"build:github-pages": "tsc && vite build --mode github-pages",
 		"preview": "vite preview",
 		"preview:pwa": "vite build && vite preview",
 		"test": "vitest run",

@@ -7,8 +7,8 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-	base: mode === "github-pages" ? "/microchat/" : "/",
+export default defineConfig(() => ({
+	base: process.env.BASE_URL || "/",
 	plugins: [
 		devtools(),
 		tanstackRouter({

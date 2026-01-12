@@ -18,6 +18,7 @@ const router = createRouter({
 	context: {
 		...TanStackQueryProviderContext,
 	},
+	basepath: import.meta.env.BASE_URL,
 	defaultPreload: "intent",
 	scrollRestoration: true,
 	defaultStructuralSharing: true,
@@ -52,8 +53,10 @@ reportWebVitals();
 // Register service worker for PWA support
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
 	window.addEventListener("load", () => {
+		const basePath = import.meta.env.BASE_URL;
+		const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
 		navigator.serviceWorker
-			.register("/sw.js", { scope: "/" })
+			.register(`${normalizedBase}sw.js`, { scope: normalizedBase })
 			.then((registration) => {
 				console.log("SW registered:", registration);
 
