@@ -18,13 +18,17 @@ type Message struct {
 	Signature       sql.NullString `json:"signature"`
 	Pubkey          sql.NullString `json:"pubkey"`
 	SignedTimestamp sql.NullInt64  `json:"signed_timestamp"`
+	IsEncrypted     sql.NullBool   `json:"is_encrypted"`
+	Nonce           sql.NullString `json:"nonce"`
 }
 
 type Room struct {
-	Name         string         `json:"name"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	PasswordHash sql.NullString `json:"password_hash"`
+	Name           string         `json:"name"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	PasswordHash   sql.NullString `json:"password_hash"`
+	IsEncrypted    sql.NullBool   `json:"is_encrypted"`
+	EncryptionSalt sql.NullString `json:"encryption_salt"`
 }
 
 type User struct {

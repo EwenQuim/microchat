@@ -35,7 +35,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 			<div className="flex flex-col h-full w-full">
 				<div className="p-4 shrink-0 space-y-3">
 					<div className="flex items-center justify-between">
-						<h2 className="font-semibold text-lg">Microchat</h2>
+						<h2 className="font-semibold text-lg">Murmure</h2>
 						{username && (
 							<Link
 								to="/settings"

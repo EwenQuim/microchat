@@ -1,5 +1,5 @@
 import { useGETApiRooms } from "@/lib/api/generated/chat/chat";
-import type { Room } from "@/lib/api/generated/openAPI.schemas";
+import type { Room } from "@/types/room";
 import { getStoredPasswords } from "./useSearchRooms";
 
 export function useRooms() {
@@ -15,7 +15,7 @@ export function useRooms() {
 				staleTime: 3000,
 				select: (response) => {
 					if (response.status === 200) {
-						const onlineRooms = response.data;
+						const onlineRooms = response.data as Room[];
 
 						for (const visitedRoom of visitedRooms.split(",")) {
 							for (const onlineRoom of onlineRooms) {

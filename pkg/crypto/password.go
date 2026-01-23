@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -37,4 +39,13 @@ func VerifyPassword(password, hash string) error {
 	}
 
 	return nil
+}
+
+// GenerateRandomHex generates a random hex string of the specified byte length
+func GenerateRandomHex(byteLength int) string {
+	bytes := make([]byte, byteLength)
+	if _, err := rand.Read(bytes); err != nil {
+		panic(fmt.Sprintf("failed to generate random bytes: %v", err))
+	}
+	return hex.EncodeToString(bytes)
 }

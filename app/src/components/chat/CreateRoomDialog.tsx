@@ -28,6 +28,9 @@ export function CreateRoomDialog({
 	const queryClient = useQueryClient();
 	const { setPassword: storePassword } = useRoomPassword();
 
+	// If room has password, it MUST be E2E encrypted
+	const isEncrypted = Boolean(password);
+
 	const createRoomMutation = usePOSTApiRooms({
 		mutation: {
 			onSuccess: (response) => {
@@ -53,6 +56,7 @@ export function CreateRoomDialog({
 				data: {
 					name: roomName.trim(),
 					password: password || undefined,
+					is_encrypted: isEncrypted,
 				},
 			});
 		}
@@ -88,7 +92,7 @@ export function CreateRoomDialog({
 								className="mt-1"
 							/>
 							<p className="text-xs text-muted-foreground mt-1">
-								Set a password to make this room private
+								Password-protected rooms are automatically end-to-end encrypted
 							</p>
 						</div>
 						{createRoomMutation.isError && (

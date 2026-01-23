@@ -9,6 +9,8 @@ import (
 type Room struct {
 	Name                 string  `json:"name"`
 	HasPassword          bool    `json:"has_password"`
+	IsEncrypted          bool    `json:"is_encrypted"`
+	EncryptionSalt       *string `json:"encryption_salt,omitempty"`
 	LastMessageContent   *string `json:"last_message_content,omitempty"`
 	LastMessageUser      *string `json:"last_message_user,omitempty"`
 	LastMessageTimestamp *string `json:"last_message_timestamp,omitempty"`
@@ -28,6 +30,7 @@ func (r *Room) OutTransform(context.Context) error {
 }
 
 type CreateRoomRequest struct {
-	Name     string  `json:"name" validate:"required,min=1,max=50"`
-	Password *string `json:"password,omitempty" validate:"omitempty,min=4,max=72"`
+	Name        string  `json:"name" validate:"required,min=1,max=50"`
+	Password    *string `json:"password,omitempty" validate:"omitempty,min=4,max=72"`
+	IsEncrypted bool    `json:"is_encrypted"`
 }
