@@ -13,4 +13,3 @@ func GetUser(chatService *services.ChatService) func(c fuego.ContextNoBody) (*mo
 		return chatService.GetUser(c.Context(), publicKey)
 	}
 }
-
