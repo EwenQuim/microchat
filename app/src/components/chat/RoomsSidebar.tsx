@@ -8,6 +8,7 @@ import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRooms } from "@/hooks/useRooms";
 import { useServers } from "@/hooks/useServers";
 import { useUsername } from "@/hooks/useUsername";
+import { getServerUrl } from "@/lib/servers";
 import { cn } from "@/lib/utils";
 import { CreateRoomDialog } from "./CreateRoomDialog";
 import { SearchCommand } from "./SearchCommand";
@@ -19,7 +20,7 @@ interface RoomsSidebarProps {
 
 function extractDomain(url: string): string {
 	try {
-		return new URL(url).hostname;
+		return new URL(getServerUrl(url)).hostname;
 	} catch {
 		return url;
 	}
@@ -108,7 +109,7 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 							const localHost = window.location.host;
 							let serverHost: string;
 							try {
-								serverHost = new URL(room.serverUrl).host;
+								serverHost = new URL(getServerUrl(room.serverUrl)).host;
 							} catch {
 								serverHost = "";
 							}

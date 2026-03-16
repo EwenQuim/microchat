@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useUsername } from "@/hooks/useUsername";
+import { getServerUrl } from "@/lib/servers";
 import { cn } from "@/lib/utils";
 import { ChatArea } from "./ChatArea";
 import { RoomsSidebar } from "./RoomsSidebar";
@@ -24,12 +25,12 @@ export function ChatLayout({ roomName, serverUrl = "" }: ChatLayoutProps) {
 		? serverUrl &&
 			(() => {
 				try {
-					return new URL(serverUrl).host !== window.location.host;
+					return new URL(getServerUrl(serverUrl)).host !== window.location.host;
 				} catch {
 					return false;
 				}
 			})()
-			? `${new URL(serverUrl).host}~${roomName}`
+			? `${new URL(getServerUrl(serverUrl)).host}~${roomName}`
 			: roomName
 		: null;
 	const { username, keys, setUsername, isLoading } = useUsername();

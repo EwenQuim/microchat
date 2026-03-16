@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { gETApiServerInfo } from "@/lib/api/generated/default/default";
 import type { MutatorOptions } from "@/lib/api/mutator";
-import type { Server } from "@/lib/servers";
+import { normalizeServerUrl, type Server } from "@/lib/servers";
 import { cn } from "@/lib/utils";
 
 const PRESET_COLORS = [
@@ -43,18 +43,18 @@ export function AddServerDialog({
 	const [error, setError] = useState<string | null>(null);
 
 	const handleUrlSubmit = async () => {
-		const normalized = url.trim().replace(/\/$/, "");
-		if (!normalized) return;
+		const stored = normalizeServerUrl(url);
+		if (!stored) return;
 		setIsLoading(true);
 		setError(null);
 		try {
-			const opts: MutatorOptions = { baseUrl: normalized };
+			const opts: MutatorOptions = { baseUrl: stored };
 			const res = await gETApiServerInfo(opts);
 			if (res.status !== 200) throw new Error(`Server returned ${res.status}`);
 			const info = res.data;
-			setQuickname(info.suggested_quickname ?? normalized);
+			setQuickname(info.suggested_quickname ?? stored);
 			setDescription(info.description ?? "");
-			setUrl(normalized);
+			setUrl(stored);
 			setStep("details");
 		} catch {
 			setError("Could not connect to server. Check the URL and try again.");

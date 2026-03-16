@@ -1,165 +1,86 @@
 # MicroChat
 
-A real-time chat application built with Go (Fuego) backend and a modern frontend.
+A lightweight, self-hosted real-time chat app with Nostr-style cryptographic authentication. Built with Go and a modern web frontend.
 
-## Project Structure
+## Quick Start (Docker)
 
-```
-microchat/
-├── app/                    # Frontend application
-├── cmd/                    # Application entry points
-│   ├── server/            # API server
-│   └── cli/               # CLI tool
-├── internal/              # Private application code
-│   ├── handlers/          # HTTP request handlers
-│   ├── models/            # Data models
-│   ├── services/          # Business logic
-│   ├── repository/        # Data storage
-│   ├── middleware/        # HTTP middleware
-│   └── config/            # Configuration
-├── pkg/                   # Public packages
-│   └── client/            # API client library
-├── static/                # Built frontend files (served by API)
-├── scripts/               # Build and deployment scripts
-├── Dockerfile             # Docker configuration
-├── docker-compose.yml     # Docker Compose configuration
-└── Makefile              # Build automation
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Go 1.23+
-- Node.js 20+
-- Docker (optional)
-
-### Installation
-
-1. Install dependencies:
 ```bash
-make install
-```
-
-2. Copy environment variables:
-```bash
-cp .env.example .env
-```
-
-### Development
-
-Run in development mode (frontend dev server + Go server):
-```bash
-make dev
-```
-
-### Production Build
-
-Build everything:
-```bash
-make build
-```
-
-Run the server:
-```bash
-make run
-```
-
-Or build and run specific components:
-```bash
-make build-frontend
-make build-server
-make build-cli
-```
-
-## Docker Deployment
-
-### Using Pre-built Image (GitHub Container Registry)
-
-Pull and run the latest image:
-```bash
-docker pull ghcr.io/ewenquim/microchat:latest
 docker run -p 8080:8080 ghcr.io/ewenquim/microchat:latest
 ```
 
-### Building Locally
+Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-Build Docker image:
+## Running from Source
+
+**Prerequisites:** Go 1.23+, Node.js 20+
+
 ```bash
-make docker-build
+cp .env.example .env
+make install
+make dev
 ```
 
-Run with docker-compose:
+This starts the Go server and frontend dev server concurrently.
+
+## Usage
+
+### Web UI
+
+Open the app in your browser, create or join a room, and start chatting. Authentication uses Nostr-style keypairs — no account registration required.
+
+### CLI
+
+Send and read messages from the terminal:
+
+```bash
+# Send a message
+./bin/cli -cmd send -room general -user john -message "Hello, world!"
+
+# List messages in a room
+./bin/cli -cmd list -room general
+
+# List all rooms
+./bin/cli -cmd rooms
+```
+
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `8080` | Server port |
+| `ENV` | `development` | Environment (`development` / `production`) |
+
+## Self-Hosting with Docker Compose
+
 ```bash
 make docker-up
 ```
 
-Stop:
+To stop:
+
 ```bash
 make docker-down
 ```
 
-## CLI Usage
+## API
 
-The CLI tool allows you to interact with the chat API from the command line.
+- `GET /api/rooms` — List all chat rooms
+- `GET /api/rooms/:room/messages` — Get messages from a room
+- `POST /api/rooms/:room/messages` — Send a message to a room
 
-Send a message:
+## Contributing
+
+**Build & run:**
+
 ```bash
-./bin/cli -cmd send -room general -user john -message "Hello, world!"
+make build
+make run
 ```
 
-List messages in a room:
+**Project layout:** `app/` (frontend), `cmd/` (server + CLI entry points), `internal/` (handlers, services, models), `pkg/client/` (API client library).
+
+**Releasing:** push a version tag — the Docker image is built and published to `ghcr.io/ewenquim/microchat` automatically.
+
 ```bash
-./bin/cli -cmd list -room general
-```
-
-List all rooms:
-```bash
-./bin/cli -cmd rooms
-```
-
-## API Endpoints
-
-- `GET /api/rooms` - List all chat rooms
-- `GET /api/rooms/:room/messages` - Get messages from a room
-- `POST /api/rooms/:room/messages` - Send a message to a room
-
-## Environment Variables
-
-- `PORT` - Server port (default: 8080)
-- `ENV` - Environment (development/production)
-
-## CI/CD
-
-The project includes GitHub Actions workflows for:
-
-- **CI** (`ci.yml`): Runs on PRs and pushes
-  - Tests Go code (server & CLI)
-  - Builds frontend
-  - Runs with race detection and coverage
-
-- **Lint** (`lint.yml`): Go code linting with golangci-lint
-  - Strict on PRs (blocks merge on issues)
-  - Warnings only on main/master
-
-- **Docker Publish** (`docker-publish.yml`): Builds and pushes to GHCR
-  - Triggers on push to main/master or version tags
-  - Automatic tagging: `latest`, `v1.0.0`, `v1.0`, `v1`
-  - Published to: `ghcr.io/ewenquim/microchat`
-
-### Releasing
-
-To create a new release:
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-This will automatically build and push the Docker image with version tags.
-
-## Clean Up
-
-Remove build artifacts:
-```bash
-make clean
+git tag v1.0.0 && git push origin v1.0.0
 ```

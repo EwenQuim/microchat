@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRooms } from "@/hooks/useRooms";
 import { useSearchRooms } from "@/hooks/useSearchRooms";
+import { getServerUrl } from "@/lib/servers";
 
 interface SearchCommandProps {
 	open: boolean;
@@ -41,11 +42,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 		const sUrl = room.serverUrl ?? "";
 		let isLocal = true;
 		try {
-			isLocal = !sUrl || new URL(sUrl).host === window.location.host;
+			isLocal =
+				!sUrl || new URL(getServerUrl(sUrl)).host === window.location.host;
 		} catch {
 			isLocal = true;
 		}
-		const roomId = isLocal ? name : `${new URL(sUrl).host}~${name}`;
+		const roomId = isLocal
+			? name
+			: `${new URL(getServerUrl(sUrl)).host}~${name}`;
 		navigate({ to: "/chat/$roomName", params: { roomName: roomId } });
 		onOpenChange(false);
 		setSearch("");

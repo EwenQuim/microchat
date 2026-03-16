@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { gETApiServerInfo } from "@/lib/api/generated/default/default";
 import {
 	getServers,
+	normalizeServerUrl,
 	removeServer as removeServerFromStorage,
 	SERVERS_KEY,
 	type Server,
@@ -25,10 +26,10 @@ export function useServers() {
 
 	// Auto-discover local server on first render using the generated API client
 	useEffect(() => {
-		const localUrl = (
+		const localUrl = normalizeServerUrl(
 			window.location.origin +
-			(import.meta.env.BASE_URL ?? "/").replace(/\/$/, "")
-		).replace(/\/$/, "");
+				(import.meta.env.BASE_URL ?? "/").replace(/\/$/, ""),
+		);
 
 		gETApiServerInfo()
 			.then((res) => {
