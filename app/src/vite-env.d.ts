@@ -2,9 +2,7 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
-	readonly PROD: boolean;
-	readonly DEV: boolean;
-	readonly MODE: string;
+	readonly VITE_ENABLE_PWA: string | undefined;
 }
 
 interface ImportMeta {

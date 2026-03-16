@@ -51,7 +51,10 @@ if (rootElement && !rootElement.innerHTML) {
 reportWebVitals();
 
 // Register service worker for PWA support
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+if (
+	"serviceWorker" in navigator &&
+	import.meta.env.VITE_ENABLE_PWA !== "false"
+) {
 	window.addEventListener("load", () => {
 		const basePath = import.meta.env.BASE_URL;
 		const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;

@@ -1,11 +1,13 @@
 import { fileURLToPath, URL } from "node:url";
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import babel from "@rolldown/plugin-babel";
 import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+const enablePWA = process.env.VITE_ENABLE_PWA === "true";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -21,25 +23,29 @@ export default defineConfig(() => ({
 		// @ts-ignore — @rolldown/plugin-babel types have a spurious required-fields error
 		babel({ presets: [reactCompilerPreset()] }),
 		tailwindcss(),
-		VitePWA({
-			registerType: "autoUpdate",
-			includeAssets: [
-				"favicon.ico",
-				"logo192.png",
-				"logo512.png",
-				"logo1024.png",
-				"robots.txt",
-			],
-			manifest: false,
-			workbox: {
-				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-				navigateFallbackDenylist: [/^\/api/],
-			},
-			devOptions: {
-				enabled: false,
-				type: "module",
-			},
-		}),
+		...(enablePWA
+			? [
+					VitePWA({
+						registerType: "autoUpdate",
+						includeAssets: [
+							"favicon.ico",
+							"logo192.png",
+							"logo512.png",
+							"logo1024.png",
+							"robots.txt",
+						],
+						manifest: false,
+						workbox: {
+							globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+							navigateFallbackDenylist: [/^\/api/],
+						},
+						devOptions: {
+							enabled: false,
+							type: "module",
+						},
+					}),
+				]
+			: []),
 	],
 	resolve: {
 		alias: {

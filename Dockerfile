@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 # Build stage for frontend
 FROM node:20-alpine AS frontend-builder
+ARG VITE_ENABLE_PWA=true
+ENV VITE_ENABLE_PWA=$VITE_ENABLE_PWA
 WORKDIR /app/frontend
 COPY app/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
