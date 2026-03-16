@@ -4,12 +4,12 @@ import { Globe, Lock, Plus, Search, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
-import { useRooms } from "@/hooks/useRooms";
-import { useServers } from "@/hooks/useServers";
-import { useUsername } from "@/hooks/useUsername";
-import { getServerUrl } from "@/lib/servers";
-import { cn } from "@/lib/utils";
+import { getServerUrl } from "@/lib/core/servers";
+import { useKeyboardShortcut } from "@/lib/web/hooks/useKeyboardShortcut";
+import { useRooms } from "@/lib/web/hooks/useRooms";
+import { useServers } from "@/lib/web/hooks/useServers";
+import { useUsername } from "@/lib/web/hooks/useUsername";
+import { cn } from "@/lib/web/utils";
 import { CreateRoomDialog } from "./CreateRoomDialog";
 import { SearchCommand } from "./SearchCommand";
 

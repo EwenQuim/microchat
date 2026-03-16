@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
-import { hexToNpub } from "@/lib/crypto";
-import { cn } from "@/lib/utils";
+import { hexToNpub } from "@/lib/core/crypto";
+import { cn } from "@/lib/web/utils";
 
 const generateColorFromPubkey = (pubkey: string): string => {
 	let hash = 0;

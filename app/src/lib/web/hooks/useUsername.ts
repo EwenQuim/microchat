@@ -4,8 +4,8 @@ import {
 	generateKeyPair,
 	type KeyPair,
 	nsecToHex,
-} from "@/lib/crypto";
-import { storage } from "@/lib/storage";
+} from "@/lib/core/crypto";
+import { storage } from "@/lib/web/storage";
 
 export function useUsername() {
 	const [username, setUsernameState] = useState<string | null>(null);

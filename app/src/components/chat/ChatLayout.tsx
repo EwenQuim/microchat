@@ -8,9 +8,9 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useUsername } from "@/hooks/useUsername";
-import { getServerUrl } from "@/lib/servers";
-import { cn } from "@/lib/utils";
+import { getServerUrl } from "@/lib/core/servers";
+import { useUsername } from "@/lib/web/hooks/useUsername";
+import { cn } from "@/lib/web/utils";
 import { ChatArea } from "./ChatArea";
 import { RoomsSidebar } from "./RoomsSidebar";
 

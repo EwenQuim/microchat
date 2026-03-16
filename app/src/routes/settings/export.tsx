@@ -3,8 +3,8 @@ import { QrCode } from "lucide-react";
 import QRCode from "qrcode";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useUsername } from "@/hooks/useUsername";
-import { hexToNsec } from "@/lib/crypto";
+import { hexToNsec } from "@/lib/core/crypto";
+import { useUsername } from "@/lib/web/hooks/useUsername";
 
 export const Route = createFileRoute("/settings/export")({
 	component: ExportSettings,

@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { gETApiServerInfo } from "@/lib/api/generated/default/default";
+import { normalizeServerUrl, type Server } from "@/lib/core/servers";
 import {
 	getServers,
-	normalizeServerUrl,
 	removeServer as removeServerFromStorage,
 	SERVERS_KEY,
-	type Server,
 	setServers,
 	upsertServer,
-} from "@/lib/servers";
+} from "@/lib/web/servers";
 
 export function useServers() {
 	const [servers, setServersState] = useState<Server[]>(getServers);

@@ -2,10 +2,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import { Search } from "lucide-react";
 import { useState } from "react";
-import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
-import { useRooms } from "@/hooks/useRooms";
-import { useSearchRooms } from "@/hooks/useSearchRooms";
-import { getServerUrl } from "@/lib/servers";
+import { getServerUrl } from "@/lib/core/servers";
+import { useKeyboardShortcut } from "@/lib/web/hooks/useKeyboardShortcut";
+import { useRooms } from "@/lib/web/hooks/useRooms";
+import { useSearchRooms } from "@/lib/web/hooks/useSearchRooms";
 
 interface SearchCommandProps {
 	open: boolean;

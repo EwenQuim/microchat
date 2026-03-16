@@ -3,8 +3,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddServerDialog } from "@/components/servers/AddServerDialog";
 import { Button } from "@/components/ui/button";
-import { useServers } from "@/hooks/useServers";
-import type { Server } from "@/lib/servers";
+import type { Server } from "@/lib/core/servers";
+import { useServers } from "@/lib/web/hooks/useServers";
 
 export const Route = createFileRoute("/settings/servers")({
 	component: ServersSettings,

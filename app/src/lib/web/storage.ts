@@ -1,4 +1,4 @@
-import type { KeyPair } from "./crypto";
+import type { KeyPair } from "../core/crypto";
 
 const USERNAME_KEY = "microchat_username";
 const PRIVATE_KEY = "microchat_private_key";

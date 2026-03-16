@@ -1,4 +1,4 @@
-import { getServerUrl } from "@/lib/servers";
+import { getServerUrl } from "@/lib/core/servers";
 
 export type MutatorOptions = RequestInit & { baseUrl?: string };
 

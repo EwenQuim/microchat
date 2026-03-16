@@ -9,8 +9,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { gETApiServerInfo } from "@/lib/api/generated/default/default";
 import type { MutatorOptions } from "@/lib/api/mutator";
-import { normalizeServerUrl, type Server } from "@/lib/servers";
-import { cn } from "@/lib/utils";
+import { normalizeServerUrl, type Server } from "@/lib/core/servers";
+import { cn } from "@/lib/web/utils";
 
 const PRESET_COLORS = [
 	"#6366f1",

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUsername } from "@/hooks/useUsername";
+import { useUsername } from "@/lib/web/hooks/useUsername";
 
 export const Route = createFileRoute("/settings/import")({
 	component: ImportSettings,

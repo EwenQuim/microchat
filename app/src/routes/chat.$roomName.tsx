@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatLayout } from "@/components/chat/ChatLayout";
-import { getServers, getServerUrl } from "@/lib/servers";
+import { getServerUrl } from "@/lib/core/servers";
+import { getServers } from "@/lib/web/servers";
 
 export const Route = createFileRoute("/chat/$roomName")({
 	component: ChatRoomPage,

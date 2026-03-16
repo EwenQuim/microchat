@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/web/utils";
 import { MessageItem } from "./MessageItem";
 
 interface MessageListProps {

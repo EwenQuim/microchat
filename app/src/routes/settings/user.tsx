@@ -10,8 +10,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useUsername } from "@/hooks/useUsername";
-import { hexToNpub, hexToNsec } from "@/lib/crypto";
+import { hexToNpub, hexToNsec } from "@/lib/core/crypto";
+import { useUsername } from "@/lib/web/hooks/useUsername";
 
 export const Route = createFileRoute("/settings/user")({
 	component: UserSettings,
