@@ -32,7 +32,8 @@ type chatModel struct {
 	inputText string
 	err       string
 	loading   bool
-	scroll    int // offset from the bottom (0 = latest)
+	scroll    int  // offset from the bottom (0 = latest)
+	typing    bool // vim-style insert mode
 }
 
 func newChatModel(client *generated.ClientWithResponses, room, password string, id *identity, username string) chatModel {
@@ -127,37 +128,53 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 		return m, m.fetchMessages()
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			content := strings.TrimSpace(m.inputText)
-			if content == "" || m.username == "" {
-				if m.username == "" {
-					m.err = "Set a username in Identity screen first"
+		if m.typing {
+			switch msg.String() {
+			case "esc", "tab":
+				m.typing = false
+			case "enter":
+				content := strings.TrimSpace(m.inputText)
+				if content == "" || m.username == "" {
+					if m.username == "" {
+						m.err = "Set a username in Identity screen first"
+					}
+					return m, nil
 				}
-				return m, nil
+				m.inputText = ""
+				m.err = ""
+				return m, m.sendMessage(content)
+			case "backspace":
+				if len(m.inputText) > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-1]
+				}
+			default:
+				s := msg.String()
+				if len(s) == 1 {
+					m.inputText += s
+				}
 			}
-			m.inputText = ""
-			m.err = ""
-			return m, m.sendMessage(content)
-		case "backspace":
-			if len(m.inputText) > 0 {
-				m.inputText = m.inputText[:len(m.inputText)-1]
-			}
-		case "up":
-			m.scroll++
-		case "down":
-			if m.scroll > 0 {
-				m.scroll--
-			}
-		case "r":
-			m.loading = true
-			return m, m.fetchMessages()
-		case "ctrl+c":
-			return m, tea.Quit
-		default:
-			s := msg.String()
-			if len(s) == 1 {
-				m.inputText += s
+		} else {
+			switch msg.String() {
+			case "i":
+				m.typing = true
+			case "enter":
+				content := strings.TrimSpace(m.inputText)
+				if content != "" && m.username != "" {
+					m.inputText = ""
+					m.err = ""
+					return m, m.sendMessage(content)
+				}
+			case "up":
+				m.scroll++
+			case "down":
+				if m.scroll > 0 {
+					m.scroll--
+				}
+			case "r":
+				m.loading = true
+				return m, m.fetchMessages()
+			case "ctrl+c":
+				return m, tea.Quit
 			}
 		}
 	}
@@ -218,15 +235,21 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	}
 
 	b.WriteString(strings.Repeat("─", width) + "\n")
+	cursor := ""
+	if m.typing {
+		cursor = "█"
+	}
 	if m.username != "" {
-		b.WriteString(" " + m.username + "> " + m.inputText + "█\n")
+		b.WriteString(" " + m.username + "> " + m.inputText + cursor + "\n")
 	} else {
-		b.WriteString(" (no username)> " + m.inputText + "█\n")
+		b.WriteString(" (no username)> " + m.inputText + cursor + "\n")
 	}
 	if m.err != "" {
 		b.WriteString(" Err: " + m.err + "\n")
+	} else if m.typing {
+		b.WriteString(" [Esc] Exit  [Enter] Send  [Backspace] Delete\n")
 	} else {
-		b.WriteString(" [Enter] Send  [↑↓] Scroll  [Tab] Panels\n")
+		b.WriteString(" [i] Type  [r] Refresh  [↑↓] Scroll  [Tab] Panels\n")
 	}
 
 	return b.String()

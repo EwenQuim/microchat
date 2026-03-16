@@ -63,6 +63,13 @@ func (m mainModel) update(msg tea.Msg) (mainModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// When chat is focused and in typing mode, bypass global key handlers
+		// so Esc/Tab exit typing mode instead of switching panels or navigating
+		if m.focus == focusRight && m.hasChat && m.chat.typing {
+			var cmd tea.Cmd
+			m.chat, cmd = m.chat.update(msg)
+			return m, cmd
+		}
 		switch msg.String() {
 		case "tab":
 			if m.hasChat {
