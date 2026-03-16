@@ -4,7 +4,7 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY app/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm ci --legacy-peer-deps
 COPY app/ ./
 RUN --mount=type=cache,target=/root/.npm \
     npm run build

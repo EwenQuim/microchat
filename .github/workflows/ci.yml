@@ -63,6 +63,9 @@ jobs:
 
       - name: Install frontend dependencies
         run: cd app && npm ci
+      
+      - name: Typecheck
+        run: cd app && npm run typecheck
 
       - name: Build frontend
         run: cd app && npm run build

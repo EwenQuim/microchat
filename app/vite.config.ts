@@ -2,7 +2,8 @@ import { fileURLToPath, URL } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import viteReact from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -15,11 +16,10 @@ export default defineConfig(() => ({
 			target: "react",
 			autoCodeSplitting: true,
 		}),
-		viteReact({
-			babel: {
-				plugins: ["babel-plugin-react-compiler"],
-			},
-		}),
+		viteReact(),
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore — @rolldown/plugin-babel types have a spurious required-fields error
+		babel({ presets: [reactCompilerPreset()] }),
 		tailwindcss(),
 		VitePWA({
 			registerType: "autoUpdate",
