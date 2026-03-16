@@ -19,10 +19,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 COPY . .
 # Copy frontend build to be embedded
-COPY --from=frontend-builder /app/frontend/dist ./cmd/server/static
+COPY --from=frontend-builder /app/frontend/dist ./cmd/microchat-server/static
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=linux go build -o server ./cmd/server
+    GOOS=linux go build -o server ./cmd/microchat-server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=linux go build -o cli ./cmd/cli

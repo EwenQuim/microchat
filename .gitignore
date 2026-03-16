@@ -18,8 +18,8 @@ go.work
 # Build artifacts
 static/*
 !static/.gitkeep
-cmd/server/static/*
-!cmd/server/static/.gitkeep
+cmd/microchat-server/static/*
+!cmd/microchat-server/static/.gitkeep
 
 # Frontend (in case not covered by app/.gitignore)
 node_modules/

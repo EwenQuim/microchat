@@ -33,14 +33,14 @@ install:
 build-frontend:
 	@echo "Building frontend..."
 	cd app && npm run build
-	@echo "Copying frontend build to cmd/server/static for embedding..."
-	rm -rf cmd/server/static/*
-	mkdir -p cmd/server/static
-	cp -r app/dist/* cmd/server/static/
+	@echo "Copying frontend build to cmd/microchat-server/static for embedding..."
+	rm -rf cmd/microchat-server/static/*
+	mkdir -p cmd/microchat-server/static
+	cp -r app/dist/* cmd/microchat-server/static/
 
 build-server:
 	@echo "Building server..."
-	go build -o bin/server ./cmd/server
+	go build -o bin/server ./cmd/microchat-server
 
 build-microchat:
 	@echo "Building microchat client..."
@@ -52,7 +52,7 @@ build: build-frontend build-server build-microchat
 dev:
 	@echo "Starting development server..."
 	cd app && npm run dev &
-	go run ./cmd/server
+	go run ./cmd/microchat-server
 
 run: build
 	@echo "Starting server..."
@@ -83,5 +83,5 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf bin/
 	rm -rf app/dist
-	rm -rf cmd/server/static/*
+	rm -rf cmd/microchat-server/static/*
 	go clean

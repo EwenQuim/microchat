@@ -2,6 +2,16 @@
 
 A lightweight, self-hosted real-time chat app with Nostr-style cryptographic authentication. Built with Go and a modern web frontend.
 
+## Install the CLI
+
+```bash
+# Homebrew (macOS / Linux)
+brew install ewenquim/repo/microchat
+
+# Go
+go install github.com/EwenQuim/microchat/cmd/microchat@latest
+```
+
 ## Quick Start (Docker)
 
 ```bash
@@ -28,19 +38,34 @@ This starts the Go server and frontend dev server concurrently.
 
 Open the app in your browser, create or join a room, and start chatting. Authentication uses Nostr-style keypairs — no account registration required.
 
-### CLI
+### Client (TUI + CLI)
 
-Send and read messages from the terminal:
+Build from source:
+
+```bash
+make build-microchat   # outputs bin/microchat
+```
+
+Run without arguments to launch the interactive TUI:
+
+```bash
+microchat
+```
+
+Or use subcommands for scripting:
 
 ```bash
 # Send a message
-./bin/cli -cmd send -room general -user john -message "Hello, world!"
+microchat send --room general --user john --message "Hello, world!"
 
 # List messages in a room
-./bin/cli -cmd list -room general
+microchat list --room general
 
 # List all rooms
-./bin/cli -cmd rooms
+microchat rooms
+
+# Connect to a different server
+microchat --url http://chat.example.com rooms
 ```
 
 ## Configuration
@@ -77,7 +102,7 @@ make build
 make run
 ```
 
-**Project layout:** `app/` (frontend), `cmd/` (server + CLI entry points), `internal/` (handlers, services, models), `pkg/client/` (API client library).
+**Project layout:** `app/` (frontend), `cmd/` (server + microchat entry points), `internal/` (handlers, services, models, tui), `pkg/client/` (API client library).
 
 **Releasing:** push a version tag — the Docker image is built and published to `ghcr.io/ewenquim/microchat` automatically.
 
