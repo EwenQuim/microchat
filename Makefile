@@ -1,21 +1,21 @@
-.PHONY: help build-frontend build-server build-cli build dev run clean docker-build docker-up docker-down install lint test generate-client
+.PHONY: help build-frontend build-server build-microchat build dev run clean docker-build docker-up docker-down install lint test generate-client
 
 help:
 	@echo "Available commands:"
-	@echo "  make install        - Install Go and frontend dependencies"
-	@echo "  make build          - Build everything (frontend + server + CLI)"
-	@echo "  make build-frontend - Build frontend only"
-	@echo "  make build-server   - Build server only"
-	@echo "  make build-cli      - Build CLI only"
-	@echo "  make test           - Run all tests"
-	@echo "  make lint           - Run golangci-lint"
-	@echo "  make dev            - Run in development mode"
-	@echo "  make run            - Build and run server"
-	@echo "  make docker-build   - Build Docker image"
-	@echo "  make docker-up      - Start with docker-compose"
-	@echo "  make docker-down    - Stop docker-compose"
-	@echo "  make clean          - Clean build artifacts"
-	@echo "  make generate-client - Generate Go API client from OpenAPI spec"
+	@echo "  make install           - Install Go and frontend dependencies"
+	@echo "  make build             - Build everything (frontend + server + microchat)"
+	@echo "  make build-frontend    - Build frontend only"
+	@echo "  make build-server      - Build server only"
+	@echo "  make build-microchat   - Build microchat client (TUI + CLI) only"
+	@echo "  make test              - Run all tests"
+	@echo "  make lint              - Run golangci-lint"
+	@echo "  make dev               - Run in development mode"
+	@echo "  make run               - Build and run server"
+	@echo "  make docker-build      - Build Docker image"
+	@echo "  make docker-up         - Start with docker-compose"
+	@echo "  make docker-down       - Stop docker-compose"
+	@echo "  make clean             - Clean build artifacts"
+	@echo "  make generate-client   - Generate Go API client from OpenAPI spec"
 
 generate-client:
 	@echo "Generating Go API client..."
@@ -42,11 +42,11 @@ build-server:
 	@echo "Building server..."
 	go build -o bin/server ./cmd/server
 
-build-cli:
-	@echo "Building CLI..."
-	go build -o bin/cli ./cmd/cli
+build-microchat:
+	@echo "Building microchat client..."
+	go build -o bin/microchat ./cmd/microchat
 
-build: build-frontend build-server build-cli
+build: build-frontend build-server build-microchat
 	@echo "Build complete!"
 
 dev:

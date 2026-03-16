@@ -1,4 +1,4 @@
-package main
+package tui
 
 // screen identifies which screen is currently active.
 type screen int

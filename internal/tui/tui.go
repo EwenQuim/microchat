@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"fmt"
@@ -151,7 +151,7 @@ func (m model) View() tea.View {
 	return v
 }
 
-func main() {
+func Run() error {
 	cfg, err := loadConfig()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "warning: could not load config:", err)
@@ -159,7 +159,7 @@ func main() {
 
 	p := tea.NewProgram(initialModel(cfg))
 	if _, err := p.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
