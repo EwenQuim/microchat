@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Eye, EyeOff, QrCode, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Plus, QrCode, Trash2 } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
+import { AddServerDialog } from "@/components/servers/AddServerDialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -12,8 +13,10 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useServers } from "@/hooks/useServers";
 import { useUsername } from "@/hooks/useUsername";
 import { hexToNpub, hexToNsec } from "@/lib/crypto";
+import type { Server } from "@/lib/servers";
 
 export const Route = createFileRoute("/settings")({
 	component: Settings,
@@ -26,7 +29,7 @@ export const Route = createFileRoute("/settings")({
 
 function Settings() {
 	const [activeTab, setActiveTab] = useState<
-		"user" | "import" | "export" | "options"
+		"user" | "import" | "export" | "options" | "servers"
 	>("user");
 	const [showPrivateKey, setShowPrivateKey] = useState(false);
 	const [importNsec, setImportNsec] = useState("");
@@ -35,7 +38,9 @@ function Settings() {
 	const [showQR, setShowQR] = useState(false);
 	const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [showAddServerDialog, setShowAddServerDialog] = useState(false);
 	const { username, keys, importProfile, clearUsername } = useUsername();
+	const { servers, addServer, removeServer } = useServers();
 	const navigate = useNavigate();
 	const searchParams = Route.useSearch();
 
@@ -137,6 +142,7 @@ function Settings() {
 					<TabButton value="user" label="User" />
 					<TabButton value="import" label="Import" />
 					<TabButton value="export" label="Export" />
+					<TabButton value="servers" label="Servers" />
 					{/* <TabButton value="options" label="Options" /> */}
 				</div>
 
@@ -335,7 +341,77 @@ function Settings() {
 							</div>
 						</div>
 					)}
+
+					{activeTab === "servers" && (
+						<div className="space-y-4">
+							<h2 className="text-2xl font-semibold mb-4">Servers</h2>
+							<div className="space-y-2">
+								{servers.length === 0 && (
+									<p className="text-sm text-gray-400 py-2">
+										No servers configured.
+									</p>
+								)}
+								{servers.map((server: Server) => (
+									<div
+										key={server.url}
+										className="flex items-center gap-3 p-3 rounded-lg border border-gray-700"
+									>
+										{server.color && (
+											<div
+												className="h-4 w-4 rounded-full shrink-0"
+												style={{ backgroundColor: server.color }}
+											/>
+										)}
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center gap-2">
+												<span className="font-medium text-sm">
+													{server.quickname}
+												</span>
+												{server.isLocal && (
+													<span className="text-xs text-gray-400 bg-gray-700 px-1.5 py-0.5 rounded">
+														local
+													</span>
+												)}
+											</div>
+											<p className="text-xs text-gray-400 truncate">
+												{server.url}
+											</p>
+											{server.description && (
+												<p className="text-xs text-gray-400 mt-0.5">
+													{server.description}
+												</p>
+											)}
+										</div>
+										{!server.isLocal && (
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-8 w-8 shrink-0 text-gray-400 hover:text-destructive"
+												onClick={() => removeServer(server.url)}
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										)}
+									</div>
+								))}
+							</div>
+							<Button
+								onClick={() => setShowAddServerDialog(true)}
+								variant="outline"
+								className="w-full"
+							>
+								<Plus className="h-4 w-4 mr-2" />
+								Add Server
+							</Button>
+						</div>
+					)}
 				</div>
+
+				<AddServerDialog
+					open={showAddServerDialog}
+					onOpenChange={setShowAddServerDialog}
+					onAdd={(server) => addServer(server)}
+				/>
 
 				{/* Delete Confirmation Dialog */}
 				<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

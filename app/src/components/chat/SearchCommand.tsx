@@ -36,8 +36,17 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 		}
 	};
 
-	const handleSelect = (roomName: string) => {
-		navigate({ to: "/chat/$roomName", params: { roomName } });
+	const handleSelect = (room: { name?: string; serverUrl?: string }) => {
+		const name = room.name ?? "";
+		const sUrl = room.serverUrl ?? "";
+		let isLocal = true;
+		try {
+			isLocal = !sUrl || new URL(sUrl).host === window.location.host;
+		} catch {
+			isLocal = true;
+		}
+		const roomId = isLocal ? name : `${new URL(sUrl).host}~${name}`;
+		navigate({ to: "/chat/$roomName", params: { roomName: roomId } });
 		onOpenChange(false);
 		setSearch("");
 	};
@@ -73,9 +82,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 							?.filter((room) => !room.has_password)
 							.map((room) => (
 								<Command.Item
-									key={room.name}
+									key={`${"serverUrl" in room ? room.serverUrl : "local"}:${room.name}`}
 									value={room.name}
-									onSelect={() => handleSelect(room.name || "")}
+									onSelect={() => handleSelect(room)}
 									className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-3 text-sm outline-none hover:bg-accent data-[selected=true]:bg-accent"
 								>
 									<div className="flex flex-col flex-1 min-w-0">

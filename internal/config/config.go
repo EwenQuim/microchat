@@ -9,10 +9,16 @@ import (
 type Config struct {
 	Port         string
 	AdminPubkeys []string
+	QuickName    string
+	Description  string
 }
 
 func Load() *Config {
 	port := cmp.Or(os.Getenv("PORT"), ":8080")
+
+	hostname, _ := os.Hostname()
+	quickName := cmp.Or(os.Getenv("SERVER_QUICKNAME"), hostname)
+	description := os.Getenv("SERVER_DESCRIPTION")
 
 	// Parse comma-separated list of admin public keys
 	adminPubkeysStr := os.Getenv("ADMIN_PUBKEYS")
@@ -29,5 +35,7 @@ func Load() *Config {
 	return &Config{
 		Port:         port,
 		AdminPubkeys: adminPubkeys,
+		QuickName:    quickName,
+		Description:  description,
 	}
 }

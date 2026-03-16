@@ -10,9 +10,14 @@ export default defineConfig({
 			target: "./src/lib/api/generated",
 			client: "react-query",
 			clean: true,
-			baseUrl: "",
 			httpClient: "fetch",
 			biome: true,
+			override: {
+				mutator: {
+					path: "./src/lib/api/mutator.ts",
+					name: "customFetch",
+				},
+			},
 		},
 	},
 });

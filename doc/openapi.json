@@ -171,6 +171,18 @@
 				],
 				"type": "object"
 			},
+			"ServerInfoResponse": {
+				"description": "ServerInfoResponse schema",
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"suggested_quickname": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"User": {
 				"description": "User schema",
 				"properties": {
@@ -262,7 +274,7 @@
 		},
 		"/api/rooms": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func1`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "GET_/api/rooms",
 				"parameters": [
 					{
@@ -336,13 +348,13 @@
 						"description": ""
 					}
 				},
-				"summary": "func1",
+				"summary": "func2",
 				"tags": [
 					"chat"
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func3`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "POST_/api/rooms",
 				"parameters": [
 					{
@@ -355,7 +367,7 @@
 				],
 				"requestBody": {
 					"content": {
-						"*/*": {
+						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/CreateRoomRequest"
 							}
@@ -414,7 +426,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func3",
+				"summary": "func4",
 				"tags": [
 					"chat"
 				]
@@ -422,7 +434,7 @@
 		},
 		"/api/rooms/search": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func3`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/search",
 				"parameters": [
 					{
@@ -503,7 +515,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func2",
+				"summary": "func3",
 				"tags": [
 					"chat"
 				]
@@ -511,7 +523,7 @@
 		},
 		"/api/rooms/{room}/messages": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -593,13 +605,13 @@
 						"description": ""
 					}
 				},
-				"summary": "func4",
+				"summary": "func5",
 				"tags": [
 					"chat"
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "POST_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -620,7 +632,7 @@
 				],
 				"requestBody": {
 					"content": {
-						"*/*": {
+						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SendMessageRequest"
 							}
@@ -679,15 +691,81 @@
 						"description": ""
 					}
 				},
-				"summary": "func5",
+				"summary": "func6",
 				"tags": [
 					"chat"
 				]
 			}
 		},
+		"/api/server-info": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetServerInfo.func1`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"operationId": "GET_/api/server-info",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServerInfoResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ServerInfoResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1"
+			}
+		},
 		"/api/users/{publicKey}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func7`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
 				"operationId": "GET_/api/users/:publicKey",
 				"parameters": [
 					{
@@ -756,7 +834,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func6",
+				"summary": "func7",
 				"tags": [
 					"user"
 				]

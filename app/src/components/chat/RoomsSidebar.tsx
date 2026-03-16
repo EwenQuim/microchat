@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRooms } from "@/hooks/useRooms";
+import { useServers } from "@/hooks/useServers";
 import { useUsername } from "@/hooks/useUsername";
 import { cn } from "@/lib/utils";
 import { CreateRoomDialog } from "./CreateRoomDialog";
@@ -16,12 +17,22 @@ interface RoomsSidebarProps {
 	className?: string;
 }
 
+function extractDomain(url: string): string {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return url;
+	}
+}
+
 export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 	const { data: rooms, isLoading, error } = useRooms();
+	const { servers } = useServers();
 	const { username } = useUsername();
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showSearch, setShowSearch] = useState(false);
 	const navigate = useNavigate();
+	const multiServer = servers.length > 1;
 
 	useKeyboardShortcut((e) => {
 		if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
@@ -36,21 +47,23 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				<div className="p-4 shrink-0 space-y-3">
 					<div className="flex items-center justify-between">
 						<h2 className="font-semibold text-lg">Microchat</h2>
-						{username && (
-							<Link
-								to="/settings"
-								search={{ import: undefined }}
-								className={cn(
-									"flex items-center gap-2 px-2 py-1 rounded-lg transition-colors",
-									"hover:bg-accent",
-								)}
-							>
-								<User className="h-4 w-4" />
-								<span className="text-sm font-medium truncate max-w-24">
-									{username}
-								</span>
-							</Link>
-						)}
+						<div className="flex items-center gap-1">
+							{username && (
+								<Link
+									to="/settings"
+									search={{ import: undefined }}
+									className={cn(
+										"flex items-center gap-2 px-2 py-1 rounded-lg transition-colors",
+										"hover:bg-accent",
+									)}
+								>
+									<User className="h-4 w-4" />
+									<span className="text-sm font-medium truncate max-w-24">
+										{username}
+									</span>
+								</Link>
+							)}
+						</div>
 					</div>
 					<button
 						type="button"
@@ -87,15 +100,31 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 					<div className="p-2 space-y-1 pb-16">
 						{rooms?.map((room) => {
 							const roomName = room.name || "Unnamed Room";
+							const serverLabel = multiServer
+								? room.serverQuickname || extractDomain(room.serverUrl)
+								: null;
+							const server = servers.find((s) => s.url === room.serverUrl);
+							const serverColor = server?.color;
+							const localHost = window.location.host;
+							let serverHost: string;
+							try {
+								serverHost = new URL(room.serverUrl).host;
+							} catch {
+								serverHost = "";
+							}
+							const roomId =
+								serverHost === localHost
+									? roomName
+									: `${serverHost}~${roomName}`;
 							return (
 								<Link
-									key={roomName}
+									key={`${room.serverUrl}:${roomName}`}
 									to="/chat/$roomName"
-									params={{ roomName }}
+									params={{ roomName: roomId }}
 									className={cn(
 										"w-full flex flex-col p-3 rounded-lg transition-colors",
 										"hover:bg-accent",
-										selectedRoom === roomName && "bg-accent",
+										selectedRoom === roomId && "bg-accent",
 									)}
 								>
 									<div className="flex items-center justify-between w-full min-w-0">
@@ -108,16 +137,34 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 											)}
 											<span className="font-medium truncate">{roomName}</span>
 										</div>
-										{room.last_message_timestamp && (
-											<span className="text-xs text-muted-foreground shrink-0">
-												{formatDistanceToNow(
-													new Date(room.last_message_timestamp),
-													{
-														addSuffix: true,
-													},
-												)}
-											</span>
-										)}
+										<div className="flex items-center gap-2 shrink-0">
+											{serverLabel && (
+												<span
+													className="text-xs px-1.5 py-0.5 rounded font-medium"
+													style={
+														serverColor
+															? {
+																	backgroundColor: `${serverColor}22`,
+																	color: serverColor,
+																	border: `1px solid ${serverColor}44`,
+																}
+															: undefined
+													}
+												>
+													{serverLabel}
+												</span>
+											)}
+											{room.last_message_timestamp && (
+												<span className="text-xs text-muted-foreground">
+													{formatDistanceToNow(
+														new Date(room.last_message_timestamp),
+														{
+															addSuffix: true,
+														},
+													)}
+												</span>
+											)}
+										</div>
 									</div>
 									{room.last_message_content && (
 										<div className="text-xs text-muted-foreground mt-1 truncate min-w-0 max-w-48">
@@ -149,7 +196,10 @@ export function RoomsSidebar({ selectedRoom, className }: RoomsSidebarProps) {
 				open={showCreateDialog}
 				onOpenChange={setShowCreateDialog}
 				onRoomCreated={(roomName) =>
-					navigate({ to: "/chat/$roomName", params: { roomName } })
+					navigate({
+						to: "/chat/$roomName",
+						params: { roomName },
+					})
 				}
 			/>
 

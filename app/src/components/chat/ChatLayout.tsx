@@ -16,9 +16,22 @@ import { RoomsSidebar } from "./RoomsSidebar";
 interface ChatLayoutProps {
 	/** null if in index page, equal to room list on mobile */
 	roomName: string | null;
+	serverUrl?: string;
 }
 
-export function ChatLayout({ roomName }: ChatLayoutProps) {
+export function ChatLayout({ roomName, serverUrl = "" }: ChatLayoutProps) {
+	const selectedRoomId = roomName
+		? serverUrl &&
+			(() => {
+				try {
+					return new URL(serverUrl).host !== window.location.host;
+				} catch {
+					return false;
+				}
+			})()
+			? `${new URL(serverUrl).host}~${roomName}`
+			: roomName
+		: null;
 	const { username, keys, setUsername, isLoading } = useUsername();
 	const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 	const [tempUsername, setTempUsername] = useState("");
@@ -55,7 +68,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 			<div className="flex h-screen w-full">
 				{/* Sidebar - Full width on mobile, fixed width on desktop. Hidden on mobile when a room is selected */}
 				<RoomsSidebar
-					selectedRoom={roomName}
+					selectedRoom={selectedRoomId}
 					className={cn(
 						"w-full md:w-80 md:shrink-0",
 						roomName ? "hidden md:flex" : "flex",
@@ -64,6 +77,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 				{/* Chat Area - Full width on mobile when room selected, flex-1 on desktop. Hidden on mobile when no room is selected */}
 				<ChatArea
 					roomName={roomName}
+					serverUrl={serverUrl}
 					username={username ?? ""}
 					currentPubKey={keys?.publicKey ?? ""}
 					keys={keys}
@@ -77,7 +91,7 @@ export function ChatLayout({ roomName }: ChatLayoutProps) {
 			<Dialog open={showUsernameDialog} onOpenChange={setShowUsernameDialog}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Welcome to MicroChat</DialogTitle>
+						<DialogTitle>Welcome to µChat</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-4">
 						<p className="text-sm text-muted-foreground">

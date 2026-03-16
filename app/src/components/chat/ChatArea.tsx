@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import { useRoomPassword } from "@/hooks/useRoomPassword";
-import { getStoredPasswords } from "@/hooks/useSearchRooms";
 import { useSendMessage } from "@/hooks/useSendMessage";
-import { getGETApiRoomsQueryKey } from "@/lib/api/generated/chat/chat";
 import { type KeyPair, signMessage } from "@/lib/crypto";
 import { cn } from "@/lib/utils";
 import { MessageInput } from "./MessageInput";
@@ -16,6 +14,7 @@ import { RoomPasswordDialog } from "./RoomPasswordDialog";
 
 interface ChatAreaProps {
 	roomName: string | null;
+	serverUrl: string;
 	username: string;
 	currentPubKey: string;
 	keys: KeyPair | null;
@@ -23,6 +22,7 @@ interface ChatAreaProps {
 }
 export function ChatArea({
 	roomName,
+	serverUrl,
 	username,
 	currentPubKey,
 	keys,
@@ -33,7 +33,11 @@ export function ChatArea({
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
 	const queryClient = useQueryClient();
-	const { data: messages, isLoading } = useMessages(roomName, password);
+	const { data: messages, isLoading } = useMessages(
+		roomName,
+		password,
+		serverUrl,
+	);
 
 	const sendMessageMutation = useSendMessage();
 
@@ -43,12 +47,7 @@ export function ChatArea({
 			// Successfully accessed room - save to visited list
 			// Store with current password (empty string for public rooms)
 			setPassword(roomName, password || "");
-			const visitedRooms = Object.keys(getStoredPasswords())?.join(",");
-			queryClient.invalidateQueries({
-				queryKey: getGETApiRoomsQueryKey({
-					visited: visitedRooms || undefined,
-				}),
-			});
+			queryClient.invalidateQueries({ queryKey: ["rooms"] });
 		}
 	}, [roomName, password, setPassword, queryClient]);
 
@@ -118,7 +117,7 @@ export function ChatArea({
 		return (
 			<div className={cn("flex items-center justify-center", className)}>
 				<div className="text-center">
-					<h2 className="text-2xl font-semibold mb-2">Welcome to MicroChat</h2>
+					<h2 className="text-2xl font-semibold mb-2">Welcome to µChat</h2>
 					<p className="text-muted-foreground">
 						Select a room from the sidebar to start chatting
 					</p>
