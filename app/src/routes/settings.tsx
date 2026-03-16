@@ -115,7 +115,7 @@ function Settings() {
 			className={`px-4 md:px-6 py-3 font-medium transition-colors whitespace-nowrap ${
 				activeTab === value
 					? "border-b-2 border-cyan-500 text-cyan-500"
-					: "text-gray-400 hover:text-white"
+					: "text-muted-foreground hover:text-foreground"
 			}`}
 		>
 			{label}
@@ -123,14 +123,14 @@ function Settings() {
 	);
 
 	return (
-		<div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
+		<div className="min-h-screen bg-background text-foreground p-4 md:p-8">
 			<div className="max-w-4xl mx-auto">
 				<div className="flex items-center gap-4 mb-8">
 					<Button
 						onClick={handleGoBack}
 						variant="ghost"
 						size="icon"
-						className="text-gray-400 hover:text-white h-12 w-12 md:h-10 md:w-10"
+						className="text-muted-foreground hover:text-foreground h-12 w-12 md:h-10 md:w-10"
 					>
 						<ArrowLeft className="h-6 w-6 md:h-5 md:w-5" />
 					</Button>
@@ -138,7 +138,7 @@ function Settings() {
 				</div>
 
 				{/* Tabs */}
-				<div className="flex gap-2 mb-6 border-b border-gray-700 overflow-x-auto -mx-4 md:-mx-8 px-4 md:px-8">
+				<div className="flex gap-2 mb-6 border-b border-border overflow-x-auto -mx-4 md:-mx-8 px-4 md:px-8">
 					<TabButton value="user" label="User" />
 					<TabButton value="import" label="Import" />
 					<TabButton value="export" label="Export" />
@@ -147,27 +147,27 @@ function Settings() {
 				</div>
 
 				{/* Tab Content */}
-				<div className="bg-gray-800 rounded-lg p-4 md:p-6">
+				<div className="bg-card text-card-foreground rounded-lg p-4 md:p-6 border border-border">
 					{activeTab === "user" && (
 						<div className="space-y-6">
 							<h2 className="text-2xl font-semibold mb-4">User Information</h2>
 
 							{/* Username */}
 							<div>
-								<div className="block text-sm font-medium text-gray-400 mb-2">
+								<div className="block text-sm font-medium text-muted-foreground mb-2">
 									Username
 								</div>
-								<div className="bg-gray-700 px-4 py-3 rounded-lg text-white">
+								<div className="bg-muted px-4 py-3 rounded-lg text-foreground">
 									{username || "Not set"}
 								</div>
 							</div>
 
 							{/* Public Key */}
 							<div>
-								<div className="block text-sm font-medium text-gray-400 mb-2">
+								<div className="block text-sm font-medium text-muted-foreground mb-2">
 									Public Key
 								</div>
-								<div className="bg-gray-700 px-4 py-3 rounded-lg text-white font-mono text-sm break-all">
+								<div className="bg-muted px-4 py-3 rounded-lg text-foreground font-mono text-sm break-all">
 									{keys?.publicKey
 										? hexToNpub(keys.publicKey)
 										: "Not available"}
@@ -176,11 +176,11 @@ function Settings() {
 
 							{/* Secret/Private Key */}
 							<div>
-								<div className="block text-sm font-medium text-gray-400 mb-2">
+								<div className="block text-sm font-medium text-muted-foreground mb-2">
 									Secret Key
 								</div>
 								<div className="relative">
-									<div className="bg-gray-700 px-4 py-3 rounded-lg text-white font-mono text-sm break-all pr-12">
+									<div className="bg-muted px-4 py-3 rounded-lg text-foreground font-mono text-sm break-all pr-12">
 										{showPrivateKey
 											? keys?.privateKey
 												? hexToNsec(keys.privateKey)
@@ -190,7 +190,7 @@ function Settings() {
 									<button
 										type="button"
 										onClick={() => setShowPrivateKey(!showPrivateKey)}
-										className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-600 rounded-lg transition-colors"
+										className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-accent rounded-lg transition-colors"
 										aria-label={
 											showPrivateKey ? "Hide secret key" : "Show secret key"
 										}
@@ -198,7 +198,7 @@ function Settings() {
 										{showPrivateKey ? <EyeOff size={20} /> : <Eye size={20} />}
 									</button>
 								</div>
-								<p className="text-xs text-gray-500 mt-2">
+								<p className="text-xs text-muted-foreground mt-2">
 									Keep your secret key safe. Never share it with anyone.
 								</p>
 							</div>
@@ -214,7 +214,7 @@ function Settings() {
 											<h4 className="font-medium text-red-400 mb-1">
 												Delete Identity
 											</h4>
-											<p className="text-sm text-gray-400">
+											<p className="text-sm text-muted-foreground">
 												Remove your identity from this device. Make sure to back
 												up your secret key first (use Export tab). This only
 												deletes the local data.
@@ -237,7 +237,7 @@ function Settings() {
 					{activeTab === "import" && (
 						<div className="space-y-6">
 							<h2 className="text-2xl font-semibold mb-4">Import Profile</h2>
-							<p className="text-sm text-gray-400">
+							<p className="text-sm text-muted-foreground">
 								Import an existing profile using your secret key (nsec). You'll
 								still need to choose a display name.
 							</p>
@@ -245,7 +245,7 @@ function Settings() {
 							<div>
 								<label
 									htmlFor="import-username"
-									className="block text-sm font-medium text-gray-400 mb-2"
+									className="block text-sm font-medium text-muted-foreground mb-2"
 								>
 									Username
 								</label>
@@ -254,14 +254,14 @@ function Settings() {
 									value={importUsername}
 									onChange={(e) => setImportUsername(e.target.value)}
 									placeholder="Choose your display name"
-									className="bg-gray-700 border-gray-600 text-white"
+									className=""
 								/>
 							</div>
 
 							<div>
 								<label
 									htmlFor="import-nsec"
-									className="block text-sm font-medium text-gray-400 mb-2"
+									className="block text-sm font-medium text-muted-foreground mb-2"
 								>
 									Secret Key (nsec)
 								</label>
@@ -270,7 +270,7 @@ function Settings() {
 									value={importNsec}
 									onChange={(e) => setImportNsec(e.target.value)}
 									placeholder="nsec1..."
-									className="bg-gray-700 border-gray-600 text-white font-mono"
+									className="font-mono"
 								/>
 							</div>
 
@@ -289,7 +289,7 @@ function Settings() {
 					{activeTab === "export" && (
 						<div className="space-y-6">
 							<h2 className="text-2xl font-semibold mb-4">Export Profile</h2>
-							<p className="text-sm text-gray-400 mb-4">
+							<p className="text-sm text-muted-foreground mb-4">
 								Share your profile by displaying a QR code. Anyone scanning it
 								can import your identity on their device.
 							</p>
@@ -314,7 +314,7 @@ function Settings() {
 													className="w-full max-w-xs"
 												/>
 											</div>
-											<p className="text-xs text-gray-500 text-center">
+											<p className="text-xs text-muted-foreground text-center">
 												This QR code contains your secret key. Only share with
 												devices you own.
 											</p>
@@ -333,7 +333,7 @@ function Settings() {
 					{activeTab === "options" && (
 						<div>
 							<h2 className="text-2xl font-semibold mb-4">Options</h2>
-							<div className="text-gray-400 text-center py-8">
+							<div className="text-muted-foreground text-center py-8">
 								<p className="text-xl">WIP</p>
 								<p className="text-sm mt-2">
 									Additional options will be available here soon.
@@ -347,14 +347,14 @@ function Settings() {
 							<h2 className="text-2xl font-semibold mb-4">Servers</h2>
 							<div className="space-y-2">
 								{servers.length === 0 && (
-									<p className="text-sm text-gray-400 py-2">
+									<p className="text-sm text-muted-foreground py-2">
 										No servers configured.
 									</p>
 								)}
 								{servers.map((server: Server) => (
 									<div
 										key={server.url}
-										className="flex items-center gap-3 p-3 rounded-lg border border-gray-700"
+										className="flex items-center gap-3 p-3 rounded-lg border border-border"
 									>
 										{server.color && (
 											<div
@@ -368,16 +368,16 @@ function Settings() {
 													{server.quickname}
 												</span>
 												{server.isLocal && (
-													<span className="text-xs text-gray-400 bg-gray-700 px-1.5 py-0.5 rounded">
+													<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
 														local
 													</span>
 												)}
 											</div>
-											<p className="text-xs text-gray-400 truncate">
+											<p className="text-xs text-muted-foreground truncate">
 												{server.url}
 											</p>
 											{server.description && (
-												<p className="text-xs text-gray-400 mt-0.5">
+												<p className="text-xs text-muted-foreground mt-0.5">
 													{server.description}
 												</p>
 											)}
@@ -386,7 +386,7 @@ function Settings() {
 											<Button
 												variant="ghost"
 												size="icon"
-												className="h-8 w-8 shrink-0 text-gray-400 hover:text-destructive"
+												className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
 												onClick={() => removeServer(server.url)}
 											>
 												<Trash2 className="h-4 w-4" />
@@ -415,12 +415,12 @@ function Settings() {
 
 				{/* Delete Confirmation Dialog */}
 				<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-					<DialogContent className="bg-gray-800 border-gray-700 text-white">
+					<DialogContent>
 						<DialogHeader>
 							<DialogTitle className="text-red-500">
 								Delete Identity
 							</DialogTitle>
-							<DialogDescription className="text-gray-400">
+							<DialogDescription>
 								Are you sure you want to delete your identity from this device?
 								This will remove your username and keys. Make sure you've backed
 								up your secret key if you want to restore this identity later.
@@ -430,7 +430,7 @@ function Settings() {
 							<Button
 								onClick={() => setShowDeleteDialog(false)}
 								variant="outline"
-								className="border-gray-600 text-white hover:bg-gray-700"
+								className=""
 							>
 								Cancel
 							</Button>
