@@ -1,4 +1,4 @@
-.PHONY: help build-frontend build-server build-cli build dev run clean docker-build docker-up docker-down install lint test
+.PHONY: help build-frontend build-server build-cli build dev run clean docker-build docker-up docker-down install lint test generate-client
 
 help:
 	@echo "Available commands:"
@@ -15,6 +15,11 @@ help:
 	@echo "  make docker-up      - Start with docker-compose"
 	@echo "  make docker-down    - Stop docker-compose"
 	@echo "  make clean          - Clean build artifacts"
+	@echo "  make generate-client - Generate Go API client from OpenAPI spec"
+
+generate-client:
+	@echo "Generating Go API client..."
+	go tool oapi-codegen --config client/sdk/oapi-codegen.yaml doc/openapi.json
 
 install:
 	@echo "Installing Go dependencies..."
