@@ -31,6 +31,14 @@ func newContactsModel(cfg appConfig) contactsModel {
 
 func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.PasteMsg:
+		switch m.state {
+		case contactsStateAddNpub:
+			m.inputNpub += msg.Content
+		case contactsStateAddName:
+			m.inputName += msg.Content
+		}
+
 	case tea.KeyMsg:
 		switch m.state {
 		case contactsStateList:
@@ -145,7 +153,11 @@ func (m contactsModel) view(width, height int) string {
 				if u.DisplayName != "" {
 					nameStr = ansiColor(u.DisplayName, r, g, bv) + "  "
 				}
-				b.WriteString(fmt.Sprintf("%s%s%s%s\n", pad, cursor, nameStr, formatKeyFull(u.PubKey)))
+				displayKey := u.PubKey
+				if npub, err := pubKeyHexToNpub(u.PubKey); err == nil {
+					displayKey = npub
+				}
+				fmt.Fprintf(&b, "%s%s%s%s\n", pad, cursor, nameStr, formatKeyFull(displayKey))
 			}
 		}
 		b.WriteString("\n")

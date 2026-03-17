@@ -272,7 +272,7 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 	if focused {
 		focusMark = "*"
 	}
-	b.WriteString(focusMark + " Rooms\n")
+	b.WriteString(focusMark + " µchat\n")
 	b.WriteString(strings.Repeat("─", width) + "\n")
 
 	if m.promptPasswd {

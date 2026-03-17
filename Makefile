@@ -75,7 +75,9 @@ test:
 	go test -v -race -coverprofile=coverage.out ./...
 
 lint:
-	@echo "Running golangci-lint..."
+	@echo "Running formatters and linters..."
+	go fmt ./...
+	go tool modernize -fix ./...
 	golangci-lint run --config .golangci.yml
 	cd app && npm run format
 

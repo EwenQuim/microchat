@@ -221,10 +221,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	b.WriteString(sep + "\n")
 
 	// Reserve: header(1) + sep(1) + bottom_sep(1) + input(1) + footer(1) = 5
-	contentHeight := height - 5
-	if contentHeight < 1 {
-		contentHeight = 1
-	}
+	contentHeight := max(height-5, 1)
 
 	if m.loading {
 		for i := 0; i < contentHeight-1; i++ {
@@ -237,14 +234,8 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		}
 		b.WriteString(" (no messages yet)\n")
 	} else {
-		start := len(m.messages) - contentHeight - m.scroll
-		if start < 0 {
-			start = 0
-		}
-		end := start + contentHeight
-		if end > len(m.messages) {
-			end = len(m.messages)
-		}
+		start := max(len(m.messages)-contentHeight-m.scroll, 0)
+		end := min(start+contentHeight, len(m.messages))
 		// Pad empty lines above messages so they appear at the bottom
 		shown := end - start
 		for i := 0; i < contentHeight-shown; i++ {
@@ -291,11 +282,15 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	if m.username != "" && m.id != nil {
 		r, g, bv := m.cachedColor(m.id.PubKeyHex)
 		coloredName := ansiColor(m.username, r, g, bv)
-		keyHint := ""
+
+		truncPk := m.id.PubKeyHex
 		if pk := m.id.PubKeyHex; len(pk) >= 8 {
-			keyHint = dim(pk[len(pk)-8:])
+			npub, err := pubKeyHexToNpub(pk)
+			if err == nil && len(npub) >= 8 {
+				truncPk = npub[len(npub)-8:]
+			}
 		}
-		b.WriteString(" " + coloredName + keyHint + "> " + m.inputText + cursor + "\n")
+		b.WriteString(" " + coloredName + " " + dim(truncPk) + "> " + m.inputText + cursor + "\n")
 	} else if m.username != "" {
 		b.WriteString(" " + m.username + "> " + m.inputText + cursor + "\n")
 	} else {

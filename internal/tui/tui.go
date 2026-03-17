@@ -119,10 +119,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			username := ""
 			if m.id != nil {
-				if npub := m.id.NpubKey; len(npub) >= 6 {
-					username = npub[len(npub)-6:]
-				} else {
-					username = m.id.PubKeyHex[:12] + "…"
+				if m.cfg.ActiveIndex < len(m.cfg.Identities) {
+					username = m.cfg.Identities[m.cfg.ActiveIndex].Name
+				}
+				if username == "" {
+					if npub := m.id.NpubKey; len(npub) >= 6 {
+						username = npub[len(npub)-6:]
+					} else {
+						username = m.id.PubKeyHex[:12] + "…"
+					}
 				}
 			}
 			m.main = newMainModel(client, m.id, username)

@@ -12,7 +12,7 @@ import (
 type mainFocus int
 
 const (
-	focusLeft  mainFocus = iota
+	focusLeft mainFocus = iota
 	focusRight
 )
 
@@ -130,7 +130,7 @@ func (m mainModel) view(width, height int) string {
 	}
 
 	var b strings.Builder
-	for i := 0; i < height; i++ {
+	for i := range height {
 		left := ""
 		right := ""
 		if i < len(leftLines) {

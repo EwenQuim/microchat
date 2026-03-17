@@ -7,7 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-
 func TestInitialModel_NoIdentity_StartsOnIdentityScreen(t *testing.T) {
 	cfg := appConfig{}
 	m := initialModel(cfg)

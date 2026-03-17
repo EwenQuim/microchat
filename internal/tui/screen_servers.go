@@ -189,7 +189,7 @@ func (m serverModel) view(width, height int) string {
 				if name == "" {
 					name = srv.URL
 				}
-				b.WriteString(fmt.Sprintf("%s%s%s  %s\n", pad, cursor, name, srv.URL))
+				fmt.Fprintf(&b, "%s%s%s  %s\n", pad, cursor, name, srv.URL)
 			}
 		}
 		b.WriteString("\n")

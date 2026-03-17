@@ -337,6 +337,15 @@ func TestIdentityModel_InputState_EnterInvalidKey(t *testing.T) {
 	}
 }
 
+func TestIdentityModel_InputState_Paste(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateInput
+	m2, _ := m.update(tea.PasteMsg{Content: "deadbeef"})
+	if m2.inputText != "deadbeef" {
+		t.Errorf("inputText = %q, want deadbeef", m2.inputText)
+	}
+}
+
 func TestIdentityModel_View_MenuContainsOptions(t *testing.T) {
 	m := newIdentityModel()
 	v := m.view(80, 24)

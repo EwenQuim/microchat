@@ -3,6 +3,7 @@ package tui
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 )
 
 const bech32Charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
@@ -19,7 +20,7 @@ func init() {
 	for i := range bech32CharsetReverse {
 		bech32CharsetReverse[i] = 255
 	}
-	for i := 0; i < len(bech32Charset); i++ {
+	for i := range len(bech32Charset) {
 		bech32CharsetReverse[bech32Charset[i]] = byte(i)
 	}
 
@@ -35,7 +36,7 @@ func polymodStep(chk uint32, v byte) uint32 {
 	gen := [5]uint32{0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3}
 	b := chk >> 25
 	chk = (chk&0x1ffffff)<<5 ^ uint32(v)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if (b>>uint(i))&1 == 1 {
 			chk ^= gen[i]
 		}
@@ -82,23 +83,23 @@ func npubSuffixMatch(xCoord []byte, target []byte) bool {
 
 	// Compute checksum starting from precomputed HRP state.
 	chk := npubHRPPolymodState
-	for i := 0; i < 52; i++ {
+	for i := range 52 {
 		chk = polymodStep(chk, data[i])
 	}
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		chk = polymodStep(chk, 0)
 	}
 	chk ^= 1
 
 	var checksum [6]byte
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		checksum[i] = byte((chk >> uint(5*(5-i))) & 31)
 	}
 
 	// Full encoded payload is 58 values: data[0..51] + checksum[0..5].
 	// Compare the last len(target) values.
 	n := len(target)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		p := 58 - n + i
 		var val byte
 		if p < 52 {
@@ -115,7 +116,7 @@ func npubSuffixMatch(xCoord []byte, target []byte) bool {
 
 // isValidBech32Char reports whether c is in the bech32 charset (lowercase).
 func isValidBech32Char(c byte) bool {
-	for i := 0; i < len(bech32Charset); i++ {
+	for i := range len(bech32Charset) {
 		if bech32Charset[i] == c {
 			return true
 		}
@@ -129,7 +130,7 @@ func bech32Polymod(values []byte) uint32 {
 	for _, v := range values {
 		b := chk >> 25
 		chk = (chk&0x1ffffff)<<5 ^ uint32(v)
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			if (b>>uint(i))&1 == 1 {
 				chk ^= gen[i]
 			}
@@ -152,7 +153,7 @@ func bech32CreateChecksum(hrp string, data []byte) []byte {
 	values := append(bech32HRPExpand(hrp), data...)
 	polymod := bech32Polymod(append(values, 0, 0, 0, 0, 0, 0)) ^ 1
 	checksum := make([]byte, 6)
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		checksum[i] = byte((polymod >> uint(5*(5-i))) & 31)
 	}
 	return checksum
@@ -160,11 +161,12 @@ func bech32CreateChecksum(hrp string, data []byte) []byte {
 
 func bech32Encode(hrp string, data []byte) string {
 	combined := append(data, bech32CreateChecksum(hrp, data)...)
-	result := hrp + "1"
+	var result strings.Builder
+	result.WriteString(hrp + "1")
 	for _, b := range combined {
-		result += string(bech32Charset[b])
+		result.WriteString(string(bech32Charset[b]))
 	}
-	return result
+	return result.String()
 }
 
 func convertBits(data []byte, fromBits, toBits uint, pad bool) ([]byte, error) {

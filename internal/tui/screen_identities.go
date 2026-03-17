@@ -151,7 +151,11 @@ func (m identitiesModel) view(width, height int) string {
 				if e.Name != "" {
 					nameStr = ansiColor(e.Name, r, g, bv) + "  "
 				}
-				b.WriteString(fmt.Sprintf("%s%s%s %s%s\n", pad, cursor, active, nameStr, formatKeyFull(e.PublicKey)))
+				displayKey := e.PublicKey
+				if npub, err := pubKeyHexToNpub(e.PublicKey); err == nil {
+					displayKey = npub
+				}
+				fmt.Fprintf(&b, "%s%s%s %s%s\n", pad, cursor, active, nameStr, formatKeyFull(displayKey))
 			}
 		}
 		b.WriteString("\n")

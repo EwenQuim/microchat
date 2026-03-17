@@ -309,6 +309,24 @@ func TestContactsModel_View_ShowsAddNamePrompt(t *testing.T) {
 	}
 }
 
+func TestContactsModel_AddNpub_Paste(t *testing.T) {
+	m := makeContactsModel()
+	m.state = contactsStateAddNpub
+	m2, _ := m.update(tea.PasteMsg{Content: "npub1abc"})
+	if m2.inputNpub != "npub1abc" {
+		t.Errorf("inputNpub = %q, want npub1abc", m2.inputNpub)
+	}
+}
+
+func TestContactsModel_AddName_Paste(t *testing.T) {
+	m := makeContactsModel()
+	m.state = contactsStateAddName
+	m2, _ := m.update(tea.PasteMsg{Content: "Alice"})
+	if m2.inputName != "Alice" {
+		t.Errorf("inputName = %q, want Alice", m2.inputName)
+	}
+}
+
 func TestContactsModel_View_ShowsError(t *testing.T) {
 	m := makeContactsModel()
 	m.state = contactsStateAddNpub

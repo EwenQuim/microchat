@@ -13,10 +13,10 @@ import (
 type idState int
 
 const (
-	idStateMenu            idState = iota
-	idStateInput                   // pasting a private key
-	idStateVanityInput             // typing the vanity suffix
-	idStateVanityGenerating        // goroutines running
+	idStateMenu             idState = iota
+	idStateInput                    // pasting a private key
+	idStateVanityInput              // typing the vanity suffix
+	idStateVanityGenerating         // goroutines running
 )
 
 type idMode int
@@ -161,6 +161,11 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 			}
 		}
 
+	case tea.PasteMsg:
+		if m.state == idStateInput {
+			m.inputText += msg.Content
+		}
+
 	case vanityFoundMsg:
 		if m.vanityCancel != nil {
 			m.vanityCancel()
@@ -212,7 +217,7 @@ func (m identityModel) view(width, height int) string {
 	case idStateMenu:
 		b.WriteString(helpBar("g", "generate new keypair", "p", "paste private key", "v", "vanity keypair", "q", "quit") + "\n")
 		if m.err != "" {
-			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
+			fmt.Fprintf(&b, "\n%s  Error: %s\n", pad, m.err)
 		}
 
 	case idStateInput:
@@ -220,7 +225,7 @@ func (m identityModel) view(width, height int) string {
 		b.WriteString(pad + "> " + m.inputText + "█\n\n")
 		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
 		if m.err != "" {
-			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
+			fmt.Fprintf(&b, "\n%s  Error: %s\n", pad, m.err)
 		}
 
 	case idStateVanityInput:
@@ -228,7 +233,7 @@ func (m identityModel) view(width, height int) string {
 		b.WriteString(pad + "> " + m.inputText + "█\n\n")
 		b.WriteString(helpBar("enter", "start", "esc", "cancel") + "\n")
 		if m.err != "" {
-			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
+			fmt.Fprintf(&b, "\n%s  Error: %s\n", pad, m.err)
 		}
 
 	case idStateVanityGenerating:
@@ -236,8 +241,8 @@ func (m identityModel) view(width, height int) string {
 		if m.vanityCounter != nil {
 			attempts = m.vanityCounter.Load()
 		}
-		b.WriteString(fmt.Sprintf("%sSearching for npub ending in %q…\n\n", pad, m.vanityInput))
-		b.WriteString(fmt.Sprintf("%s%s attempts\n\n", pad, FormatCount(attempts)))
+		fmt.Fprintf(&b, "%sSearching for npub ending in %q…\n\n", pad, m.vanityInput)
+		fmt.Fprintf(&b, "%s%s attempts\n\n", pad, FormatCount(attempts))
 		b.WriteString(helpBar("esc", "cancel") + "\n")
 	}
 

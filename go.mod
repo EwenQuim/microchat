@@ -78,3 +78,5 @@ require (
 )
 
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
+
+tool golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize
