@@ -22,10 +22,10 @@ COPY . .
 COPY --from=frontend-builder /app/frontend/dist ./cmd/microchat-server/static
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=linux go build -o server ./cmd/microchat-server
+    GOOS=linux go build -o microchat-server ./cmd/microchat-server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=linux go build -o cli ./cmd/cli
+    GOOS=linux go build -o microchat ./cmd/microchat
 
 # Final stage
 FROM alpine:latest
@@ -45,14 +45,14 @@ RUN mkdir -p /data && chown -R appuser:appuser /data
 RUN mkdir -p /app/doc && chown -R appuser:appuser /app
 
 # Copy Go binaries (static files are now embedded in the binary)
-COPY --from=go-builder /app/server .
-COPY --from=go-builder /app/cli .
+COPY --from=go-builder /app/microchat-server .
+COPY --from=go-builder /app/microchat .
 
 # Change ownership of binaries
-RUN chown appuser:appuser /app/server /app/cli
+RUN chown appuser:appuser /app/microchat-server /app/microchat
 
 # Switch to non-root user
 USER appuser
 
 # Run server
-CMD ["./server"]
+CMD ["./microchat-server"]

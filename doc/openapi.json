@@ -274,7 +274,7 @@
 		},
 		"/api/rooms": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/rooms",
 				"parameters": [
 					{
@@ -354,7 +354,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "POST_/api/rooms",
 				"parameters": [
 					{
@@ -434,7 +434,7 @@
 		},
 		"/api/rooms/search": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func3`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func3`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/search",
 				"parameters": [
 					{
@@ -523,7 +523,7 @@
 		},
 		"/api/rooms/{room}/messages": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -611,7 +611,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "POST_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -699,7 +699,7 @@
 		},
 		"/api/server-info": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetServerInfo.func1`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetServerInfo.func1`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/server-info",
 				"parameters": [
 					{
@@ -765,7 +765,7 @@
 		},
 		"/api/users/{publicKey}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func7`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func7`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/users/:publicKey",
 				"parameters": [
 					{
