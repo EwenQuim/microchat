@@ -290,11 +290,11 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 				truncPk = npub[len(npub)-8:]
 			}
 		}
-		b.WriteString(" " + coloredName + " " + dim(truncPk) + "> " + m.inputText + cursor + "\n")
+		b.WriteString(" " + coloredName + " " + dim(truncPk) + " > " + m.inputText + cursor + "\n")
 	} else if m.username != "" {
-		b.WriteString(" " + m.username + "> " + m.inputText + cursor + "\n")
+		b.WriteString(" " + m.username + " > " + m.inputText + cursor + "\n")
 	} else {
-		b.WriteString(" (no username)> " + m.inputText + cursor + "\n")
+		b.WriteString(" (no username) > " + m.inputText + cursor + "\n")
 	}
 	if m.err != "" {
 		b.WriteString(" Err: " + m.err + "\n")
