@@ -1,14 +1,10 @@
 package tui
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"runtime"
-	"strings"
-	"sync/atomic"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
@@ -71,77 +67,6 @@ func (id identity) SignMessage(content, room string, timestamp int64) (string, e
 	return hex.EncodeToString(compact), nil
 }
 
-// isValidVanitySuffix returns true iff suffix has 1–5 bech32 chars.
-func isValidVanitySuffix(suffix string) bool {
-	if len(suffix) < 1 || len(suffix) > 5 {
-		return false
-	}
-	for i := range len(suffix) {
-		if !isValidBech32Char(suffix[i]) {
-			return false
-		}
-	}
-	return true
-}
-
-type vanityResult struct {
-	id  identity
-	err error
-}
-
-// generateVanityIdentity spawns NumCPU goroutines to find a keypair whose
-// compressed public key hex ends with suffix. counter is incremented for
-// every attempt. Returns context.Err() if the context is cancelled before a
-// match is found.
-func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.Int64) (identity, error) {
-	ch := make(chan vanityResult, 1)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	for range runtime.NumCPU() {
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-				id, err := generateIdentity()
-				if err != nil {
-					select {
-					case ch <- vanityResult{err: err}:
-						cancel()
-					default:
-					}
-					return
-				}
-				counter.Add(1)
-				if strings.HasSuffix(id.NpubKey, suffix) {
-					select {
-					case ch <- vanityResult{id: id}:
-						cancel()
-					default:
-					}
-					return
-				}
-			}
-		}()
-	}
-
-	select {
-	case res := <-ch:
-		return res.id, res.err
-	case <-ctx.Done():
-		// drain in case a result arrived at the same time
-		select {
-		case res := <-ch:
-			return res.id, res.err
-		default:
-		}
-		return identity{}, ctx.Err()
-	}
-}
-
 // GenerateKeypair generates a random secp256k1 keypair and returns npub and private key hex.
 func GenerateKeypair() (npub, privKeyHex string, err error) {
 	id, err := generateIdentity()
@@ -149,31 +74,6 @@ func GenerateKeypair() (npub, privKeyHex string, err error) {
 		return "", "", err
 	}
 	return id.NpubKey, id.PrivKeyHex, nil
-}
-
-// GenerateVanityKeypair finds a keypair whose npub ends with suffix.
-func GenerateVanityKeypair(ctx context.Context, suffix string, counter *atomic.Int64) (npub, privKeyHex string, err error) {
-	id, err := generateVanityIdentity(ctx, suffix, counter)
-	if err != nil {
-		return "", "", err
-	}
-	return id.NpubKey, id.PrivKeyHex, nil
-}
-
-// ValidateVanitySuffix returns a descriptive error if suffix is invalid, or nil.
-func ValidateVanitySuffix(suffix string) error {
-	if len(suffix) == 0 {
-		return fmt.Errorf("vanity suffix must be 1–5 bech32 characters")
-	}
-	if len(suffix) > 5 {
-		return fmt.Errorf("vanity suffix too long: max 5 characters, got %d", len(suffix))
-	}
-	for i := range len(suffix) {
-		if !isValidBech32Char(suffix[i]) {
-			return fmt.Errorf("vanity suffix %q contains invalid character %q (only bech32 charset allowed: %s)", suffix, suffix[i], bech32Charset)
-		}
-	}
-	return nil
 }
 
 // CurrentIdentity reads the saved identity from ~/.config/microchat/config.json.

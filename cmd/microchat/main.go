@@ -59,7 +59,11 @@ func main() {
 						Name:  "generate",
 						Usage: "Generate a new keypair (random or vanity)",
 						Flags: []cli.Flag{
-							&cli.StringFlag{Name: "vanity", Usage: "Vanity suffix (1–4 bech32 chars, e.g. cafe)"},
+							&cli.StringFlag{Name: "vanity", Usage: "Vanity suffix (1–5 bech32 chars, e.g. cafe)"},
+							&cli.BoolFlag{
+								Name:  "unsafe-cpu-usage",
+								Usage: "Allow vanity suffix longer than 5 chars (warning: uses 100% of all CPU cores)",
+							},
 						},
 						Action: runUserGenerate,
 					},
@@ -166,8 +170,14 @@ func runUserGenerate(c *cli.Context) error {
 		return nil
 	}
 
-	if err := tui.ValidateVanitySuffix(suffix); err != nil {
-		return err
+	var validateErr error
+	if c.Bool("unsafe-cpu-usage") {
+		validateErr = tui.ValidateVanitySuffixUnsafe(suffix)
+	} else {
+		validateErr = tui.ValidateVanitySuffix(suffix)
+	}
+	if validateErr != nil {
+		return validateErr
 	}
 
 	var counter atomic.Int64
@@ -178,7 +188,7 @@ func runUserGenerate(c *cli.Context) error {
 		for {
 			select {
 			case <-ticker.C:
-				fmt.Fprintf(os.Stderr, "\rsearching… %d attempts", counter.Load())
+				fmt.Fprintf(os.Stderr, "\rsearching… %s attempts", tui.FormatCount(counter.Load()))
 			case <-done:
 				return
 			}

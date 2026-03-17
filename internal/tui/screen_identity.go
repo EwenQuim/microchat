@@ -95,7 +95,7 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 			switch msg.String() {
 			case "enter":
 				if m.inputText == "" {
-					m.err = "Enter 1–4 bech32 characters"
+					m.err = "Enter 1–5 bech32 characters"
 					return m, nil
 				}
 				suffix := m.inputText
@@ -122,6 +122,8 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 				s := msg.String()
 				if len(s) == 1 && isValidBech32Char(s[0]) && len(m.inputText) < 5 {
 					m.inputText += s
+				} else if len(s) == 1 && isValidBech32Char(s[0]) {
+					m.err = "Max 5 chars in TUI. Use the CLI with --unsafe-cpu-usage for longer suffixes."
 				}
 			}
 
@@ -210,7 +212,7 @@ func (m identityModel) view(width, height int) string {
 			attempts = m.vanityCounter.Load()
 		}
 		b.WriteString(fmt.Sprintf("%sSearching for npub ending in %q…\n\n", pad, m.vanityInput))
-		b.WriteString(fmt.Sprintf("%s%d attempts\n\n", pad, attempts))
+		b.WriteString(fmt.Sprintf("%s%s attempts\n\n", pad, FormatCount(attempts)))
 		b.WriteString(helpBar("esc", "cancel") + "\n")
 	}
 
