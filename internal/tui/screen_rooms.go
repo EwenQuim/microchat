@@ -280,7 +280,7 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 		masked := strings.Repeat("*", len(m.passwdInput))
 		b.WriteString(" > " + masked + "█\n")
 		b.WriteString("\n")
-		b.WriteString(" [Enter] OK  [Esc] Cancel\n")
+		b.WriteString(helpBar("enter", "ok", "esc", "cancel") + "\n")
 		return b.String()
 	}
 

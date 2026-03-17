@@ -253,7 +253,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 				if len(pk) > 8 {
 					pk = pk[:8]
 				}
-				keyLabel = " @" + pk
+				keyLabel = dim(" " + pk)
 			}
 			colorKey := user
 			if msg.Pubkey != nil && *msg.Pubkey != "" {
@@ -261,7 +261,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			}
 			r, g, bv := pubkeyColor(colorKey)
 			coloredUser := ansiColor(user, r, g, bv)
-			b.WriteString(fmt.Sprintf(" <%s%s> %s\n", coloredUser, keyLabel, content))
+			fmt.Fprintf(&b, " %s%s%s %s\n", coloredUser, keyLabel, dim(":"), content)
 		}
 	}
 
@@ -282,9 +282,9 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	if m.err != "" {
 		b.WriteString(" Err: " + m.err + "\n")
 	} else if m.typing {
-		b.WriteString(" [Esc] Exit  [Enter] Send  [Backspace] Delete\n")
+		b.WriteString(helpBar("esc", "exit", "enter", "send", "⌫", "delete") + "\n")
 	} else {
-		b.WriteString(" [i] Type  [r] Refresh  [↑↓] Scroll  [Tab] Panels\n")
+		b.WriteString(helpBar("i", "insert", "r", "refresh", "↑↓", "scroll", "tab", "panels") + "\n")
 	}
 
 	return b.String()

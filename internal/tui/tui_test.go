@@ -124,7 +124,7 @@ func TestModel_View_DelegatesToIdentityScreen(t *testing.T) {
 	m.height = 24
 
 	v := m.View()
-	if !strings.Contains(v.Content, "[g]") {
+	if !strings.Contains(v.Content, "generate new keypair") {
 		t.Errorf("view should contain identity screen content, got:\n%s", v.Content)
 	}
 }

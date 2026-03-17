@@ -154,6 +154,18 @@ func dim(s string) string {
 	return "\033[2m" + s + "\033[0m"
 }
 
+func helpKey(key, desc string) string {
+	return key + " " + dim(desc)
+}
+
+func helpBar(pairs ...string) string {
+	items := make([]string, 0, len(pairs)/2)
+	for i := 0; i+1 < len(pairs); i += 2 {
+		items = append(items, helpKey(pairs[i], pairs[i+1]))
+	}
+	return " " + strings.Join(items, dim("  •  "))
+}
+
 func padRight(s string, width int) string {
 	sw := runewidth.StringWidth(s)
 	if sw >= width {

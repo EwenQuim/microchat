@@ -183,12 +183,12 @@ func (m serverModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(pad + "[↑/↓] Navigate  [Enter] Open  [a] Add  [d] Delete  [Tab] Identity  [q] Quit\n")
+		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "tab", "identity", "q", "quit") + "\n")
 
 	case serverStateAddURL:
 		b.WriteString(pad + "Enter server URL:\n\n")
 		b.WriteString(pad + "> " + m.inputText + "█\n\n")
-		b.WriteString(pad + "[Enter] Confirm   [Esc] Cancel\n")
+		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
 
 	case serverStateLoading:
 		b.WriteString(pad + "Connecting to " + m.inputText + "…\n")

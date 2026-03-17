@@ -89,9 +89,7 @@ func (m identityModel) view(width, height int) string {
 
 	switch m.state {
 	case idStateMenu:
-		b.WriteString(pad + "[g] Generate a new keypair\n")
-		b.WriteString(pad + "[p] Paste an existing private key (hex)\n")
-		b.WriteString(pad + "[q] Quit\n")
+		b.WriteString(helpBar("g", "generate new keypair", "p", "paste private key", "q", "quit") + "\n")
 		if m.err != "" {
 			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
 		}
@@ -99,7 +97,7 @@ func (m identityModel) view(width, height int) string {
 	case idStateInput:
 		b.WriteString(pad + "Paste your private key (hex):\n\n")
 		b.WriteString(pad + "> " + m.inputText + "█\n\n")
-		b.WriteString(pad + "[Enter] Confirm   [Esc] Cancel\n")
+		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
 		if m.err != "" {
 			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
 		}

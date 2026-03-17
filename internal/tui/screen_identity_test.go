@@ -173,14 +173,14 @@ func TestIdentityModel_View_MenuContainsOptions(t *testing.T) {
 	m := newIdentityModel()
 	v := m.view(80, 24)
 
-	if !strings.Contains(v, "[g]") {
-		t.Error("view should contain [g]")
+	if !strings.Contains(v, "g ") {
+		t.Error("view should contain g key")
 	}
-	if !strings.Contains(v, "[p]") {
-		t.Error("view should contain [p]")
+	if !strings.Contains(v, "p ") {
+		t.Error("view should contain p key")
 	}
-	if !strings.Contains(v, "[q]") {
-		t.Error("view should contain [q]")
+	if !strings.Contains(v, "q ") {
+		t.Error("view should contain q key")
 	}
 }
 
