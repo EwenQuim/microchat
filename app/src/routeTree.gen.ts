@@ -17,6 +17,8 @@ import { Route as SettingsUserRouteImport } from './routes/settings/user'
 import { Route as SettingsServersRouteImport } from './routes/settings/servers'
 import { Route as SettingsImportRouteImport } from './routes/settings/import'
 import { Route as SettingsExportRouteImport } from './routes/settings/export'
+import { Route as SettingsContactsRouteImport } from './routes/settings/contacts'
+import { Route as SettingsIdentitiesRouteImport } from './routes/settings/identities'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as ChatRoomNameRouteImport } from './routes/chat.$roomName'
 
@@ -60,6 +62,16 @@ const SettingsExportRoute = SettingsExportRouteImport.update({
   path: '/export',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsContactsRoute = SettingsContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsIdentitiesRoute = SettingsIdentitiesRouteImport.update({
+  id: '/identities',
+  path: '/identities',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -76,7 +88,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/settings/contacts': typeof SettingsContactsRoute
   '/settings/export': typeof SettingsExportRoute
+  '/settings/identities': typeof SettingsIdentitiesRoute
   '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
   '/settings/user': typeof SettingsUserRoute
@@ -87,7 +101,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/settings/contacts': typeof SettingsContactsRoute
   '/settings/export': typeof SettingsExportRoute
+  '/settings/identities': typeof SettingsIdentitiesRoute
   '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
   '/settings/user': typeof SettingsUserRoute
@@ -100,7 +116,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/settings/contacts': typeof SettingsContactsRoute
   '/settings/export': typeof SettingsExportRoute
+  '/settings/identities': typeof SettingsIdentitiesRoute
   '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
   '/settings/user': typeof SettingsUserRoute
@@ -114,7 +132,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/chat/$roomName'
     | '/demo/tanstack-query'
+    | '/settings/contacts'
     | '/settings/export'
+    | '/settings/identities'
     | '/settings/import'
     | '/settings/servers'
     | '/settings/user'
@@ -125,7 +145,9 @@ export interface FileRouteTypes {
     | '/'
     | '/chat/$roomName'
     | '/demo/tanstack-query'
+    | '/settings/contacts'
     | '/settings/export'
+    | '/settings/identities'
     | '/settings/import'
     | '/settings/servers'
     | '/settings/user'
@@ -137,7 +159,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/chat/$roomName'
     | '/demo/tanstack-query'
+    | '/settings/contacts'
     | '/settings/export'
+    | '/settings/identities'
     | '/settings/import'
     | '/settings/servers'
     | '/settings/user'
@@ -204,6 +228,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsImportRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/contacts': {
+      id: '/settings/contacts'
+      path: '/contacts'
+      fullPath: '/settings/contacts'
+      preLoaderRoute: typeof SettingsContactsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/identities': {
+      id: '/settings/identities'
+      path: '/identities'
+      fullPath: '/settings/identities'
+      preLoaderRoute: typeof SettingsIdentitiesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/export': {
       id: '/settings/export'
       path: '/export'
@@ -229,7 +267,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface SettingsRouteChildren {
+  SettingsContactsRoute: typeof SettingsContactsRoute
   SettingsExportRoute: typeof SettingsExportRoute
+  SettingsIdentitiesRoute: typeof SettingsIdentitiesRoute
   SettingsImportRoute: typeof SettingsImportRoute
   SettingsServersRoute: typeof SettingsServersRoute
   SettingsUserRoute: typeof SettingsUserRoute
@@ -237,7 +277,9 @@ interface SettingsRouteChildren {
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsContactsRoute: SettingsContactsRoute,
   SettingsExportRoute: SettingsExportRoute,
+  SettingsIdentitiesRoute: SettingsIdentitiesRoute,
   SettingsImportRoute: SettingsImportRoute,
   SettingsServersRoute: SettingsServersRoute,
   SettingsUserRoute: SettingsUserRoute,

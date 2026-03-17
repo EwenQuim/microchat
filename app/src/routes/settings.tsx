@@ -14,8 +14,10 @@ export const Route = createFileRoute("/settings")({
 
 const TABS = [
 	{ value: "user", label: "User", to: "/settings/user" },
+	{ value: "identities", label: "Identities", to: "/settings/identities" },
 	{ value: "import", label: "Import", to: "/settings/import" },
 	{ value: "export", label: "Export", to: "/settings/export" },
+	{ value: "contacts", label: "Contacts", to: "/settings/contacts" },
 	{ value: "servers", label: "Servers", to: "/settings/servers" },
 ] as const;
 
