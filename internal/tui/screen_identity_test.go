@@ -18,32 +18,32 @@ func TestIdentityModel_MenuPress_v(t *testing.T) {
 	}
 }
 
-func TestIdentityModel_VanityInput_HexOnly(t *testing.T) {
+func TestIdentityModel_VanityInput_Bech32Only(t *testing.T) {
 	m := newIdentityModel()
 	m.state = idStateVanityInput
 	m.inputText = ""
 
-	// non-hex char should be ignored
-	m2, _ := m.update(pressChar("z"))
+	// 'b' is not in bech32 charset — should be ignored
+	m2, _ := m.update(pressChar("b"))
 	if m2.inputText != "" {
 		t.Errorf("expected inputText to stay empty, got %q", m2.inputText)
 	}
 
-	// hex char should be appended
-	m3, _ := m2.update(pressChar("a"))
-	if m3.inputText != "a" {
-		t.Errorf("expected inputText = \"a\", got %q", m3.inputText)
+	// 'z' is valid bech32 — should be appended
+	m3, _ := m2.update(pressChar("z"))
+	if m3.inputText != "z" {
+		t.Errorf("expected inputText = \"z\", got %q", m3.inputText)
 	}
 }
 
-func TestIdentityModel_VanityInput_MaxFour(t *testing.T) {
+func TestIdentityModel_VanityInput_MaxFive(t *testing.T) {
 	m := newIdentityModel()
 	m.state = idStateVanityInput
-	m.inputText = "cafe"
+	m.inputText = "cafe0"
 
-	m2, _ := m.update(pressChar("0"))
-	if m2.inputText != "cafe" {
-		t.Errorf("expected inputText unchanged at \"cafe\", got %q", m2.inputText)
+	m2, _ := m.update(pressChar("q"))
+	if m2.inputText != "cafe0" {
+		t.Errorf("expected inputText unchanged at \"cafe0\", got %q", m2.inputText)
 	}
 }
 

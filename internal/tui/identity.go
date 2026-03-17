@@ -18,6 +18,7 @@ import (
 type identity struct {
 	privKey    *secp256k1.PrivateKey
 	PubKeyHex  string
+	NpubKey    string
 	PrivKeyHex string
 }
 
@@ -28,9 +29,12 @@ func generateIdentity() (identity, error) {
 		return identity{}, fmt.Errorf("generate keypair: %w", err)
 	}
 	pubKey := privKey.PubKey()
+	pubKeyHex := hex.EncodeToString(pubKey.SerializeCompressed())
+	npub, _ := pubKeyHexToNpub(pubKeyHex) // empty string on error
 	return identity{
 		privKey:    privKey,
-		PubKeyHex:  hex.EncodeToString(pubKey.SerializeCompressed()),
+		PubKeyHex:  pubKeyHex,
+		NpubKey:    npub,
 		PrivKeyHex: hex.EncodeToString(privKey.Serialize()),
 	}, nil
 }
@@ -43,9 +47,12 @@ func identityFromHex(privKeyHex string) (identity, error) {
 	}
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
 	pubKey := privKey.PubKey()
+	pubKeyHex := hex.EncodeToString(pubKey.SerializeCompressed())
+	npub, _ := pubKeyHexToNpub(pubKeyHex) // empty string on error
 	return identity{
 		privKey:    privKey,
-		PubKeyHex:  hex.EncodeToString(pubKey.SerializeCompressed()),
+		PubKeyHex:  pubKeyHex,
+		NpubKey:    npub,
 		PrivKeyHex: privKeyHex,
 	}, nil
 }
@@ -64,18 +71,13 @@ func (id identity) SignMessage(content, room string, timestamp int64) (string, e
 	return hex.EncodeToString(compact), nil
 }
 
-// isHexChar reports whether c is a lowercase hex character [0-9a-f].
-func isHexChar(c byte) bool {
-	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')
-}
-
-// isValidVanitySuffix returns true iff suffix has 1–4 lowercase hex chars.
+// isValidVanitySuffix returns true iff suffix has 1–5 bech32 chars.
 func isValidVanitySuffix(suffix string) bool {
-	if len(suffix) < 1 || len(suffix) > 4 {
+	if len(suffix) < 1 || len(suffix) > 5 {
 		return false
 	}
 	for i := range len(suffix) {
-		if !isHexChar(suffix[i]) {
+		if !isValidBech32Char(suffix[i]) {
 			return false
 		}
 	}
@@ -114,7 +116,7 @@ func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.
 					return
 				}
 				counter.Add(1)
-				if strings.HasSuffix(id.PubKeyHex, suffix) {
+				if strings.HasSuffix(id.NpubKey, suffix) {
 					select {
 					case ch <- vanityResult{id: id}:
 						cancel()
@@ -140,42 +142,42 @@ func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.
 	}
 }
 
-// GenerateKeypair generates a random secp256k1 keypair and returns hex strings.
-func GenerateKeypair() (pubKeyHex, privKeyHex string, err error) {
+// GenerateKeypair generates a random secp256k1 keypair and returns npub and private key hex.
+func GenerateKeypair() (npub, privKeyHex string, err error) {
 	id, err := generateIdentity()
 	if err != nil {
 		return "", "", err
 	}
-	return id.PubKeyHex, id.PrivKeyHex, nil
+	return id.NpubKey, id.PrivKeyHex, nil
 }
 
-// GenerateVanityKeypair finds a keypair whose public key hex ends with suffix.
-func GenerateVanityKeypair(ctx context.Context, suffix string, counter *atomic.Int64) (pubKeyHex, privKeyHex string, err error) {
+// GenerateVanityKeypair finds a keypair whose npub ends with suffix.
+func GenerateVanityKeypair(ctx context.Context, suffix string, counter *atomic.Int64) (npub, privKeyHex string, err error) {
 	id, err := generateVanityIdentity(ctx, suffix, counter)
 	if err != nil {
 		return "", "", err
 	}
-	return id.PubKeyHex, id.PrivKeyHex, nil
+	return id.NpubKey, id.PrivKeyHex, nil
 }
 
 // ValidateVanitySuffix returns a descriptive error if suffix is invalid, or nil.
 func ValidateVanitySuffix(suffix string) error {
 	if len(suffix) == 0 {
-		return fmt.Errorf("vanity suffix must be 1–4 lowercase hex characters")
+		return fmt.Errorf("vanity suffix must be 1–5 bech32 characters")
 	}
-	if len(suffix) > 4 {
-		return fmt.Errorf("vanity suffix too long: max 4 characters, got %d", len(suffix))
+	if len(suffix) > 5 {
+		return fmt.Errorf("vanity suffix too long: max 5 characters, got %d", len(suffix))
 	}
 	for i := range len(suffix) {
-		if !isHexChar(suffix[i]) {
-			return fmt.Errorf("vanity suffix %q contains invalid character %q (only 0-9, a-f allowed)", suffix, suffix[i])
+		if !isValidBech32Char(suffix[i]) {
+			return fmt.Errorf("vanity suffix %q contains invalid character %q (only bech32 charset allowed: %s)", suffix, suffix[i], bech32Charset)
 		}
 	}
 	return nil
 }
 
 // CurrentIdentity reads the saved identity from ~/.config/microchat/config.json.
-func CurrentIdentity() (pubKeyHex, privKeyHex string, err error) {
+func CurrentIdentity() (npub, privKeyHex string, err error) {
 	cfg, err := loadConfig()
 	if err != nil {
 		return "", "", fmt.Errorf("load config: %w", err)
@@ -183,7 +185,11 @@ func CurrentIdentity() (pubKeyHex, privKeyHex string, err error) {
 	if cfg.Identity == nil {
 		return "", "", fmt.Errorf("no identity configured")
 	}
-	return cfg.Identity.PublicKey, cfg.Identity.PrivateKey, nil
+	id, err := identityFromHex(cfg.Identity.PrivateKey)
+	if err != nil {
+		return "", "", err
+	}
+	return id.NpubKey, id.PrivKeyHex, nil
 }
 
 // derToCompact converts a DER-encoded ECDSA signature to a 64-byte R || S compact form.

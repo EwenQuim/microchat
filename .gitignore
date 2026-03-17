@@ -1,5 +1,7 @@
 # Binaries
 bin/
+/microchat
+/microchat-server
 *.exe
 *.exe~
 *.dll

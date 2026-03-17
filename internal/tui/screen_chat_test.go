@@ -115,7 +115,11 @@ func TestPubkeyColorConsistency(t *testing.T) {
 }
 
 func TestChatModel_View_PubkeyOnlyDisplayName(t *testing.T) {
-	pk := "03d884d6abcdef1234567890"
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
 	content := "hello world"
 	msg := generated.Message{
 		Pubkey:  &pk,
@@ -127,12 +131,14 @@ func TestChatModel_View_PubkeyOnlyDisplayName(t *testing.T) {
 
 	v := m.viewPanel(60, 10, true)
 
-	truncPk := pk[:8]
-	if !strings.Contains(v, "@"+truncPk) {
-		t.Errorf("view should contain @%s for pubkey-only message, got:\n%s", truncPk, v)
+	// truncPk is last 6 chars of npub
+	npub := id.NpubKey
+	truncPk := npub[len(npub)-6:]
+	if !strings.Contains(v, truncPk) {
+		t.Errorf("view should contain %s for pubkey-only message, got:\n%s", truncPk, v)
 	}
 	if !strings.Contains(v, truncPk+"…") {
-		t.Errorf("view should show truncated pubkey %s… as display name, got:\n%s", truncPk, v)
+		t.Errorf("view should show truncated npub %s… as display name, got:\n%s", truncPk, v)
 	}
 }
 

@@ -59,7 +59,7 @@ func main() {
 						Name:  "generate",
 						Usage: "Generate a new keypair (random or vanity)",
 						Flags: []cli.Flag{
-							&cli.StringFlag{Name: "vanity", Usage: "Vanity suffix (1–4 hex chars, e.g. cafe)"},
+							&cli.StringFlag{Name: "vanity", Usage: "Vanity suffix (1–4 bech32 chars, e.g. cafe)"},
 						},
 						Action: runUserGenerate,
 					},
@@ -157,11 +157,11 @@ func runRooms(c *cli.Context) error {
 func runUserGenerate(c *cli.Context) error {
 	suffix := c.String("vanity")
 	if suffix == "" {
-		pub, priv, err := tui.GenerateKeypair()
+		npub, priv, err := tui.GenerateKeypair()
 		if err != nil {
 			return fmt.Errorf("generate keypair: %w", err)
 		}
-		fmt.Printf("public key:  %s\n", pub)
+		fmt.Printf("npub:        %s\n", npub)
 		fmt.Printf("private key: %s\n", priv)
 		return nil
 	}
@@ -180,28 +180,28 @@ func runUserGenerate(c *cli.Context) error {
 			case <-ticker.C:
 				fmt.Fprintf(os.Stderr, "\rsearching… %d attempts", counter.Load())
 			case <-done:
-				fmt.Fprintf(os.Stderr, "\r")
 				return
 			}
 		}
 	}()
 
-	pub, priv, err := tui.GenerateVanityKeypair(context.Background(), suffix, &counter)
+	npub, priv, err := tui.GenerateVanityKeypair(context.Background(), suffix, &counter)
 	close(done)
+	fmt.Fprintln(os.Stderr)
 	if err != nil {
 		return fmt.Errorf("generate vanity keypair: %w", err)
 	}
-	fmt.Printf("public key:  %s\n", pub)
+	fmt.Printf("npub:        %s\n", npub)
 	fmt.Printf("private key: %s\n", priv)
 	return nil
 }
 
 func runUserShow(c *cli.Context) error {
-	pub, priv, err := tui.CurrentIdentity()
+	npub, priv, err := tui.CurrentIdentity()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("public key:  %s\n", pub)
+	fmt.Printf("npub:        %s\n", npub)
 	fmt.Printf("private key: %s\n", priv)
 	return nil
 }

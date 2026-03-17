@@ -150,7 +150,7 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 		m.rooms = msg.rooms
 		m.cursor = 0
 		m.err = ""
-		return m, nil
+		return m, m.previewCmd()
 
 	case roomCreatedMsg:
 		m.state = roomStateList

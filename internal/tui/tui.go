@@ -99,7 +99,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			username := ""
 			if m.id != nil {
-				username = m.id.PubKeyHex[:12] + "…"
+				if npub := m.id.NpubKey; len(npub) >= 6 {
+					username = npub[len(npub)-6:]
+				} else {
+					username = m.id.PubKeyHex[:12] + "…"
+				}
 			}
 			m.main = newMainModel(client, m.id, username)
 			return m, m.main.init()

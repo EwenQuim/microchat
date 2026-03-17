@@ -95,7 +95,7 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 			switch msg.String() {
 			case "enter":
 				if m.inputText == "" {
-					m.err = "Enter 1–4 hex characters (0-9, a-f)"
+					m.err = "Enter 1–4 bech32 characters"
 					return m, nil
 				}
 				suffix := m.inputText
@@ -120,7 +120,7 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 				m.err = ""
 			default:
 				s := msg.String()
-				if len(s) == 1 && isHexChar(s[0]) && len(m.inputText) < 4 {
+				if len(s) == 1 && isValidBech32Char(s[0]) && len(m.inputText) < 5 {
 					m.inputText += s
 				}
 			}
@@ -197,7 +197,7 @@ func (m identityModel) view(width, height int) string {
 		}
 
 	case idStateVanityInput:
-		b.WriteString(pad + "Enter vanity suffix (1–4 hex chars, e.g. cafe):\n\n")
+		b.WriteString(pad + "Enter vanity suffix (1–5 bech32 chars, e.g. cafe):\n\n")
 		b.WriteString(pad + "> " + m.inputText + "█\n\n")
 		b.WriteString(helpBar("enter", "start", "esc", "cancel") + "\n")
 		if m.err != "" {
@@ -209,7 +209,7 @@ func (m identityModel) view(width, height int) string {
 		if m.vanityCounter != nil {
 			attempts = m.vanityCounter.Load()
 		}
-		b.WriteString(fmt.Sprintf("%sSearching for pubkey ending in %q…\n\n", pad, m.vanityInput))
+		b.WriteString(fmt.Sprintf("%sSearching for npub ending in %q…\n\n", pad, m.vanityInput))
 		b.WriteString(fmt.Sprintf("%s%d attempts\n\n", pad, attempts))
 		b.WriteString(helpBar("esc", "cancel") + "\n")
 	}

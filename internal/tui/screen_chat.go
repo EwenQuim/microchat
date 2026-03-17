@@ -254,9 +254,9 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			var fullPk, truncPk string
 			if msg.Pubkey != nil && *msg.Pubkey != "" {
 				fullPk = *msg.Pubkey
-				truncPk = fullPk
-				if len(truncPk) > 8 {
-					truncPk = truncPk[:8]
+				npub, err := pubKeyHexToNpub(fullPk)
+				if err == nil && len(npub) >= 6 {
+					truncPk = npub[len(npub)-6:]
 				}
 			}
 			user := "?"
@@ -271,7 +271,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			}
 			keyLabel := ""
 			if truncPk != "" {
-				keyLabel = " @" + truncPk
+				keyLabel = " " + dim(truncPk)
 			}
 			colorKey := user
 			if fullPk != "" {

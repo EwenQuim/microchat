@@ -177,13 +177,15 @@ func TestDerToCompact_NotAllZero(t *testing.T) {
 }
 
 func TestIsValidVanitySuffix(t *testing.T) {
-	valid := []string{"a", "0f", "cafe", "1234"}
+	// valid: chars in bech32 charset, 1–5 chars
+	valid := []string{"a", "0f", "cafe", "3j5k", "ewen0"}
 	for _, s := range valid {
 		if !isValidVanitySuffix(s) {
 			t.Errorf("isValidVanitySuffix(%q) = false, want true", s)
 		}
 	}
-	invalid := []string{"", "12345", "xyz", "AB"}
+	// invalid: empty, too long (6+), contains '1'/'b'/'i'/'o' (excluded), uppercase
+	invalid := []string{"", "cafe00", "1b", "AB"}
 	for _, s := range invalid {
 		if isValidVanitySuffix(s) {
 			t.Errorf("isValidVanitySuffix(%q) = true, want false", s)
@@ -194,12 +196,29 @@ func TestIsValidVanitySuffix(t *testing.T) {
 func TestGenerateVanityIdentity_Finds(t *testing.T) {
 	ctx := context.Background()
 	var counter atomic.Int64
-	id, err := generateVanityIdentity(ctx, "0", &counter)
+	id, err := generateVanityIdentity(ctx, "q", &counter)
 	if err != nil {
 		t.Fatalf("generateVanityIdentity() error: %v", err)
 	}
-	if !strings.HasSuffix(id.PubKeyHex, "0") {
-		t.Errorf("PubKeyHex %q does not end with '0'", id.PubKeyHex)
+	if !strings.HasSuffix(id.NpubKey, "q") {
+		t.Errorf("NpubKey %q does not end with 'q'", id.NpubKey)
+	}
+}
+
+func TestPubKeyHexToNpub_Format(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity() error: %v", err)
+	}
+	npub, err := pubKeyHexToNpub(id.PubKeyHex)
+	if err != nil {
+		t.Fatalf("pubKeyHexToNpub() error: %v", err)
+	}
+	if !strings.HasPrefix(npub, "npub1") {
+		t.Errorf("npub %q does not start with 'npub1'", npub)
+	}
+	if len(npub) != 63 {
+		t.Errorf("npub length = %d, want 63", len(npub))
 	}
 }
 
