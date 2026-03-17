@@ -134,7 +134,7 @@ func TestIdentitiesModel_Delete_AdjustsActiveIndex(t *testing.T) {
 	}
 }
 
-func TestIdentitiesModel_Esc_NavigatesToServers(t *testing.T) {
+func TestIdentitiesModel_Esc_NavigatesToRooms(t *testing.T) {
 	id1, _ := generateIdentity()
 	m := makeIdentitiesModel(0, identityEntry{PrivateKey: id1.PrivKeyHex, PublicKey: id1.PubKeyHex})
 	_, cmd := m.update(pressKey(tea.KeyEscape))
@@ -143,12 +143,12 @@ func TestIdentitiesModel_Esc_NavigatesToServers(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenServers {
-		t.Errorf("expected screenServers, got %v", nav.to)
+	if nav.to != screenRooms {
+		t.Errorf("expected screenRooms, got %v", nav.to)
 	}
 }
 
-func TestIdentitiesModel_Tab_NavigatesToServers(t *testing.T) {
+func TestIdentitiesModel_Tab_NavigatesToContacts(t *testing.T) {
 	id1, _ := generateIdentity()
 	m := makeIdentitiesModel(0, identityEntry{PrivateKey: id1.PrivKeyHex, PublicKey: id1.PubKeyHex})
 	_, cmd := m.update(pressKey(tea.KeyTab))
@@ -157,8 +157,8 @@ func TestIdentitiesModel_Tab_NavigatesToServers(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenServers {
-		t.Errorf("expected screenServers, got %v", nav.to)
+	if nav.to != screenContacts {
+		t.Errorf("expected screenContacts, got %v", nav.to)
 	}
 }
 

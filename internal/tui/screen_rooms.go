@@ -3,10 +3,17 @@ package tui
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
+	"github.com/mattn/go-runewidth"
+)
+
+const (
+	maxServerNameWidth = 12
+	maxRoomNameWidth   = 20
 )
 
 type roomState int
@@ -18,10 +25,17 @@ const (
 	roomStateLoading           // waiting for rooms list
 )
 
-// roomsLoadedMsg carries the fetched room list (or an error).
-type roomsLoadedMsg struct {
-	rooms []generated.Room
-	err   error
+// serverRoom pairs a room with the server it belongs to.
+type serverRoom struct {
+	server serverConfig
+	room   generated.Room
+}
+
+// serverRoomsLoadedMsg carries the fetched room list for one server (or an error).
+type serverRoomsLoadedMsg struct {
+	serverURL string
+	rooms     []generated.Room
+	err       error
 }
 
 // roomCreatedMsg is sent after creating a room.
@@ -32,59 +46,102 @@ type roomCreatedMsg struct {
 
 // roomSelectedMsg is sent when the user opens a room.
 type roomSelectedMsg struct {
+	server   serverConfig
 	room     string
 	password string
 	preview  bool // true = auto-preview, don't shift focus to right panel
 }
 
 type roomModel struct {
-	state        roomState
-	client       *generated.ClientWithResponses
-	rooms        []generated.Room
-	cursor       int
-	inputText    string
-	err          string
-	selectedRoom string
-	roomPassword string
-	promptPasswd bool
-	passwdInput  string
+	state          roomState
+	clients        map[string]*generated.ClientWithResponses // keyed by srv.URL
+	servers        []serverConfig
+	serverRooms    []serverRoom
+	loading        map[string]bool
+	selectedServer serverConfig // for password prompt
+	cursor         int
+	inputText      string
+	err            string
+	selectedRoom   string
+	roomPassword   string
+	promptPasswd   bool
+	passwdInput    string
 }
 
-func newRoomModel(client *generated.ClientWithResponses) roomModel {
-	return roomModel{client: client, state: roomStateLoading}
+func newRoomModel(clients map[string]*generated.ClientWithResponses, servers []serverConfig) roomModel {
+	loading := make(map[string]bool, len(servers))
+	for _, srv := range servers {
+		loading[srv.URL] = true
+	}
+	state := roomStateLoading
+	if len(servers) == 0 {
+		state = roomStateList
+	}
+	return roomModel{
+		clients: clients,
+		servers: servers,
+		loading: loading,
+		state:   state,
+	}
 }
 
 func (m roomModel) init() tea.Cmd {
-	return m.fetchRooms("")
+	if len(m.servers) == 0 {
+		return nil
+	}
+	cmds := make([]tea.Cmd, 0, len(m.servers))
+	for _, srv := range m.servers {
+		cmds = append(cmds, m.fetchServerRooms(srv))
+	}
+	return tea.Batch(cmds...)
 }
 
-func (m roomModel) fetchRooms(query string) tea.Cmd {
-	client := m.client
+func (m roomModel) fetchServerRooms(srv serverConfig) tea.Cmd {
+	client := m.clients[srv.URL]
+	serverURL := srv.URL
 	return func() tea.Msg {
-		if query != "" {
-			resp, err := client.GETapiroomssearchWithResponse(context.Background(), &generated.GETapiroomssearchParams{Q: &query})
-			if err != nil {
-				return roomsLoadedMsg{err: err}
-			}
-			if resp.JSON200 == nil {
-				return roomsLoadedMsg{err: fmt.Errorf("search failed: %d", resp.StatusCode())}
-			}
-			return roomsLoadedMsg{rooms: *resp.JSON200}
+		if client == nil {
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: fmt.Errorf("no client for %s", serverURL)}
 		}
 		resp, err := client.GETapiroomsWithResponse(context.Background(), nil)
 		if err != nil {
-			return roomsLoadedMsg{err: err}
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: err}
 		}
 		if resp.JSON200 == nil {
-			return roomsLoadedMsg{err: fmt.Errorf("server error: %d", resp.StatusCode())}
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: fmt.Errorf("server error: %d", resp.StatusCode())}
 		}
-		return roomsLoadedMsg{rooms: *resp.JSON200}
+		return serverRoomsLoadedMsg{serverURL: serverURL, rooms: *resp.JSON200}
+	}
+}
+
+func (m roomModel) fetchSearch(srv serverConfig, query string) tea.Cmd {
+	client := m.clients[srv.URL]
+	serverURL := srv.URL
+	return func() tea.Msg {
+		if client == nil {
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: fmt.Errorf("no client for %s", serverURL)}
+		}
+		resp, err := client.GETapiroomssearchWithResponse(context.Background(), &generated.GETapiroomssearchParams{Q: &query})
+		if err != nil {
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: err}
+		}
+		if resp.JSON200 == nil {
+			return serverRoomsLoadedMsg{serverURL: serverURL, err: fmt.Errorf("search failed: %d", resp.StatusCode())}
+		}
+		return serverRoomsLoadedMsg{serverURL: serverURL, rooms: *resp.JSON200}
 	}
 }
 
 func (m roomModel) createRoom(name string) tea.Cmd {
-	client := m.client
+	if len(m.servers) == 0 {
+		return func() tea.Msg { return roomCreatedMsg{err: fmt.Errorf("no server configured")} }
+	}
+	srv := m.servers[0]
+	client := m.clients[srv.URL]
 	return func() tea.Msg {
+		if client == nil {
+			return roomCreatedMsg{err: fmt.Errorf("no client for %s", srv.URL)}
+		}
 		resp, err := client.POSTapiroomsWithResponse(context.Background(), nil, generated.CreateRoomRequest{Name: name})
 		if err != nil {
 			return roomCreatedMsg{err: err}
@@ -97,18 +154,56 @@ func (m roomModel) createRoom(name string) tea.Cmd {
 }
 
 func (m roomModel) previewCmd() tea.Cmd {
-	if m.cursor >= len(m.rooms) {
+	if m.cursor >= len(m.serverRooms) {
 		return nil
 	}
-	rm := m.rooms[m.cursor]
-	if rm.HasPassword != nil && *rm.HasPassword {
+	sr := m.serverRooms[m.cursor]
+	if sr.room.HasPassword != nil && *sr.room.HasPassword {
 		return nil // password rooms require explicit Enter
 	}
 	name := ""
-	if rm.Name != nil {
-		name = *rm.Name
+	if sr.room.Name != nil {
+		name = *sr.room.Name
 	}
-	return func() tea.Msg { return roomSelectedMsg{room: name, password: "", preview: true} }
+	srv := sr.server
+	return func() tea.Msg { return roomSelectedMsg{server: srv, room: name, password: "", preview: true} }
+}
+
+func (m roomModel) findServer(serverURL string) serverConfig {
+	for _, srv := range m.servers {
+		if srv.URL == serverURL {
+			return srv
+		}
+	}
+	return serverConfig{URL: serverURL}
+}
+
+// roomLine formats a single room entry for the list panel.
+func roomLine(sr serverRoom, cursor string) string {
+	srvName := runewidth.Truncate(serverDisplayName(sr.server), maxServerNameWidth, "")
+	prefix := dim(srvName + "~")
+	name := "(unnamed)"
+	if sr.room.Name != nil {
+		name = *sr.room.Name
+	}
+	name = runewidth.Truncate(name, maxRoomNameWidth, "")
+	lock := ""
+	if sr.room.HasPassword != nil && *sr.room.HasPassword {
+		lock = " 🔒"
+	}
+	return " " + cursor + prefix + name + lock + "\n"
+}
+
+// serverDisplayName returns the quickname if set, otherwise the hostname from the URL.
+func serverDisplayName(srv serverConfig) string {
+	if srv.Quickname != "" {
+		return srv.Quickname
+	}
+	u, err := url.Parse(srv.URL)
+	if err != nil || u.Hostname() == "" {
+		return srv.URL
+	}
+	return u.Hostname()
 }
 
 func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
@@ -122,7 +217,8 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				m.passwdInput = ""
 				room := m.selectedRoom
 				password := m.roomPassword
-				return m, func() tea.Msg { return roomSelectedMsg{room: room, password: password} }
+				srv := m.selectedServer
+				return m, func() tea.Msg { return roomSelectedMsg{server: srv, room: room, password: password} }
 			case "backspace":
 				if len(m.passwdInput) > 0 {
 					m.passwdInput = m.passwdInput[:len(m.passwdInput)-1]
@@ -141,15 +237,30 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case roomsLoadedMsg:
-		m.state = roomStateList
+	case serverRoomsLoadedMsg:
+		delete(m.loading, msg.serverURL)
 		if msg.err != nil {
-			m.err = msg.err.Error()
-			return m, nil
+			if m.err == "" {
+				m.err = msg.err.Error()
+			}
+		} else {
+			// Rebuild serverRooms: keep entries from other servers, replace for this server
+			filtered := make([]serverRoom, 0, len(m.serverRooms))
+			for _, sr := range m.serverRooms {
+				if sr.server.URL != msg.serverURL {
+					filtered = append(filtered, sr)
+				}
+			}
+			srv := m.findServer(msg.serverURL)
+			for _, rm := range msg.rooms {
+				filtered = append(filtered, serverRoom{server: srv, room: rm})
+			}
+			m.serverRooms = filtered
+			m.err = ""
 		}
-		m.rooms = msg.rooms
-		m.cursor = 0
-		m.err = ""
+		if len(m.loading) == 0 {
+			m.state = roomStateList
+		}
 		return m, m.previewCmd()
 
 	case roomCreatedMsg:
@@ -159,8 +270,10 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 			return m, nil
 		}
 		m.err = ""
-		// Refresh room list
-		return m, m.fetchRooms("")
+		if len(m.servers) > 0 {
+			return m, m.fetchServerRooms(m.servers[0])
+		}
+		return m, nil
 
 	case tea.KeyMsg:
 		switch m.state {
@@ -172,24 +285,34 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				}
 				return m, m.previewCmd()
 			case "down", "j":
-				if m.cursor < len(m.rooms)-1 {
+				if m.cursor < len(m.serverRooms)-1 {
 					m.cursor++
 				}
 				return m, m.previewCmd()
+			case "g":
+				m.cursor = 0
+				return m, m.previewCmd()
+			case "G":
+				if len(m.serverRooms) > 0 {
+					m.cursor = len(m.serverRooms) - 1
+				}
+				return m, m.previewCmd()
 			case "enter":
-				if m.cursor < len(m.rooms) {
-					rm := m.rooms[m.cursor]
-					if rm.Name != nil {
-						m.selectedRoom = *rm.Name
+				if m.cursor < len(m.serverRooms) {
+					sr := m.serverRooms[m.cursor]
+					m.selectedServer = sr.server
+					if sr.room.Name != nil {
+						m.selectedRoom = *sr.room.Name
 					}
 					m.roomPassword = ""
-					if rm.HasPassword != nil && *rm.HasPassword {
+					if sr.room.HasPassword != nil && *sr.room.HasPassword {
 						m.promptPasswd = true
 						m.passwdInput = ""
 						return m, nil
 					}
 					room := m.selectedRoom
-					return m, func() tea.Msg { return roomSelectedMsg{room: room, password: ""} }
+					srv := m.selectedServer
+					return m, func() tea.Msg { return roomSelectedMsg{server: srv, room: room, password: ""} }
 				}
 			case "/":
 				m.state = roomStateSearch
@@ -200,8 +323,17 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				m.inputText = ""
 				m.err = ""
 			case "r":
-				m.state = roomStateLoading
-				return m, m.fetchRooms("")
+				if len(m.servers) > 0 {
+					for _, srv := range m.servers {
+						m.loading[srv.URL] = true
+					}
+					m.state = roomStateLoading
+					cmds := make([]tea.Cmd, 0, len(m.servers))
+					for _, srv := range m.servers {
+						cmds = append(cmds, m.fetchServerRooms(srv))
+					}
+					return m, tea.Batch(cmds...)
+				}
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			}
@@ -210,7 +342,9 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 			switch msg.String() {
 			case "enter":
 				m.state = roomStateLoading
-				return m, m.fetchRooms(m.inputText)
+				if len(m.servers) > 0 {
+					return m, m.fetchSearch(m.servers[0], m.inputText)
+				}
 			case "backspace":
 				if len(m.inputText) > 0 {
 					m.inputText = m.inputText[:len(m.inputText)-1]
@@ -218,8 +352,10 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 			case "esc":
 				m.state = roomStateList
 				m.inputText = ""
-				// Restore full list
-				return m, m.fetchRooms("")
+				// Restore full list for servers[0]
+				if len(m.servers) > 0 {
+					return m, m.fetchServerRooms(m.servers[0])
+				}
 			case "ctrl+c":
 				return m, tea.Quit
 			default:
@@ -290,26 +426,34 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 
 	switch m.state {
 	case roomStateLoading:
-		b.WriteString(" Loading…\n")
-	case roomStateList:
-		if len(m.rooms) == 0 {
-			b.WriteString(" (no rooms)\n")
-			b.WriteString(" [c] to create one\n")
+		if len(m.serverRooms) == 0 {
+			b.WriteString(" Loading…\n")
 		} else {
-			for i, rm := range m.rooms {
+			// Partial results: show rooms from servers that already responded
+			for i, sr := range m.serverRooms {
 				cursor := "  "
 				if i == m.cursor {
 					cursor = "▶ "
 				}
-				name := "(unnamed)"
-				if rm.Name != nil {
-					name = *rm.Name
+				b.WriteString(roomLine(sr, cursor))
+			}
+			b.WriteString(dim(" (loading…)") + "\n")
+		}
+	case roomStateList:
+		if len(m.serverRooms) == 0 {
+			b.WriteString(" (no rooms)\n")
+			if len(m.servers) == 0 {
+				b.WriteString(" [tab] to add a server\n")
+			} else {
+				b.WriteString(" [c] to create one\n")
+			}
+		} else {
+			for i, sr := range m.serverRooms {
+				cursor := "  "
+				if i == m.cursor {
+					cursor = "▶ "
 				}
-				lock := ""
-				if rm.HasPassword != nil && *rm.HasPassword {
-					lock = " 🔒"
-				}
-				b.WriteString(" " + cursor + name + lock + "\n")
+				b.WriteString(roomLine(sr, cursor))
 			}
 		}
 	case roomStateSearch:

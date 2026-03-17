@@ -14,7 +14,7 @@ func pressRealChar(code rune, text string) tea.KeyPressMsg {
 }
 
 func TestChatModel_TypingMode_SpaceAppended(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.typing = true
 	m.inputText = "hello"
 
@@ -26,7 +26,7 @@ func TestChatModel_TypingMode_SpaceAppended(t *testing.T) {
 }
 
 func TestChatModel_TypingMode_RAppended(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.typing = true
 	m.inputText = "hello"
 
@@ -38,7 +38,7 @@ func TestChatModel_TypingMode_RAppended(t *testing.T) {
 }
 
 func TestChatModel_NormalMode_IEntersTyping(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	// typing starts false
 
 	m2, _ := m.update(pressRealChar('i', "i"))
@@ -49,7 +49,7 @@ func TestChatModel_NormalMode_IEntersTyping(t *testing.T) {
 }
 
 func TestChatModel_NormalMode_RRefreshes(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.loading = false
 	// typing starts false
 
@@ -64,7 +64,7 @@ func TestChatModel_NormalMode_RRefreshes(t *testing.T) {
 }
 
 func TestChatModel_TypingMode_EscExitsTyping(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.typing = true
 
 	m2, _ := m.update(pressKey(tea.KeyEscape))
@@ -75,7 +75,7 @@ func TestChatModel_TypingMode_EscExitsTyping(t *testing.T) {
 }
 
 func TestChatModel_View_TypingModeCursor(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.typing = true
 	m.loading = false
 
@@ -86,7 +86,7 @@ func TestChatModel_View_TypingModeCursor(t *testing.T) {
 }
 
 func TestChatModel_View_NormalModeNoCursor(t *testing.T) {
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.typing = false
 	m.loading = false
 
@@ -125,7 +125,7 @@ func TestChatModel_View_PubkeyOnlyDisplayName(t *testing.T) {
 		Pubkey:  &pk,
 		Content: &content,
 	}
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.loading = false
 	m.messages = []generated.Message{msg}
 
@@ -151,7 +151,7 @@ func BenchmarkViewPanel_ColorCache(b *testing.B) {
 		c := content
 		msgs[i] = generated.Message{Pubkey: &p, Content: &c}
 	}
-	m := newChatModel(nil, "room", "", nil, "alice")
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
 	m.loading = false
 	m.messages = msgs
 

@@ -14,6 +14,8 @@ services:
       - ./doc:/app/doc
       - ./data:/data
     environment:
+      SERVER_QUICKNAME: localchat
+      SERVER_DESCRIPTION: Local version of µchat
       ENV: production
       DOCKER_BUILDKIT: 1
       DB_PATH: /data/db.sqlite3

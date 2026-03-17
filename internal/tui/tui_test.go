@@ -19,7 +19,7 @@ func TestInitialModel_NoIdentity_StartsOnIdentityScreen(t *testing.T) {
 	}
 }
 
-func TestInitialModel_WithIdentity_StartsOnServersScreen(t *testing.T) {
+func TestInitialModel_WithIdentity_StartsOnRoomsScreen(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
 	id, err := generateIdentity()
@@ -36,8 +36,8 @@ func TestInitialModel_WithIdentity_StartsOnServersScreen(t *testing.T) {
 	}
 	m := initialModel(cfg)
 
-	if m.screen != screenServers {
-		t.Errorf("screen = %v, want screenServers", m.screen)
+	if m.screen != screenRooms {
+		t.Errorf("screen = %v, want screenRooms", m.screen)
 	}
 	if m.id == nil {
 		t.Error("id should be set when identity is in config")
@@ -47,7 +47,7 @@ func TestInitialModel_WithIdentity_StartsOnServersScreen(t *testing.T) {
 	}
 }
 
-func TestInitialModel_InvalidPrivKey_StartsOnServersScreen(t *testing.T) {
+func TestInitialModel_InvalidPrivKey_StartsOnRoomsScreen(t *testing.T) {
 	cfg := appConfig{
 		Identity: &identityConfig{
 			PrivateKey: "not-valid-hex!!",
@@ -56,9 +56,9 @@ func TestInitialModel_InvalidPrivKey_StartsOnServersScreen(t *testing.T) {
 	}
 	m := initialModel(cfg)
 
-	// Should still go to servers screen (identity was configured)
-	if m.screen != screenServers {
-		t.Errorf("screen = %v, want screenServers", m.screen)
+	// Should still go to rooms screen (identity was configured)
+	if m.screen != screenRooms {
+		t.Errorf("screen = %v, want screenRooms", m.screen)
 	}
 	// But id should be nil due to parse error
 	if m.id != nil {
@@ -199,6 +199,8 @@ func TestModel_View_DelegatesToServersScreen(t *testing.T) {
 		},
 	}
 	m := initialModel(cfg)
+	// initialModel now starts on screenRooms; manually switch to servers for this view test
+	m.screen = screenServers
 	m.width = 80
 	m.height = 24
 
@@ -247,7 +249,7 @@ func TestModel_View_DelegatesToIdentitiesScreen(t *testing.T) {
 	}
 }
 
-func TestInitialModel_WithIdentitiesArray_StartsOnServersScreen(t *testing.T) {
+func TestInitialModel_WithIdentitiesArray_StartsOnRoomsScreen(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
 	id, err := generateIdentity()
@@ -262,8 +264,8 @@ func TestInitialModel_WithIdentitiesArray_StartsOnServersScreen(t *testing.T) {
 	}
 	m := initialModel(cfg)
 
-	if m.screen != screenServers {
-		t.Errorf("screen = %v, want screenServers", m.screen)
+	if m.screen != screenRooms {
+		t.Errorf("screen = %v, want screenRooms", m.screen)
 	}
 	if m.id == nil {
 		t.Fatal("id should be set when Identities array is populated")

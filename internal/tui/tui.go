@@ -20,9 +20,43 @@ type model struct {
 	identities identitiesModel
 	main       mainModel
 	ident      identityModel
+}
 
-	currentClient *generated.ClientWithResponses
-	currentServer serverConfig
+func buildClientsMap(servers []serverConfig) map[string]*generated.ClientWithResponses {
+	clients := make(map[string]*generated.ClientWithResponses, len(servers))
+	for _, srv := range servers {
+		u := srv.URL
+		if !strings.Contains(u, "http") {
+			u = "https://" + u
+		}
+		if !strings.HasSuffix(u, "/") {
+			u += "/"
+		}
+		client, err := generated.NewClientWithResponses(u)
+		if err != nil {
+			continue // skip invalid URLs
+		}
+		clients[srv.URL] = client
+	}
+	return clients
+}
+
+func deriveUsername(id *identity, cfg appConfig) string {
+	if id == nil {
+		return ""
+	}
+	username := ""
+	if cfg.ActiveIndex < len(cfg.Identities) {
+		username = cfg.Identities[cfg.ActiveIndex].Name
+	}
+	if username == "" {
+		if npub := id.NpubKey; len(npub) >= 6 {
+			username = npub[len(npub)-6:]
+		} else {
+			username = id.PubKeyHex[:12] + "…"
+		}
+	}
+	return username
 }
 
 func initialModel(cfg appConfig) model {
@@ -47,18 +81,27 @@ func initialModel(cfg appConfig) model {
 		}
 	}
 
+	// Always init servers model
+	m.servers = newServerModel(cfg)
+
 	if len(cfg.Identities) == 0 && cfg.Identity == nil {
 		m.screen = screenIdentity
 		m.ident = newIdentityModel()
 	} else {
-		m.screen = screenServers
-		m.servers = newServerModel(cfg)
+		servers := m.servers.servers
+		clients := buildClientsMap(servers)
+		username := deriveUsername(m.id, cfg)
+		m.screen = screenRooms
+		m.main = newMainModel(clients, servers, m.id, username)
 	}
 
 	return m
 }
 
 func (m model) Init() tea.Cmd {
+	if m.screen == screenRooms {
+		return m.main.init()
+	}
 	return nil
 }
 
@@ -99,38 +142,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.contacts = newContactsModel(m.cfg)
 
 		case screenRooms:
-			srv := m.servers.selectedServer()
-			m.currentServer = srv
-			m.cfg.LastServer = srv.URL
-			_ = saveConfig(m.cfg)
-
-			url := srv.URL
-			if !strings.HasSuffix(url, "/") {
-				url += "/"
-			}
-			client, err := generated.NewClientWithResponses(url)
-			if err != nil {
-				// Fall back to servers screen with error
-				m.screen = screenServers
-				m.servers.err = fmt.Sprintf("invalid server URL: %s", err)
-				return m, nil
-			}
-			m.currentClient = client
-
-			username := ""
-			if m.id != nil {
-				if m.cfg.ActiveIndex < len(m.cfg.Identities) {
-					username = m.cfg.Identities[m.cfg.ActiveIndex].Name
-				}
-				if username == "" {
-					if npub := m.id.NpubKey; len(npub) >= 6 {
-						username = npub[len(npub)-6:]
-					} else {
-						username = m.id.PubKeyHex[:12] + "…"
-					}
-				}
-			}
-			m.main = newMainModel(client, m.id, username)
+			servers := m.servers.servers
+			clients := buildClientsMap(servers)
+			username := deriveUsername(m.id, m.cfg)
+			m.main = newMainModel(clients, servers, m.id, username)
 			return m, m.main.init()
 		}
 		return m, nil

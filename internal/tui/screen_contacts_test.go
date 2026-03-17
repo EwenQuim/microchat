@@ -121,7 +121,7 @@ func TestContactsModel_Delete_EmptyList(t *testing.T) {
 	}
 }
 
-func TestContactsModel_Esc_NavigatesToServers(t *testing.T) {
+func TestContactsModel_Esc_NavigatesToRooms(t *testing.T) {
 	m := makeContactsModel()
 	_, cmd := m.update(pressKey(tea.KeyEscape))
 	msg := runCmd(cmd)
@@ -129,12 +129,12 @@ func TestContactsModel_Esc_NavigatesToServers(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenServers {
-		t.Errorf("expected screenServers, got %v", nav.to)
+	if nav.to != screenRooms {
+		t.Errorf("expected screenRooms, got %v", nav.to)
 	}
 }
 
-func TestContactsModel_Tab_NavigatesToServers(t *testing.T) {
+func TestContactsModel_Tab_NavigatesToRooms(t *testing.T) {
 	m := makeContactsModel()
 	_, cmd := m.update(pressKey(tea.KeyTab))
 	msg := runCmd(cmd)
@@ -142,8 +142,8 @@ func TestContactsModel_Tab_NavigatesToServers(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenServers {
-		t.Errorf("expected screenServers, got %v", nav.to)
+	if nav.to != screenRooms {
+		t.Errorf("expected screenRooms, got %v", nav.to)
 	}
 }
 

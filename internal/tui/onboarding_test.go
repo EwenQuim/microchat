@@ -88,9 +88,9 @@ func TestNewUser_GenerateKey_NavigationSavesConfig(t *testing.T) {
 	}
 }
 
-// TestNewUser_AfterOnboarding_RestartSeesServersScreen simulates loading the
-// saved config on a second startup and verifies the user lands on the servers screen.
-func TestNewUser_AfterOnboarding_RestartSeesServersScreen(t *testing.T) {
+// TestNewUser_AfterOnboarding_RestartSeesRoomsScreen simulates loading the
+// saved config on a second startup and verifies the user lands on the rooms screen.
+func TestNewUser_AfterOnboarding_RestartSeesRoomsScreen(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
 	// First startup: generate key and navigate
@@ -103,7 +103,7 @@ func TestNewUser_AfterOnboarding_RestartSeesServersScreen(t *testing.T) {
 	m = newModel.(model)
 
 	if m.screen != screenServers {
-		t.Fatalf("expected screenServers after first onboarding, got %v", m.screen)
+		t.Fatalf("expected screenServers after first onboarding navigate, got %v", m.screen)
 	}
 
 	// Simulate restart: load config and build a fresh model
@@ -113,8 +113,8 @@ func TestNewUser_AfterOnboarding_RestartSeesServersScreen(t *testing.T) {
 	}
 	m2 := initialModel(cfg2)
 
-	if m2.screen != screenServers {
-		t.Errorf("after restart, screen = %v, want screenServers", m2.screen)
+	if m2.screen != screenRooms {
+		t.Errorf("after restart, screen = %v, want screenRooms", m2.screen)
 	}
 	if m2.id == nil {
 		t.Error("after restart, id should be set from saved config")

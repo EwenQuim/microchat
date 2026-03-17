@@ -54,23 +54,26 @@ func (m serverModel) selectedServer() serverConfig {
 
 func fetchServerInfo(url string) tea.Cmd {
 	return func() tea.Msg {
-		// Ensure URL has a trailing slash for the generated client
+		// Normalize URL: add scheme and trailing slash for the generated client
 		serverURL := url
+		if !strings.Contains(serverURL, "http") {
+			serverURL = "https://" + serverURL
+		}
 		if !strings.HasSuffix(serverURL, "/") {
 			serverURL += "/"
 		}
 		client, err := generated.NewClientWithResponses(serverURL)
 		if err != nil {
-			return serverInfoMsg{url: url, err: err}
+			return serverInfoMsg{url: serverURL, err: err}
 		}
 		resp, err := client.GETapiserverInfoWithResponse(context.Background(), nil)
 		if err != nil {
-			return serverInfoMsg{url: url, err: err}
+			return serverInfoMsg{url: serverURL, err: err}
 		}
 		if resp.JSON200 == nil {
-			return serverInfoMsg{url: url, err: fmt.Errorf("server returned %d", resp.StatusCode())}
+			return serverInfoMsg{url: serverURL, err: fmt.Errorf("server returned %d", resp.StatusCode())}
 		}
-		return serverInfoMsg{url: url, info: resp.JSON200}
+		return serverInfoMsg{url: serverURL, info: resp.JSON200}
 	}
 }
 
@@ -125,6 +128,8 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 				}
 			case "u":
 				return m, func() tea.Msg { return navigateMsg{to: screenContacts} }
+			case "esc":
+				return m, func() tea.Msg { return navigateMsg{to: screenRooms} }
 			case "tab":
 				return m, func() tea.Msg { return navigateMsg{to: screenIdentities} }
 			case "ctrl+c", "q":
@@ -193,7 +198,7 @@ func (m serverModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "u", "contacts", "tab", "identities", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "u", "contacts", "tab", "identities", "esc", "rooms", "q", "quit") + "\n")
 
 	case serverStateAddURL:
 		b.WriteString(pad + "Enter server URL:\n\n")

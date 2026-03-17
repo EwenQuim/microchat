@@ -2,12 +2,21 @@ package tui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
 	"github.com/mattn/go-runewidth"
 )
+
+// ansiEscapeRe matches ANSI escape sequences (e.g. \033[2m, \033[0m, \033[38;2;r;g;bm).
+var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+// visibleWidth returns the printable column width of s, ignoring ANSI escape codes.
+func visibleWidth(s string) int {
+	return runewidth.StringWidth(ansiEscapeRe.ReplaceAllString(s, ""))
+}
 
 type mainFocus int
 
@@ -21,17 +30,19 @@ type mainModel struct {
 	rooms    roomModel
 	chat     chatModel
 	hasChat  bool
-	client   *generated.ClientWithResponses
+	clients  map[string]*generated.ClientWithResponses
+	servers  []serverConfig
 	id       *identity
 	username string
 }
 
-func newMainModel(client *generated.ClientWithResponses, id *identity, username string) mainModel {
+func newMainModel(clients map[string]*generated.ClientWithResponses, servers []serverConfig, id *identity, username string) mainModel {
 	return mainModel{
-		client:   client,
+		clients:  clients,
+		servers:  servers,
 		id:       id,
 		username: username,
-		rooms:    newRoomModel(client),
+		rooms:    newRoomModel(clients, servers),
 		focus:    focusLeft,
 	}
 }
@@ -43,14 +54,15 @@ func (m mainModel) init() tea.Cmd {
 func (m mainModel) update(msg tea.Msg) (mainModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case roomSelectedMsg:
-		m.chat = newChatModel(m.client, msg.room, msg.password, m.id, m.username)
+		client := m.clients[msg.server.URL]
+		m.chat = newChatModel(client, msg.server, msg.room, msg.password, m.id, m.username)
 		m.hasChat = true
 		if !msg.preview {
 			m.focus = focusRight
 		}
 		return m, m.chat.init()
 
-	case roomsLoadedMsg, roomCreatedMsg:
+	case serverRoomsLoadedMsg, roomCreatedMsg:
 		var cmd tea.Cmd
 		m.rooms, cmd = m.rooms.update(msg)
 		return m, cmd
@@ -73,20 +85,23 @@ func (m mainModel) update(msg tea.Msg) (mainModel, tea.Cmd) {
 		}
 		switch msg.String() {
 		case "tab":
-			if m.hasChat {
-				if m.focus == focusLeft {
-					m.focus = focusRight
-				} else {
-					m.focus = focusLeft
-				}
-			}
-			return m, nil
+			return m, func() tea.Msg { return navigateMsg{to: screenServers} }
 		case "esc":
 			if m.focus == focusRight {
 				m.focus = focusLeft
 				return m, nil
 			}
 			return m, func() tea.Msg { return navigateMsg{to: screenServers} }
+		case "right":
+			if m.focus == focusLeft && m.hasChat {
+				m.focus = focusRight
+				return m, nil
+			}
+		case "left":
+			if m.focus == focusRight {
+				m.focus = focusLeft
+				return m, nil
+			}
 		default:
 			if m.focus == focusLeft {
 				var cmd tea.Cmd
@@ -177,9 +192,10 @@ func formatKeyFull(key string) string {
 }
 
 func padRight(s string, width int) string {
-	sw := runewidth.StringWidth(s)
+	sw := visibleWidth(s)
 	if sw >= width {
-		return runewidth.Truncate(s, width, "")
+		// Can't safely truncate ANSI-coded strings; return as-is.
+		return s
 	}
 	return s + strings.Repeat(" ", width-sw)
 }

@@ -65,7 +65,7 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 					m.configChanged = true
 				}
 			case "esc", "tab":
-				return m, func() tea.Msg { return navigateMsg{to: screenServers} }
+				return m, func() tea.Msg { return navigateMsg{to: screenRooms} }
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			}
@@ -161,7 +161,7 @@ func (m contactsModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "d", "delete", "esc", "back", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "d", "delete", "esc/tab", "rooms", "q", "quit") + "\n")
 
 	case contactsStateAddNpub:
 		b.WriteString(pad + "Enter npub (public key):\n\n")

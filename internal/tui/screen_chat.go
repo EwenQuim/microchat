@@ -41,6 +41,7 @@ type messageSentMsg struct {
 
 type chatModel struct {
 	client   *generated.ClientWithResponses
+	server   serverConfig
 	room     string
 	password string
 	id       *identity
@@ -55,9 +56,10 @@ type chatModel struct {
 	colorCache map[string][3]uint8
 }
 
-func newChatModel(client *generated.ClientWithResponses, room, password string, id *identity, username string) chatModel {
+func newChatModel(client *generated.ClientWithResponses, server serverConfig, room, password string, id *identity, username string) chatModel {
 	return chatModel{
 		client:     client,
+		server:     server,
 		room:       room,
 		password:   password,
 		id:         id,
@@ -217,7 +219,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		focusMark = "*"
 	}
 	sep := strings.Repeat("─", width)
-	b.WriteString(focusMark + " #" + m.room + "\n")
+	b.WriteString(focusMark + " " + dim(serverDisplayName(m.server)+"~") + "#" + m.room + "\n")
 	b.WriteString(sep + "\n")
 
 	// Reserve: header(1) + sep(1) + bottom_sep(1) + input(1) + footer(1) = 5
@@ -301,7 +303,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	} else if m.typing {
 		b.WriteString(helpBar("esc", "exit", "enter", "send", "⌫", "delete") + "\n")
 	} else {
-		b.WriteString(helpBar("i", "insert", "r", "refresh", "↑↓", "scroll", "tab", "panels") + "\n")
+		b.WriteString(helpBar("i", "insert", "r", "refresh", "↑↓", "scroll", "tab", "servers") + "\n")
 	}
 
 	return b.String()

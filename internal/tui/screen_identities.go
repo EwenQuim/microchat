@@ -66,8 +66,10 @@ func (m identitiesModel) update(msg tea.Msg) (identitiesModel, tea.Cmd) {
 				}
 				m.configChanged = true
 			}
-		case "esc", "tab":
-			return m, func() tea.Msg { return navigateMsg{to: screenServers} }
+		case "esc":
+			return m, func() tea.Msg { return navigateMsg{to: screenRooms} }
+		case "tab":
+			return m, func() tea.Msg { return navigateMsg{to: screenContacts} }
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
@@ -159,7 +161,7 @@ func (m identitiesModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "enter", "activate", "a", "add", "d", "delete", "esc", "back", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "enter", "activate", "a", "add", "d", "delete", "tab", "contacts", "esc", "rooms", "q", "quit") + "\n")
 
 	case identitiesStateAddKey:
 		b.WriteString(m.sub.view(width, height))
