@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/EwenQuim/microchat/client/sdk/generated"
 )
 
 // pressRealChar simulates a real terminal keypress where both Code and Text are set.
@@ -110,6 +111,47 @@ func TestPubkeyColorConsistency(t *testing.T) {
 
 	if r1 != r2 || g1 != g2 || b1 != b2 {
 		t.Errorf("same pubkey should produce same color")
+	}
+}
+
+func TestChatModel_View_PubkeyOnlyDisplayName(t *testing.T) {
+	pk := "03d884d6abcdef1234567890"
+	content := "hello world"
+	msg := generated.Message{
+		Pubkey:  &pk,
+		Content: &content,
+	}
+	m := newChatModel(nil, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+
+	v := m.viewPanel(60, 10, true)
+
+	truncPk := pk[:8]
+	if !strings.Contains(v, "@"+truncPk) {
+		t.Errorf("view should contain @%s for pubkey-only message, got:\n%s", truncPk, v)
+	}
+	if !strings.Contains(v, truncPk+"…") {
+		t.Errorf("view should show truncated pubkey %s… as display name, got:\n%s", truncPk, v)
+	}
+}
+
+func BenchmarkViewPanel_ColorCache(b *testing.B) {
+	pk := "03d884d6abcdef1234567890"
+	content := "hello world"
+	msgs := make([]generated.Message, 40)
+	for i := range msgs {
+		p := pk
+		c := content
+		msgs[i] = generated.Message{Pubkey: &p, Content: &c}
+	}
+	m := newChatModel(nil, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = msgs
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = m.viewPanel(80, 45, true)
 	}
 }
 

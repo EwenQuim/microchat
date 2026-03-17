@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -145,7 +146,7 @@ func (m mainModel) view(width, height int) string {
 		} else if m.hasChat {
 			rightStr = dim(rightStr)
 		}
-		b.WriteString(leftPadded + "│" + rightStr + "\n")
+		fmt.Fprintf(&b, "%s│%s\n", leftPadded, rightStr)
 	}
 	return b.String()
 }

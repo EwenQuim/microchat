@@ -46,23 +46,34 @@ type chatModel struct {
 	id       *identity
 	username string
 
-	messages  []generated.Message
-	inputText string
-	err       string
-	loading   bool
-	scroll    int  // offset from the bottom (0 = latest)
-	typing    bool // vim-style insert mode
+	messages   []generated.Message
+	inputText  string
+	err        string
+	loading    bool
+	scroll     int  // offset from the bottom (0 = latest)
+	typing     bool // vim-style insert mode
+	colorCache map[string][3]uint8
 }
 
 func newChatModel(client *generated.ClientWithResponses, room, password string, id *identity, username string) chatModel {
 	return chatModel{
-		client:   client,
-		room:     room,
-		password: password,
-		id:       id,
-		username: username,
-		loading:  true,
+		client:     client,
+		room:       room,
+		password:   password,
+		id:         id,
+		username:   username,
+		loading:    true,
+		colorCache: make(map[string][3]uint8),
 	}
+}
+
+func (m chatModel) cachedColor(key string) (r, g, b uint8) {
+	if c, ok := m.colorCache[key]; ok {
+		return c[0], c[1], c[2]
+	}
+	r, g, b = pubkeyColor(key)
+	m.colorCache[key] = [3]uint8{r, g, b}
+	return r, g, b
 }
 
 func (m chatModel) init() tea.Cmd {
@@ -205,8 +216,9 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	if focused {
 		focusMark = "*"
 	}
+	sep := strings.Repeat("─", width)
 	b.WriteString(focusMark + " #" + m.room + "\n")
-	b.WriteString(strings.Repeat("─", width) + "\n")
+	b.WriteString(sep + "\n")
 
 	// Reserve: header(1) + sep(1) + bottom_sep(1) + input(1) + footer(1) = 5
 	contentHeight := height - 5
@@ -233,45 +245,45 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			b.WriteString("\n")
 		}
 		for _, msg := range m.messages[start:end] {
+			var fullPk, truncPk string
+			if msg.Pubkey != nil && *msg.Pubkey != "" {
+				fullPk = *msg.Pubkey
+				truncPk = fullPk
+				if len(truncPk) > 8 {
+					truncPk = truncPk[:8]
+				}
+			}
 			user := "?"
 			if msg.User != nil && *msg.User != "" {
 				user = *msg.User
-			} else if msg.Pubkey != nil {
-				pk := *msg.Pubkey
-				if len(pk) > 8 {
-					pk = pk[:8]
-				}
-				user = pk + "…"
+			} else if truncPk != "" {
+				user = truncPk + "…"
 			}
 			content := ""
 			if msg.Content != nil {
 				content = *msg.Content
 			}
 			keyLabel := ""
-			if msg.Pubkey != nil && *msg.Pubkey != "" {
-				pk := *msg.Pubkey
-				if len(pk) > 8 {
-					pk = pk[:8]
-				}
-				keyLabel = dim(" " + pk)
+			if truncPk != "" {
+				keyLabel = " @" + truncPk
 			}
 			colorKey := user
-			if msg.Pubkey != nil && *msg.Pubkey != "" {
-				colorKey = *msg.Pubkey
+			if fullPk != "" {
+				colorKey = fullPk
 			}
-			r, g, bv := pubkeyColor(colorKey)
+			r, g, bv := m.cachedColor(colorKey)
 			coloredUser := ansiColor(user, r, g, bv)
 			fmt.Fprintf(&b, " %s%s%s %s\n", coloredUser, keyLabel, dim(":"), content)
 		}
 	}
 
-	b.WriteString(strings.Repeat("─", width) + "\n")
+	b.WriteString(sep + "\n")
 	cursor := ""
 	if m.typing {
 		cursor = "█"
 	}
 	if m.username != "" && m.id != nil {
-		r, g, bv := pubkeyColor(m.id.PubKeyHex)
+		r, g, bv := m.cachedColor(m.id.PubKeyHex)
 		coloredName := ansiColor(m.username, r, g, bv)
 		b.WriteString(" " + coloredName + "> " + m.inputText + cursor + "\n")
 	} else if m.username != "" {
