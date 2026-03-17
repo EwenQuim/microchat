@@ -7,6 +7,174 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+func TestIdentityModel_MenuPress_v(t *testing.T) {
+	m := newIdentityModel()
+	m2, cmd := m.update(pressChar("v"))
+	if m2.state != idStateVanityInput {
+		t.Errorf("expected idStateVanityInput, got %v", m2.state)
+	}
+	if cmd != nil {
+		t.Error("expected nil cmd after pressing v")
+	}
+}
+
+func TestIdentityModel_VanityInput_HexOnly(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = ""
+
+	// non-hex char should be ignored
+	m2, _ := m.update(pressChar("z"))
+	if m2.inputText != "" {
+		t.Errorf("expected inputText to stay empty, got %q", m2.inputText)
+	}
+
+	// hex char should be appended
+	m3, _ := m2.update(pressChar("a"))
+	if m3.inputText != "a" {
+		t.Errorf("expected inputText = \"a\", got %q", m3.inputText)
+	}
+}
+
+func TestIdentityModel_VanityInput_MaxFour(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = "cafe"
+
+	m2, _ := m.update(pressChar("0"))
+	if m2.inputText != "cafe" {
+		t.Errorf("expected inputText unchanged at \"cafe\", got %q", m2.inputText)
+	}
+}
+
+func TestIdentityModel_VanityInput_Backspace(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = "ab"
+
+	m2, _ := m.update(pressKey(tea.KeyBackspace))
+	if m2.inputText != "a" {
+		t.Errorf("expected inputText = \"a\", got %q", m2.inputText)
+	}
+}
+
+func TestIdentityModel_VanityInput_Esc(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = "ab"
+
+	m2, cmd := m.update(pressKey(tea.KeyEscape))
+	if m2.state != idStateMenu {
+		t.Errorf("expected idStateMenu, got %v", m2.state)
+	}
+	if m2.inputText != "" {
+		t.Errorf("expected inputText cleared, got %q", m2.inputText)
+	}
+	if cmd != nil {
+		t.Error("expected nil cmd after esc")
+	}
+}
+
+func TestIdentityModel_VanityInput_EnterEmpty(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = ""
+
+	m2, cmd := m.update(pressKey(tea.KeyEnter))
+	if m2.err == "" {
+		t.Error("expected error for empty vanity suffix")
+	}
+	if cmd != nil {
+		t.Error("expected nil cmd on empty suffix")
+	}
+}
+
+func TestIdentityModel_VanityInput_EnterValid(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = "ff"
+
+	m2, cmd := m.update(pressKey(tea.KeyEnter))
+	if m2.state != idStateVanityGenerating {
+		t.Errorf("expected idStateVanityGenerating, got %v", m2.state)
+	}
+	if cmd == nil {
+		t.Error("expected non-nil cmd to start vanity search")
+	}
+}
+
+func TestIdentityModel_VanityGenerating_Esc(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityGenerating
+	cancelCalled := false
+	m.vanityCancel = func() { cancelCalled = true }
+
+	m2, _ := m.update(pressKey(tea.KeyEscape))
+	if !cancelCalled {
+		t.Error("expected vanityCancel to be called on esc")
+	}
+	if m2.state != idStateMenu {
+		t.Errorf("expected idStateMenu after esc, got %v", m2.state)
+	}
+}
+
+func TestIdentityModel_VanityFound(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+
+	m := newIdentityModel()
+	m.state = idStateVanityGenerating
+	cancelCalled := false
+	m.vanityCancel = func() { cancelCalled = true }
+
+	m2, cmd := m.update(vanityFoundMsg{id: id})
+	if !cancelCalled {
+		t.Error("expected vanityCancel to be called on found")
+	}
+	if m2.result.PubKeyHex != id.PubKeyHex {
+		t.Errorf("expected result to be set, got %v", m2.result)
+	}
+
+	msg := runCmd(cmd)
+	nav, ok := msg.(navigateMsg)
+	if !ok {
+		t.Fatalf("expected navigateMsg, got %T", msg)
+	}
+	if nav.to != screenServers {
+		t.Errorf("expected screenServers, got %v", nav.to)
+	}
+}
+
+func TestIdentityModel_View_VanityInput(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityInput
+	m.inputText = "ab"
+
+	v := m.view(80, 24)
+	if !strings.Contains(v, "> ") {
+		t.Error("view should contain \"> \"")
+	}
+	if !strings.Contains(v, "█") {
+		t.Error("view should contain cursor █")
+	}
+}
+
+func TestIdentityModel_View_VanityGenerating(t *testing.T) {
+	m := newIdentityModel()
+	m.state = idStateVanityGenerating
+	m.vanityInput = "ff"
+
+	v := m.view(80, 24)
+	if !strings.Contains(v, "Searching") {
+		t.Error("view should contain \"Searching\"")
+	}
+	if !strings.Contains(v, "attempts") {
+		t.Error("view should contain \"attempts\"")
+	}
+}
+
 // runCmd executes a Cmd and returns its Msg.
 func runCmd(cmd tea.Cmd) tea.Msg {
 	if cmd == nil {

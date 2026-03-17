@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync/atomic"
+	"time"
 
 	"github.com/EwenQuim/microchat/client/sdk/generated"
 	"github.com/EwenQuim/microchat/internal/tui"
@@ -48,6 +50,25 @@ func main() {
 				Name:   "rooms",
 				Usage:  "List all available rooms",
 				Action: runRooms,
+			},
+			{
+				Name:  "user",
+				Usage: "Manage identity keypair",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "generate",
+						Usage: "Generate a new keypair (random or vanity)",
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "vanity", Usage: "Vanity suffix (1–4 hex chars, e.g. cafe)"},
+						},
+						Action: runUserGenerate,
+					},
+					{
+						Name:   "show",
+						Usage:  "Show the current identity",
+						Action: runUserShow,
+					},
+				},
 			},
 		},
 	}
@@ -130,5 +151,57 @@ func runRooms(c *cli.Context) error {
 		}
 		fmt.Printf("  - %s\n", *r.Name)
 	}
+	return nil
+}
+
+func runUserGenerate(c *cli.Context) error {
+	suffix := c.String("vanity")
+	if suffix == "" {
+		pub, priv, err := tui.GenerateKeypair()
+		if err != nil {
+			return fmt.Errorf("generate keypair: %w", err)
+		}
+		fmt.Printf("public key:  %s\n", pub)
+		fmt.Printf("private key: %s\n", priv)
+		return nil
+	}
+
+	if err := tui.ValidateVanitySuffix(suffix); err != nil {
+		return err
+	}
+
+	var counter atomic.Int64
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Fprintf(os.Stderr, "\rsearching… %d attempts", counter.Load())
+			case <-done:
+				fmt.Fprintf(os.Stderr, "\r")
+				return
+			}
+		}
+	}()
+
+	pub, priv, err := tui.GenerateVanityKeypair(context.Background(), suffix, &counter)
+	close(done)
+	if err != nil {
+		return fmt.Errorf("generate vanity keypair: %w", err)
+	}
+	fmt.Printf("public key:  %s\n", pub)
+	fmt.Printf("private key: %s\n", priv)
+	return nil
+}
+
+func runUserShow(c *cli.Context) error {
+	pub, priv, err := tui.CurrentIdentity()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("public key:  %s\n", pub)
+	fmt.Printf("private key: %s\n", priv)
 	return nil
 }

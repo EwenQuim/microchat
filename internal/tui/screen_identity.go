@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -10,15 +13,23 @@ import (
 type idState int
 
 const (
-	idStateMenu  idState = iota
-	idStateInput         // pasting a private key
+	idStateMenu            idState = iota
+	idStateInput                   // pasting a private key
+	idStateVanityInput             // typing the vanity suffix
+	idStateVanityGenerating        // goroutines running
 )
 
+type vanityProgressMsg struct{ attempts int64 }
+type vanityFoundMsg struct{ id identity }
+
 type identityModel struct {
-	state     idState
-	inputText string
-	err       string
-	result    identity
+	state        idState
+	inputText    string
+	err          string
+	result       identity
+	vanityCancel context.CancelFunc
+	vanityCounter *atomic.Int64
+	vanityInput  string // suffix being searched
 }
 
 func newIdentityModel() identityModel {
@@ -42,6 +53,10 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 				return m, func() tea.Msg { return navigateMsg{to: screenServers} }
 			case "p":
 				m.state = idStateInput
+				m.inputText = ""
+				m.err = ""
+			case "v":
+				m.state = idStateVanityInput
 				m.inputText = ""
 				m.err = ""
 			case "ctrl+c", "q":
@@ -75,9 +90,88 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 					m.inputText += s
 				}
 			}
+
+		case idStateVanityInput:
+			switch msg.String() {
+			case "enter":
+				if m.inputText == "" {
+					m.err = "Enter 1–4 hex characters (0-9, a-f)"
+					return m, nil
+				}
+				suffix := m.inputText
+				m.vanityInput = suffix
+				m.vanityCounter = &atomic.Int64{}
+				ctx, cancel := context.WithCancel(context.Background())
+				m.vanityCancel = cancel
+				m.state = idStateVanityGenerating
+				m.err = ""
+				counter := m.vanityCounter
+				return m, tea.Batch(
+					startVanityCmd(ctx, suffix, counter),
+					vanityTickCmd(counter),
+				)
+			case "backspace":
+				if len(m.inputText) > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-1]
+				}
+			case "esc", "ctrl+c":
+				m.state = idStateMenu
+				m.inputText = ""
+				m.err = ""
+			default:
+				s := msg.String()
+				if len(s) == 1 && isHexChar(s[0]) && len(m.inputText) < 4 {
+					m.inputText += s
+				}
+			}
+
+		case idStateVanityGenerating:
+			switch msg.String() {
+			case "esc", "ctrl+c":
+				if m.vanityCancel != nil {
+					m.vanityCancel()
+					m.vanityCancel = nil
+				}
+				m.state = idStateMenu
+				m.inputText = ""
+				m.err = ""
+			}
+		}
+
+	case vanityFoundMsg:
+		if m.vanityCancel != nil {
+			m.vanityCancel()
+			m.vanityCancel = nil
+		}
+		m.result = msg.id
+		m.err = ""
+		return m, func() tea.Msg { return navigateMsg{to: screenServers} }
+
+	case vanityProgressMsg:
+		if m.state == idStateVanityGenerating {
+			counter := m.vanityCounter
+			return m, vanityTickCmd(counter)
 		}
 	}
 	return m, nil
+}
+
+func startVanityCmd(ctx context.Context, suffix string, counter *atomic.Int64) tea.Cmd {
+	return func() tea.Msg {
+		id, err := generateVanityIdentity(ctx, suffix, counter)
+		if err != nil {
+			// context cancelled — return a progress msg as a safe no-op
+			return vanityProgressMsg{attempts: counter.Load()}
+		}
+		return vanityFoundMsg{id: id}
+	}
+}
+
+func vanityTickCmd(counter *atomic.Int64) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(100 * time.Millisecond)
+		return vanityProgressMsg{attempts: counter.Load()}
+	}
 }
 
 func (m identityModel) view(width, height int) string {
@@ -89,7 +183,7 @@ func (m identityModel) view(width, height int) string {
 
 	switch m.state {
 	case idStateMenu:
-		b.WriteString(helpBar("g", "generate new keypair", "p", "paste private key", "q", "quit") + "\n")
+		b.WriteString(helpBar("g", "generate new keypair", "p", "paste private key", "v", "vanity keypair", "q", "quit") + "\n")
 		if m.err != "" {
 			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
 		}
@@ -101,6 +195,23 @@ func (m identityModel) view(width, height int) string {
 		if m.err != "" {
 			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
 		}
+
+	case idStateVanityInput:
+		b.WriteString(pad + "Enter vanity suffix (1–4 hex chars, e.g. cafe):\n\n")
+		b.WriteString(pad + "> " + m.inputText + "█\n\n")
+		b.WriteString(helpBar("enter", "start", "esc", "cancel") + "\n")
+		if m.err != "" {
+			b.WriteString(fmt.Sprintf("\n%s  Error: %s\n", pad, m.err))
+		}
+
+	case idStateVanityGenerating:
+		attempts := int64(0)
+		if m.vanityCounter != nil {
+			attempts = m.vanityCounter.Load()
+		}
+		b.WriteString(fmt.Sprintf("%sSearching for pubkey ending in %q…\n\n", pad, m.vanityInput))
+		b.WriteString(fmt.Sprintf("%s%d attempts\n\n", pad, attempts))
+		b.WriteString(helpBar("esc", "cancel") + "\n")
 	}
 
 	return b.String()

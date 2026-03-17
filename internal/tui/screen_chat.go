@@ -227,8 +227,14 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	}
 
 	if m.loading {
+		for i := 0; i < contentHeight-1; i++ {
+			b.WriteString("\n")
+		}
 		b.WriteString(" Loading messages…\n")
 	} else if len(m.messages) == 0 {
+		for i := 0; i < contentHeight-1; i++ {
+			b.WriteString("\n")
+		}
 		b.WriteString(" (no messages yet)\n")
 	} else {
 		start := len(m.messages) - contentHeight - m.scroll

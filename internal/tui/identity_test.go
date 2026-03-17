@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"context"
 	"encoding/hex"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -171,5 +173,57 @@ func TestDerToCompact_NotAllZero(t *testing.T) {
 
 	if strings.Count(sig, "0") == len(sig) {
 		t.Error("compact signature is all zeros")
+	}
+}
+
+func TestIsValidVanitySuffix(t *testing.T) {
+	valid := []string{"a", "0f", "cafe", "1234"}
+	for _, s := range valid {
+		if !isValidVanitySuffix(s) {
+			t.Errorf("isValidVanitySuffix(%q) = false, want true", s)
+		}
+	}
+	invalid := []string{"", "12345", "xyz", "AB"}
+	for _, s := range invalid {
+		if isValidVanitySuffix(s) {
+			t.Errorf("isValidVanitySuffix(%q) = true, want false", s)
+		}
+	}
+}
+
+func TestGenerateVanityIdentity_Finds(t *testing.T) {
+	ctx := context.Background()
+	var counter atomic.Int64
+	id, err := generateVanityIdentity(ctx, "0", &counter)
+	if err != nil {
+		t.Fatalf("generateVanityIdentity() error: %v", err)
+	}
+	if !strings.HasSuffix(id.PubKeyHex, "0") {
+		t.Errorf("PubKeyHex %q does not end with '0'", id.PubKeyHex)
+	}
+}
+
+func TestGenerateVanityIdentity_Cancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var counter atomic.Int64
+	_, err := generateVanityIdentity(ctx, "cafe", &counter)
+	if err == nil {
+		t.Error("expected error when context cancelled, got nil")
+	}
+	if ctx.Err() == nil {
+		t.Error("expected ctx.Err() != nil")
+	}
+}
+
+func TestGenerateVanityIdentity_CounterIncrements(t *testing.T) {
+	ctx := context.Background()
+	var counter atomic.Int64
+	_, err := generateVanityIdentity(ctx, "0", &counter)
+	if err != nil {
+		t.Fatalf("generateVanityIdentity() error: %v", err)
+	}
+	if counter.Load() == 0 {
+		t.Error("expected counter > 0 after finding a vanity key")
 	}
 }
