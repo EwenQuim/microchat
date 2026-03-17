@@ -16,6 +16,7 @@ type model struct {
 	height  int
 	id      *identity // nil if no identity configured
 	servers serverModel
+	users   usersModel
 	main    mainModel
 	ident   identityModel
 
@@ -78,6 +79,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.servers = newServerModel(m.cfg)
 
+		case screenUsers:
+			m.users = newUsersModel(m.cfg)
+
 		case screenRooms:
 			srv := m.servers.selectedServer()
 			m.currentServer = srv
@@ -121,10 +125,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case screenServers:
 		var cmd tea.Cmd
 		m.servers, cmd = m.servers.update(msg)
-		// Persist config changes immediately
 		if m.servers.configChanged {
 			m.cfg.Servers = m.servers.servers
 			m.servers.configChanged = false
+			_ = saveConfig(m.cfg)
+		}
+		return m, cmd
+
+	case screenUsers:
+		var cmd tea.Cmd
+		m.users, cmd = m.users.update(msg)
+		if m.users.configChanged {
+			m.cfg.Users = m.users.users
+			m.users.configChanged = false
 			_ = saveConfig(m.cfg)
 		}
 		return m, cmd
@@ -145,6 +158,8 @@ func (m model) View() tea.View {
 		content = m.ident.view(m.width, m.height)
 	case screenServers:
 		content = m.servers.view(m.width, m.height)
+	case screenUsers:
+		content = m.users.view(m.width, m.height)
 	case screenRooms:
 		content = m.main.view(m.width, m.height)
 	default:
@@ -156,9 +171,14 @@ func (m model) View() tea.View {
 }
 
 func Run() error {
+	if err := checkConfigPermissions(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: "+err.Error())
+		return err
+	}
 	cfg, err := loadConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "warning: could not load config:", err)
+		fmt.Fprintln(os.Stderr, "Error: could not load config:", err)
+		return err
 	}
 
 	p := tea.NewProgram(initialModel(cfg))

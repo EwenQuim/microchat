@@ -322,3 +322,16 @@ func TestServerModel_View_EmptyList(t *testing.T) {
 		t.Errorf("view should show no-servers message, got:\n%s", v)
 	}
 }
+
+func TestServerModel_PressU_NavigatesToUsers(t *testing.T) {
+	m := makeServerModel()
+	_, cmd := m.update(pressChar("u"))
+	msg := runCmd(cmd)
+	nav, ok := msg.(navigateMsg)
+	if !ok {
+		t.Fatalf("expected navigateMsg, got %T", msg)
+	}
+	if nav.to != screenUsers {
+		t.Errorf("expected screenUsers, got %v", nav.to)
+	}
+}

@@ -129,6 +129,64 @@ func TestModel_View_DelegatesToIdentityScreen(t *testing.T) {
 	}
 }
 
+func TestModel_NavigateMsg_ToUsers(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	cfg := appConfig{
+		Identity: &identityConfig{
+			PrivateKey: id.PrivKeyHex,
+			PublicKey:  id.PubKeyHex,
+		},
+		Users: []userEntry{
+			{PubKey: "abc", DisplayName: "Alice"},
+		},
+	}
+	m := initialModel(cfg)
+	newModel, _ := m.Update(navigateMsg{to: screenUsers})
+	updated := newModel.(model)
+	if updated.screen != screenUsers {
+		t.Errorf("screen = %v, want screenUsers", updated.screen)
+	}
+	if len(updated.users.users) != 1 {
+		t.Errorf("users count = %d, want 1", len(updated.users.users))
+	}
+}
+
+func TestModel_View_DelegatesToUsersScreen(t *testing.T) {
+	m := initialModel(appConfig{})
+	m.screen = screenUsers
+	m.users = newUsersModel(appConfig{})
+	m.width = 80
+	m.height = 24
+	v := m.View()
+	if !strings.Contains(v.Content, "Contacts") {
+		t.Errorf("view should contain contacts screen content, got:\n%s", v.Content)
+	}
+}
+
+func TestModel_UsersScreen_ConfigSavedOnDelete(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	m := initialModel(appConfig{})
+	m.screen = screenUsers
+	m.users = newUsersModel(appConfig{
+		Users: []userEntry{{PubKey: "abc", DisplayName: "Alice"}},
+	})
+	newModel, _ := m.Update(pressChar("d"))
+	updated := newModel.(model)
+	if updated.users.configChanged {
+		t.Error("configChanged should be reset after save")
+	}
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if len(got.Users) != 0 {
+		t.Errorf("expected 0 users in saved config, got %d", len(got.Users))
+	}
+}
+
 func TestModel_View_DelegatesToServersScreen(t *testing.T) {
 	id, err := generateIdentity()
 	if err != nil {

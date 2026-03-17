@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -92,6 +95,88 @@ func TestSaveConfig_CreatesParentDirs(t *testing.T) {
 	}
 	if got.LastServer != cfg.LastServer {
 		t.Errorf("LastServer = %q, want %q", got.LastServer, cfg.LastServer)
+	}
+}
+
+func TestCheckConfigPermissions_MissingFile(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	if err := checkConfigPermissions(); err != nil {
+		t.Errorf("expected nil for missing file, got: %v", err)
+	}
+}
+
+func TestCheckConfigPermissions_CorrectPerms(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	if err := saveConfig(appConfig{}); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	if err := checkConfigPermissions(); err != nil {
+		t.Errorf("expected nil for correct perms, got: %v", err)
+	}
+}
+
+func TestCheckConfigPermissions_WrongFilePerms(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	if err := saveConfig(appConfig{}); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	if err := os.Chmod(configPath(), 0644); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+	err := checkConfigPermissions()
+	if err == nil {
+		t.Error("expected error for wrong file permissions")
+	}
+	if err != nil && !strings.Contains(err.Error(), "0644") {
+		t.Errorf("error should mention wrong permissions, got: %v", err)
+	}
+}
+
+func TestCheckConfigPermissions_WrongDirPerms(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	if err := saveConfig(appConfig{}); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	dirPath := filepath.Dir(configPath())
+	if err := os.Chmod(dirPath, 0755); err != nil {
+		t.Fatalf("chmod dir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dirPath, 0700) })
+	err := checkConfigPermissions()
+	if err == nil {
+		t.Error("expected error for wrong dir permissions")
+	}
+	if err != nil && !strings.Contains(err.Error(), "0755") {
+		t.Errorf("error should mention wrong permissions, got: %v", err)
+	}
+}
+
+func TestSaveLoadConfig_WithUsers(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	cfg := appConfig{
+		Users: []userEntry{
+			{PubKey: "abc123", DisplayName: "Alice"},
+			{PubKey: "def456", DisplayName: "Bob"},
+		},
+	}
+	if err := saveConfig(cfg); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if len(got.Users) != 2 {
+		t.Fatalf("Users count = %d, want 2", len(got.Users))
+	}
+	if got.Users[0].PubKey != "abc123" {
+		t.Errorf("Users[0].PubKey = %q, want abc123", got.Users[0].PubKey)
+	}
+	if got.Users[0].DisplayName != "Alice" {
+		t.Errorf("Users[0].DisplayName = %q, want Alice", got.Users[0].DisplayName)
+	}
+	if got.Users[1].PubKey != "def456" {
+		t.Errorf("Users[1].PubKey = %q, want def456", got.Users[1].PubKey)
 	}
 }
 

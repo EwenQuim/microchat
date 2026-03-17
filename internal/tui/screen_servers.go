@@ -115,6 +115,8 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 					}
 					m.configChanged = true
 				}
+			case "u":
+				return m, func() tea.Msg { return navigateMsg{to: screenUsers} }
 			case "tab":
 				return m, func() tea.Msg { return navigateMsg{to: screenIdentity} }
 			case "ctrl+c", "q":
@@ -183,7 +185,7 @@ func (m serverModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "tab", "identity", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "u", "contacts", "tab", "identity", "q", "quit") + "\n")
 
 	case serverStateAddURL:
 		b.WriteString(pad + "Enter server URL:\n\n")

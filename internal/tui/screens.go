@@ -7,6 +7,7 @@ const (
 	screenIdentity screen = iota
 	screenServers
 	screenRooms
+	screenUsers
 )
 
 // navigateMsg is sent by sub-models to trigger a screen transition.

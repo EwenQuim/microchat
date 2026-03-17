@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -17,10 +18,39 @@ type serverConfig struct {
 	Description string `json:"description"`
 }
 
+type userEntry struct {
+	PubKey      string `json:"pub_key"`
+	DisplayName string `json:"display_name"`
+}
+
 type appConfig struct {
 	Identity   *identityConfig `json:"identity,omitempty"`
 	Servers    []serverConfig  `json:"servers"`
 	LastServer string          `json:"last_server,omitempty"`
+	Users      []userEntry     `json:"users,omitempty"`
+}
+
+func checkConfigPermissions() error {
+	path := configPath()
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	}
+	dirPath := filepath.Dir(path)
+	dirInfo, err := os.Stat(dirPath)
+	if err != nil {
+		return err
+	}
+	if dirInfo.Mode().Perm() != 0700 {
+		return fmt.Errorf("config directory has insecure permissions %04o (want 0700)\n  fix: chmod 0700 ~/.config/microchat/", dirInfo.Mode().Perm())
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if fileInfo.Mode().Perm() != 0600 {
+		return fmt.Errorf("config file has insecure permissions %04o (want 0600)\n  fix: chmod 0600 ~/.config/microchat/config.json", fileInfo.Mode().Perm())
+	}
+	return nil
 }
 
 func configPath() string {
