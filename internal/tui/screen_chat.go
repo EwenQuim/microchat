@@ -148,9 +148,8 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 					m.inputText = m.inputText[:len(m.inputText)-1]
 				}
 			default:
-				s := msg.String()
-				if len(s) == 1 {
-					m.inputText += s
+				if t := msg.Key().Text; t != "" {
+					m.inputText += t
 				}
 			}
 		} else {

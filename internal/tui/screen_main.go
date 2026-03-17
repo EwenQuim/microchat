@@ -138,9 +138,20 @@ func (m mainModel) view(width, height int) string {
 		if i < len(rightLines) {
 			right = rightLines[i]
 		}
-		b.WriteString(padRight(left, leftWidth) + "│" + right + "\n")
+		leftPadded := padRight(left, leftWidth)
+		rightStr := right
+		if m.focus == focusRight {
+			leftPadded = dim(leftPadded)
+		} else if m.hasChat {
+			rightStr = dim(rightStr)
+		}
+		b.WriteString(leftPadded + "│" + rightStr + "\n")
 	}
 	return b.String()
+}
+
+func dim(s string) string {
+	return "\033[2m" + s + "\033[0m"
 }
 
 func padRight(s string, width int) string {
