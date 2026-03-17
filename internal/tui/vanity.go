@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strings"
 	"sync/atomic"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // FormatCount formats n with underscore thousands separators (e.g. 1_234_567).
@@ -44,6 +45,11 @@ type vanityResult struct {
 // every attempt. Returns context.Err() if the context is cancelled before a
 // match is found.
 func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.Int64) (identity, error) {
+	target, err := bech32SuffixToVals(suffix)
+	if err != nil {
+		return identity{}, fmt.Errorf("invalid suffix: %w", err)
+	}
+
 	ch := make(chan vanityResult, 1)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -56,7 +62,7 @@ func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.
 					return
 				default:
 				}
-				id, err := generateIdentity()
+				privKey, err := secp256k1.GeneratePrivateKey()
 				if err != nil {
 					select {
 					case ch <- vanityResult{err: err}:
@@ -66,14 +72,16 @@ func generateVanityIdentity(ctx context.Context, suffix string, counter *atomic.
 					return
 				}
 				counter.Add(1)
-				if strings.HasSuffix(id.NpubKey, suffix) {
-					select {
-					case ch <- vanityResult{id: id}:
-						cancel()
-					default:
-					}
-					return
+				compressed := privKey.PubKey().SerializeCompressed()
+				if !npubSuffixMatch(compressed[1:], target) {
+					continue
 				}
+				select {
+				case ch <- vanityResult{id: identityFromPrivKey(privKey)}:
+					cancel()
+				default:
+				}
+				return
 			}
 		}()
 	}

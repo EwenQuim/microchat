@@ -7,6 +7,112 @@ import (
 
 const bech32Charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
+var (
+	// npubHRPPolymodState is the bech32 polymod state after processing bech32HRPExpand("npub"),
+	// precomputed once to avoid 9 polymod iterations per vanity attempt.
+	npubHRPPolymodState uint32
+	// bech32CharsetReverse maps an ASCII byte to its 5-bit bech32 value (255 = invalid).
+	bech32CharsetReverse [256]byte
+)
+
+func init() {
+	for i := range bech32CharsetReverse {
+		bech32CharsetReverse[i] = 255
+	}
+	for i := 0; i < len(bech32Charset); i++ {
+		bech32CharsetReverse[bech32Charset[i]] = byte(i)
+	}
+
+	chk := uint32(1)
+	for _, v := range bech32HRPExpand("npub") {
+		chk = polymodStep(chk, v)
+	}
+	npubHRPPolymodState = chk
+}
+
+// polymodStep advances the bech32 polymod checksum by one 5-bit value.
+func polymodStep(chk uint32, v byte) uint32 {
+	gen := [5]uint32{0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3}
+	b := chk >> 25
+	chk = (chk&0x1ffffff)<<5 ^ uint32(v)
+	for i := 0; i < 5; i++ {
+		if (b>>uint(i))&1 == 1 {
+			chk ^= gen[i]
+		}
+	}
+	return chk
+}
+
+// bech32SuffixToVals converts a bech32 suffix string to its 5-bit values.
+// Call once before the hot loop to avoid per-attempt string scanning.
+func bech32SuffixToVals(suffix string) ([]byte, error) {
+	out := make([]byte, len(suffix))
+	for i := range len(suffix) {
+		v := bech32CharsetReverse[suffix[i]]
+		if v == 255 {
+			return nil, fmt.Errorf("invalid bech32 character %q", suffix[i])
+		}
+		out[i] = v
+	}
+	return out, nil
+}
+
+// npubSuffixMatch checks whether the npub encoding of xCoord (32-byte secp256k1
+// x-coordinate) ends with the given target 5-bit values. Zero allocations: all
+// intermediate state lives on the stack.
+func npubSuffixMatch(xCoord []byte, target []byte) bool {
+	// Convert 32 bytes → 52 5-bit values (padded), same as convertBits(xCoord, 8, 5, true).
+	var data [52]byte
+	acc := 0
+	bits := 0
+	pos := 0
+	for _, byt := range xCoord {
+		acc = (acc << 8) | int(byt)
+		bits += 8
+		for bits >= 5 {
+			bits -= 5
+			data[pos] = byte((acc >> bits) & 31)
+			pos++
+		}
+	}
+	if bits > 0 {
+		data[pos] = byte((acc << (5 - bits)) & 31)
+	}
+	// pos == 52
+
+	// Compute checksum starting from precomputed HRP state.
+	chk := npubHRPPolymodState
+	for i := 0; i < 52; i++ {
+		chk = polymodStep(chk, data[i])
+	}
+	for i := 0; i < 6; i++ {
+		chk = polymodStep(chk, 0)
+	}
+	chk ^= 1
+
+	var checksum [6]byte
+	for i := 0; i < 6; i++ {
+		checksum[i] = byte((chk >> uint(5*(5-i))) & 31)
+	}
+
+	// Full encoded payload is 58 values: data[0..51] + checksum[0..5].
+	// Compare the last len(target) values.
+	n := len(target)
+	for i := 0; i < n; i++ {
+		p := 58 - n + i
+		var val byte
+		if p < 52 {
+			val = data[p]
+		} else {
+			val = checksum[p-52]
+		}
+		if val != target[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // isValidBech32Char reports whether c is in the bech32 charset (lowercase).
 func isValidBech32Char(c byte) bool {
 	for i := 0; i < len(bech32Charset); i++ {

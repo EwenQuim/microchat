@@ -35,6 +35,20 @@ func generateIdentity() (identity, error) {
 	}, nil
 }
 
+// identityFromPrivKey builds a full identity from an already-generated private key.
+// Used on vanity match to avoid the hex round-trip in the hot path.
+func identityFromPrivKey(privKey *secp256k1.PrivateKey) identity {
+	pubKey := privKey.PubKey()
+	pubKeyHex := hex.EncodeToString(pubKey.SerializeCompressed())
+	npub, _ := pubKeyHexToNpub(pubKeyHex) // empty string on error
+	return identity{
+		privKey:    privKey,
+		PubKeyHex:  pubKeyHex,
+		NpubKey:    npub,
+		PrivKeyHex: hex.EncodeToString(privKey.Serialize()),
+	}
+}
+
 // identityFromHex restores an identity from a hex-encoded private key.
 func identityFromHex(privKeyHex string) (identity, error) {
 	privKeyBytes, err := hex.DecodeString(privKeyHex)
@@ -82,10 +96,14 @@ func CurrentIdentity() (npub, privKeyHex string, err error) {
 	if err != nil {
 		return "", "", fmt.Errorf("load config: %w", err)
 	}
-	if cfg.Identity == nil {
+	if len(cfg.Identities) == 0 {
 		return "", "", fmt.Errorf("no identity configured")
 	}
-	id, err := identityFromHex(cfg.Identity.PrivateKey)
+	idx := cfg.ActiveIndex
+	if idx < 0 || idx >= len(cfg.Identities) {
+		idx = 0
+	}
+	id, err := identityFromHex(cfg.Identities[idx].PrivateKey)
 	if err != nil {
 		return "", "", err
 	}

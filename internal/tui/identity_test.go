@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 func TestGenerateIdentity(t *testing.T) {
@@ -244,5 +246,105 @@ func TestGenerateVanityIdentity_CounterIncrements(t *testing.T) {
 	}
 	if counter.Load() == 0 {
 		t.Error("expected counter > 0 after finding a vanity key")
+	}
+}
+
+func TestBech32SuffixToVals(t *testing.T) {
+	// Round-trip: bech32Charset[val] == char for every charset character.
+	for i := range len(bech32Charset) {
+		c := bech32Charset[i]
+		vals, err := bech32SuffixToVals(string(c))
+		if err != nil {
+			t.Errorf("bech32SuffixToVals(%q) error: %v", c, err)
+			continue
+		}
+		if len(vals) != 1 {
+			t.Errorf("bech32SuffixToVals(%q) len = %d, want 1", c, len(vals))
+			continue
+		}
+		if bech32Charset[vals[0]] != c {
+			t.Errorf("round-trip failed for %q: got index %d → %q", c, vals[0], bech32Charset[vals[0]])
+		}
+	}
+
+	// Error on invalid character.
+	_, err := bech32SuffixToVals("b") // 'b' is not in bech32 charset
+	if err == nil {
+		t.Error("expected error for invalid bech32 char 'b', got nil")
+	}
+}
+
+func TestNpubSuffixMatch_AgainstReference(t *testing.T) {
+	for range 100 {
+		privKey, err := secp256k1.GeneratePrivateKey()
+		if err != nil {
+			t.Fatalf("GeneratePrivateKey: %v", err)
+		}
+		id := identityFromPrivKey(privKey)
+		compressed := privKey.PubKey().SerializeCompressed()
+
+		for suffixLen := 1; suffixLen <= 6; suffixLen++ {
+			suffix := id.NpubKey[len(id.NpubKey)-suffixLen:]
+			target, err := bech32SuffixToVals(suffix)
+			if err != nil {
+				t.Fatalf("bech32SuffixToVals(%q): %v", suffix, err)
+			}
+			got := npubSuffixMatch(compressed[1:], target)
+			want := strings.HasSuffix(id.NpubKey, suffix)
+			if got != want {
+				t.Errorf("npubSuffixMatch mismatch for npub=%s suffix=%q: got %v want %v",
+					id.NpubKey, suffix, got, want)
+			}
+		}
+	}
+}
+
+func TestNpubSuffixMatch_LongSuffix(t *testing.T) {
+	for range 20 {
+		privKey, err := secp256k1.GeneratePrivateKey()
+		if err != nil {
+			t.Fatalf("GeneratePrivateKey: %v", err)
+		}
+		id := identityFromPrivKey(privKey)
+		compressed := privKey.PubKey().SerializeCompressed()
+
+		suffix := id.NpubKey[len(id.NpubKey)-10:]
+		target, err := bech32SuffixToVals(suffix)
+		if err != nil {
+			t.Fatalf("bech32SuffixToVals(%q): %v", suffix, err)
+		}
+		if !npubSuffixMatch(compressed[1:], target) {
+			t.Errorf("npubSuffixMatch returned false for own suffix: npub=%s suffix=%q",
+				id.NpubKey, suffix)
+		}
+
+		// Negative check: a suffix with a different last char should not match.
+		otherChar := bech32Charset[(strings.IndexByte(bech32Charset, suffix[len(suffix)-1])+1)%len(bech32Charset)]
+		wrongSuffix := suffix[:len(suffix)-1] + string(otherChar)
+		wrongTarget, _ := bech32SuffixToVals(wrongSuffix)
+		if id.NpubKey[len(id.NpubKey)-10:] != wrongSuffix {
+			if npubSuffixMatch(compressed[1:], wrongTarget) {
+				t.Errorf("npubSuffixMatch returned true for wrong suffix: npub=%s wrongSuffix=%q",
+					id.NpubKey, wrongSuffix)
+			}
+		}
+	}
+}
+
+func BenchmarkGenerateVanityIteration(b *testing.B) {
+	target, _ := bech32SuffixToVals("qqq")
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		privKey, _ := secp256k1.GeneratePrivateKey()
+		compressed := privKey.PubKey().SerializeCompressed()
+		npubSuffixMatch(compressed[1:], target)
+	}
+}
+
+func BenchmarkGenerateVanityIteration_Baseline(b *testing.B) {
+	b.ReportAllocs()
+	for range b.N {
+		vanityIterationOld("qqq")
 	}
 }
