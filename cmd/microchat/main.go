@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"sync/atomic"
 	"time"
 
@@ -195,9 +197,16 @@ func runUserGenerate(c *cli.Context) error {
 		}
 	}()
 
-	npub, priv, err := tui.GenerateVanityKeypair(context.Background(), suffix, &counter)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	npub, priv, err := tui.GenerateVanityKeypair(ctx, suffix, &counter)
 	close(done)
 	fmt.Fprintln(os.Stderr)
+	if errors.Is(err, context.Canceled) {
+		fmt.Fprintln(os.Stderr, "cancelled")
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("generate vanity keypair: %w", err)
 	}
