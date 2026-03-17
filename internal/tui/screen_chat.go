@@ -219,7 +219,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		focusMark = "*"
 	}
 	sep := strings.Repeat("─", width)
-	b.WriteString(focusMark + " " + dim(serverDisplayName(m.server)+"~") + "#" + m.room + "\n")
+	b.WriteString(focusMark + " " + dim(serverDisplayName(m.server)+"~") + m.room + "\n")
 	b.WriteString(sep + "\n")
 
 	// Reserve: header(1) + sep(1) + bottom_sep(1) + input(1) + footer(1) = 5
