@@ -8,7 +8,25 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
+	colorful "github.com/lucasb-eyer/go-colorful"
 )
+
+func pubkeyColor(pubkey string) (r, g, b uint8) {
+	var hash int32
+	for _, ch := range pubkey {
+		hash = int32(ch) + ((hash << 5) - hash)
+	}
+	if hash < 0 {
+		hash = -hash
+	}
+	hue := hash % 360
+	c := colorful.Hsl(float64(hue), 0.70, 0.55)
+	return uint8(c.R * 255), uint8(c.G * 255), uint8(c.B * 255)
+}
+
+func ansiColor(s string, r, g, b uint8) string {
+	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", r, g, b, s)
+}
 
 // messagesLoadedMsg carries fetched messages or an error.
 type messagesLoadedMsg struct {
@@ -229,7 +247,21 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			if msg.Content != nil {
 				content = *msg.Content
 			}
-			b.WriteString(fmt.Sprintf(" <%s> %s\n", user, content))
+			keyLabel := ""
+			if msg.Pubkey != nil && *msg.Pubkey != "" {
+				pk := *msg.Pubkey
+				if len(pk) > 8 {
+					pk = pk[:8]
+				}
+				keyLabel = " @" + pk
+			}
+			colorKey := user
+			if msg.Pubkey != nil && *msg.Pubkey != "" {
+				colorKey = *msg.Pubkey
+			}
+			r, g, bv := pubkeyColor(colorKey)
+			coloredUser := ansiColor(user, r, g, bv)
+			b.WriteString(fmt.Sprintf(" <%s%s> %s\n", coloredUser, keyLabel, content))
 		}
 	}
 
@@ -238,7 +270,11 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	if m.typing {
 		cursor = "█"
 	}
-	if m.username != "" {
+	if m.username != "" && m.id != nil {
+		r, g, bv := pubkeyColor(m.id.PubKeyHex)
+		coloredName := ansiColor(m.username, r, g, bv)
+		b.WriteString(" " + coloredName + "> " + m.inputText + cursor + "\n")
+	} else if m.username != "" {
 		b.WriteString(" " + m.username + "> " + m.inputText + cursor + "\n")
 	} else {
 		b.WriteString(" (no username)> " + m.inputText + cursor + "\n")

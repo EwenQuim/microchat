@@ -94,3 +94,40 @@ func TestChatModel_View_NormalModeNoCursor(t *testing.T) {
 		t.Error("view in normal mode should not show cursor █")
 	}
 }
+
+func TestPubkeyColorDifferentKeysProduceDifferentColors(t *testing.T) {
+	r1, g1, b1 := pubkeyColor("03d884d6abcd1234")
+	r2, g2, b2 := pubkeyColor("026df5f7efgh5678")
+
+	if r1 == r2 && g1 == g2 && b1 == b2 {
+		t.Errorf("different pubkeys should produce different colors, both got (%d,%d,%d)", r1, g1, b1)
+	}
+}
+
+func TestPubkeyColorConsistency(t *testing.T) {
+	r1, g1, b1 := pubkeyColor("03d884d6abcd1234")
+	r2, g2, b2 := pubkeyColor("03d884d6abcd1234")
+
+	if r1 != r2 || g1 != g2 || b1 != b2 {
+		t.Errorf("same pubkey should produce same color")
+	}
+}
+
+// Verify hue is spread across spectrum, not all red
+func TestPubkeyColorNotAllRed(t *testing.T) {
+	keys := []string{
+		"03d884d6", "026df5f7", "037e530d", "03dffe83", "03a4ad4c",
+	}
+	allSameColor := true
+	r0, g0, b0 := pubkeyColor(keys[0])
+	for _, k := range keys[1:] {
+		r, g, b := pubkeyColor(k)
+		if r != r0 || g != g0 || b != b0 {
+			allSameColor = false
+			break
+		}
+	}
+	if allSameColor {
+		t.Errorf("all pubkeys mapped to same color (%d,%d,%d) — hue scaling bug", r0, g0, b0)
+	}
+}
