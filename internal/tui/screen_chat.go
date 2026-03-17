@@ -255,8 +255,8 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			if msg.Pubkey != nil && *msg.Pubkey != "" {
 				fullPk = *msg.Pubkey
 				npub, err := pubKeyHexToNpub(fullPk)
-				if err == nil && len(npub) >= 6 {
-					truncPk = npub[len(npub)-6:]
+				if err == nil && len(npub) >= 8 {
+					truncPk = npub[len(npub)-8:]
 				}
 			}
 			user := "?"
@@ -291,7 +291,11 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	if m.username != "" && m.id != nil {
 		r, g, bv := m.cachedColor(m.id.PubKeyHex)
 		coloredName := ansiColor(m.username, r, g, bv)
-		b.WriteString(" " + coloredName + "> " + m.inputText + cursor + "\n")
+		keyHint := ""
+		if pk := m.id.PubKeyHex; len(pk) >= 8 {
+			keyHint = dim(pk[len(pk)-8:])
+		}
+		b.WriteString(" " + coloredName + keyHint + "> " + m.inputText + cursor + "\n")
 	} else if m.username != "" {
 		b.WriteString(" " + m.username + "> " + m.inputText + cursor + "\n")
 	} else {

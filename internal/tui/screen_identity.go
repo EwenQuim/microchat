@@ -19,21 +19,34 @@ const (
 	idStateVanityGenerating        // goroutines running
 )
 
+type idMode int
+
+const (
+	idModeSetup idMode = iota // first-run: emits navigateMsg{to: screenServers}
+	idModeAdd                 // add to list: emits identityCreatedMsg
+)
+
 type vanityProgressMsg struct{ attempts int64 }
 type vanityFoundMsg struct{ id identity }
+type identityCreatedMsg struct{ id identity }
 
 type identityModel struct {
-	state        idState
-	inputText    string
-	err          string
-	result       identity
-	vanityCancel context.CancelFunc
+	state         idState
+	mode          idMode
+	inputText     string
+	err           string
+	result        identity
+	vanityCancel  context.CancelFunc
 	vanityCounter *atomic.Int64
-	vanityInput  string // suffix being searched
+	vanityInput   string // suffix being searched
 }
 
 func newIdentityModel() identityModel {
-	return identityModel{state: idStateMenu}
+	return identityModel{state: idStateMenu, mode: idModeSetup}
+}
+
+func newIdentityModelAdd() identityModel {
+	return identityModel{state: idStateMenu, mode: idModeAdd}
 }
 
 func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
@@ -50,6 +63,10 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 				}
 				m.result = id
 				m.err = ""
+				if m.mode == idModeAdd {
+					id := m.result
+					return m, func() tea.Msg { return identityCreatedMsg{id: id} }
+				}
 				return m, func() tea.Msg { return navigateMsg{to: screenServers} }
 			case "p":
 				m.state = idStateInput
@@ -75,6 +92,10 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 				}
 				m.result = id
 				m.err = ""
+				if m.mode == idModeAdd {
+					id := m.result
+					return m, func() tea.Msg { return identityCreatedMsg{id: id} }
+				}
 				return m, func() tea.Msg { return navigateMsg{to: screenServers} }
 			case "backspace":
 				if len(m.inputText) > 0 {
@@ -147,6 +168,10 @@ func (m identityModel) update(msg tea.Msg) (identityModel, tea.Cmd) {
 		}
 		m.result = msg.id
 		m.err = ""
+		if m.mode == idModeAdd {
+			id := m.result
+			return m, func() tea.Msg { return identityCreatedMsg{id: id} }
+		}
 		return m, func() tea.Msg { return navigateMsg{to: screenServers} }
 
 	case vanityProgressMsg:

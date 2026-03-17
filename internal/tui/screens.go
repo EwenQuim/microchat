@@ -5,9 +5,10 @@ type screen int
 
 const (
 	screenIdentity screen = iota
+	screenIdentities
 	screenServers
 	screenRooms
-	screenUsers
+	screenContacts
 )
 
 // navigateMsg is sent by sub-models to trigger a screen transition.

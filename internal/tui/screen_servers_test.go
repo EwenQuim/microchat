@@ -15,10 +15,21 @@ func makeServerModel(servers ...serverConfig) serverModel {
 }
 
 func TestServerModel_SelectedServer_Empty(t *testing.T) {
-	m := makeServerModel()
+	m := serverModel{} // truly empty — no defaults
 	got := m.selectedServer()
 	if got != (serverConfig{}) {
 		t.Errorf("expected zero value for empty server list, got %+v", got)
+	}
+}
+
+func TestServerModel_DefaultServer_Present(t *testing.T) {
+	m := makeServerModel() // no user servers → gets defaults
+	if len(m.servers) == 0 {
+		t.Error("expected at least one default server when no user servers configured")
+	}
+	got := m.selectedServer()
+	if got == (serverConfig{}) {
+		t.Error("expected default server to be selected, got zero value")
 	}
 }
 
@@ -123,7 +134,7 @@ func TestServerModel_Enter_WithServers(t *testing.T) {
 }
 
 func TestServerModel_Enter_NoServers(t *testing.T) {
-	m := makeServerModel()
+	m := serverModel{} // truly empty — no defaults
 
 	_, cmd := m.update(pressKey(tea.KeyEnter))
 	if cmd != nil {
@@ -225,7 +236,7 @@ func TestServerModel_Delete_AdjustsCursor(t *testing.T) {
 }
 
 func TestServerModel_Delete_EmptyList(t *testing.T) {
-	m := makeServerModel()
+	m := serverModel{} // truly empty — bypasses defaults
 
 	m2, _ := m.update(pressChar("d"))
 	if len(m2.servers) != 0 {
@@ -233,7 +244,7 @@ func TestServerModel_Delete_EmptyList(t *testing.T) {
 	}
 }
 
-func TestServerModel_Tab_NavigatesToIdentity(t *testing.T) {
+func TestServerModel_Tab_NavigatesToIdentities(t *testing.T) {
 	m := makeServerModel()
 
 	_, cmd := m.update(pressKey(tea.KeyTab))
@@ -242,15 +253,15 @@ func TestServerModel_Tab_NavigatesToIdentity(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenIdentity {
-		t.Errorf("expected screenIdentity, got %v", nav.to)
+	if nav.to != screenIdentities {
+		t.Errorf("expected screenIdentities, got %v", nav.to)
 	}
 }
 
 func TestServerModel_ServerInfoMsg_Success(t *testing.T) {
 	name := "TestServer"
 	desc := "A test server"
-	m := makeServerModel()
+	m := serverModel{} // start with truly empty model
 
 	info := &generated.ServerInfoResponse{
 		SuggestedQuickname: &name,
@@ -283,8 +294,7 @@ func TestServerModel_ServerInfoMsg_Success(t *testing.T) {
 }
 
 func TestServerModel_ServerInfoMsg_Error(t *testing.T) {
-	m := makeServerModel()
-	m.state = serverStateLoading
+	m := serverModel{state: serverStateLoading} // truly empty — no defaults
 
 	m2, _ := m.update(serverInfoMsg{url: "http://bad.example", err: fmt.Errorf("connection refused")})
 	if m2.state != serverStateList {
@@ -315,7 +325,7 @@ func TestServerModel_View_ShowsCursor(t *testing.T) {
 }
 
 func TestServerModel_View_EmptyList(t *testing.T) {
-	m := makeServerModel()
+	m := serverModel{} // truly empty — bypasses defaults
 
 	v := m.view(80, 24)
 	if !strings.Contains(v, "no servers") {
@@ -323,7 +333,7 @@ func TestServerModel_View_EmptyList(t *testing.T) {
 	}
 }
 
-func TestServerModel_PressU_NavigatesToUsers(t *testing.T) {
+func TestServerModel_PressU_NavigatesToContacts(t *testing.T) {
 	m := makeServerModel()
 	_, cmd := m.update(pressChar("u"))
 	msg := runCmd(cmd)
@@ -331,7 +341,7 @@ func TestServerModel_PressU_NavigatesToUsers(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected navigateMsg, got %T", msg)
 	}
-	if nav.to != screenUsers {
-		t.Errorf("expected screenUsers, got %v", nav.to)
+	if nav.to != screenContacts {
+		t.Errorf("expected screenContacts, got %v", nav.to)
 	}
 }

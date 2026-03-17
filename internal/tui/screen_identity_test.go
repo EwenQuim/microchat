@@ -371,3 +371,61 @@ func TestIdentityModel_View_ShowsError(t *testing.T) {
 		t.Error("view should display the error message")
 	}
 }
+
+func TestIdentityModel_AddMode_GenerateEmitsCreatedMsg(t *testing.T) {
+	m := newIdentityModelAdd()
+	m2, cmd := m.update(pressChar("g"))
+	if m2.result.privKey == nil {
+		t.Error("expected result identity to be set after pressing g")
+	}
+	msg := runCmd(cmd)
+	crm, ok := msg.(identityCreatedMsg)
+	if !ok {
+		t.Fatalf("expected identityCreatedMsg, got %T", msg)
+	}
+	if crm.id.PubKeyHex != m2.result.PubKeyHex {
+		t.Errorf("created msg id = %q, want %q", crm.id.PubKeyHex, m2.result.PubKeyHex)
+	}
+}
+
+func TestIdentityModel_AddMode_PasteEmitsCreatedMsg(t *testing.T) {
+	id, _ := generateIdentity()
+	m := newIdentityModelAdd()
+	m.state = idStateInput
+	m.inputText = id.PrivKeyHex
+	m2, cmd := m.update(pressKey(tea.KeyEnter))
+	if m2.err != "" {
+		t.Errorf("unexpected error: %s", m2.err)
+	}
+	msg := runCmd(cmd)
+	crm, ok := msg.(identityCreatedMsg)
+	if !ok {
+		t.Fatalf("expected identityCreatedMsg, got %T", msg)
+	}
+	if crm.id.PubKeyHex != id.PubKeyHex {
+		t.Errorf("created msg id = %q, want %q", crm.id.PubKeyHex, id.PubKeyHex)
+	}
+}
+
+func TestIdentityModel_AddMode_VanityFoundEmitsCreatedMsg(t *testing.T) {
+	id, _ := generateIdentity()
+	m := newIdentityModelAdd()
+	m.state = idStateVanityGenerating
+	cancelCalled := false
+	m.vanityCancel = func() { cancelCalled = true }
+	m2, cmd := m.update(vanityFoundMsg{id: id})
+	if !cancelCalled {
+		t.Error("expected vanityCancel to be called")
+	}
+	if m2.result.PubKeyHex != id.PubKeyHex {
+		t.Errorf("expected result to be set")
+	}
+	msg := runCmd(cmd)
+	crm, ok := msg.(identityCreatedMsg)
+	if !ok {
+		t.Fatalf("expected identityCreatedMsg, got %T", msg)
+	}
+	if crm.id.PubKeyHex != id.PubKeyHex {
+		t.Errorf("created msg id = %q, want %q", crm.id.PubKeyHex, id.PubKeyHex)
+	}
+}

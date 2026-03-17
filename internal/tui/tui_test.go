@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+
 func TestInitialModel_NoIdentity_StartsOnIdentityScreen(t *testing.T) {
 	cfg := appConfig{}
 	m := initialModel(cfg)
@@ -27,6 +28,7 @@ func TestInitialModel_WithIdentity_StartsOnServersScreen(t *testing.T) {
 		t.Fatalf("generateIdentity: %v", err)
 	}
 
+	// Uses legacy Identity field - should still work via fallback
 	cfg := appConfig{
 		Identity: &identityConfig{
 			PrivateKey: id.PrivKeyHex,
@@ -112,8 +114,8 @@ func TestModel_NavigateMsg_ToServers_SavesIdentity(t *testing.T) {
 	if updated.id.PubKeyHex != id.PubKeyHex {
 		t.Errorf("id.PubKeyHex = %q, want %q", updated.id.PubKeyHex, id.PubKeyHex)
 	}
-	if updated.cfg.Identity == nil {
-		t.Error("cfg.Identity should be set after navigating from identity")
+	if len(updated.cfg.Identities) == 0 {
+		t.Error("cfg.Identities should be set after navigating from identity")
 	}
 }
 
@@ -129,35 +131,34 @@ func TestModel_View_DelegatesToIdentityScreen(t *testing.T) {
 	}
 }
 
-func TestModel_NavigateMsg_ToUsers(t *testing.T) {
+func TestModel_NavigateMsg_ToContacts(t *testing.T) {
 	id, err := generateIdentity()
 	if err != nil {
 		t.Fatalf("generateIdentity: %v", err)
 	}
 	cfg := appConfig{
-		Identity: &identityConfig{
-			PrivateKey: id.PrivKeyHex,
-			PublicKey:  id.PubKeyHex,
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
 		},
-		Users: []userEntry{
+		Contacts: []contactEntry{
 			{PubKey: "abc", DisplayName: "Alice"},
 		},
 	}
 	m := initialModel(cfg)
-	newModel, _ := m.Update(navigateMsg{to: screenUsers})
+	newModel, _ := m.Update(navigateMsg{to: screenContacts})
 	updated := newModel.(model)
-	if updated.screen != screenUsers {
-		t.Errorf("screen = %v, want screenUsers", updated.screen)
+	if updated.screen != screenContacts {
+		t.Errorf("screen = %v, want screenContacts", updated.screen)
 	}
-	if len(updated.users.users) != 1 {
-		t.Errorf("users count = %d, want 1", len(updated.users.users))
+	if len(updated.contacts.contacts) != 1 {
+		t.Errorf("contacts count = %d, want 1", len(updated.contacts.contacts))
 	}
 }
 
-func TestModel_View_DelegatesToUsersScreen(t *testing.T) {
+func TestModel_View_DelegatesToContactsScreen(t *testing.T) {
 	m := initialModel(appConfig{})
-	m.screen = screenUsers
-	m.users = newUsersModel(appConfig{})
+	m.screen = screenContacts
+	m.contacts = newContactsModel(appConfig{})
 	m.width = 80
 	m.height = 24
 	v := m.View()
@@ -166,24 +167,24 @@ func TestModel_View_DelegatesToUsersScreen(t *testing.T) {
 	}
 }
 
-func TestModel_UsersScreen_ConfigSavedOnDelete(t *testing.T) {
+func TestModel_ContactsScreen_ConfigSavedOnDelete(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	m := initialModel(appConfig{})
-	m.screen = screenUsers
-	m.users = newUsersModel(appConfig{
-		Users: []userEntry{{PubKey: "abc", DisplayName: "Alice"}},
+	m.screen = screenContacts
+	m.contacts = newContactsModel(appConfig{
+		Contacts: []contactEntry{{PubKey: "abc", DisplayName: "Alice"}},
 	})
 	newModel, _ := m.Update(pressChar("d"))
 	updated := newModel.(model)
-	if updated.users.configChanged {
+	if updated.contacts.configChanged {
 		t.Error("configChanged should be reset after save")
 	}
 	got, err := loadConfig()
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if len(got.Users) != 0 {
-		t.Errorf("expected 0 users in saved config, got %d", len(got.Users))
+	if len(got.Contacts) != 0 {
+		t.Errorf("expected 0 contacts in saved config, got %d", len(got.Contacts))
 	}
 }
 
@@ -194,9 +195,8 @@ func TestModel_View_DelegatesToServersScreen(t *testing.T) {
 	}
 
 	cfg := appConfig{
-		Identity: &identityConfig{
-			PrivateKey: id.PrivKeyHex,
-			PublicKey:  id.PubKeyHex,
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
 		},
 	}
 	m := initialModel(cfg)
@@ -206,5 +206,194 @@ func TestModel_View_DelegatesToServersScreen(t *testing.T) {
 	v := m.View()
 	if !strings.Contains(v.Content, "Servers") {
 		t.Errorf("view should contain servers screen content, got:\n%s", v.Content)
+	}
+}
+
+func TestModel_NavigateMsg_ToIdentities(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
+		},
+	}
+	m := initialModel(cfg)
+	newModel, _ := m.Update(navigateMsg{to: screenIdentities})
+	updated := newModel.(model)
+	if updated.screen != screenIdentities {
+		t.Errorf("screen = %v, want screenIdentities", updated.screen)
+	}
+}
+
+func TestModel_View_DelegatesToIdentitiesScreen(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{Name: "Main", PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
+		},
+	}
+	m := initialModel(cfg)
+	m.screen = screenIdentities
+	m.identities = newIdentitiesModel(m.cfg)
+	m.width = 80
+	m.height = 24
+	v := m.View()
+	if !strings.Contains(v.Content, "Identities") {
+		t.Errorf("view should contain identities screen content, got:\n%s", v.Content)
+	}
+}
+
+func TestInitialModel_WithIdentitiesArray_StartsOnServersScreen(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
+		},
+	}
+	m := initialModel(cfg)
+
+	if m.screen != screenServers {
+		t.Errorf("screen = %v, want screenServers", m.screen)
+	}
+	if m.id == nil {
+		t.Fatal("id should be set when Identities array is populated")
+	}
+	if m.id.PubKeyHex != id.PubKeyHex {
+		t.Errorf("id.PubKeyHex = %q, want %q", m.id.PubKeyHex, id.PubKeyHex)
+	}
+}
+
+func TestInitialModel_IdentitiesArray_ActiveIndexOutOfBounds_FallsToFirst(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+
+	cfg := appConfig{
+		Identities:  []identityEntry{{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex}},
+		ActiveIndex: 99,
+	}
+	m := initialModel(cfg)
+
+	if m.id == nil {
+		t.Fatal("id should be set (falls back to index 0)")
+	}
+	if m.id.PubKeyHex != id.PubKeyHex {
+		t.Errorf("id.PubKeyHex = %q, want %q (should fall back to first entry)", m.id.PubKeyHex, id.PubKeyHex)
+	}
+}
+
+func TestInitialModel_BothIdentitiesAndLegacy_IdentitiesWins(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	id1, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity id1: %v", err)
+	}
+	id2, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity id2: %v", err)
+	}
+
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id1.PrivKeyHex, PublicKey: id1.PubKeyHex},
+		},
+		Identity: &identityConfig{
+			PrivateKey: id2.PrivKeyHex,
+			PublicKey:  id2.PubKeyHex,
+		},
+	}
+	m := initialModel(cfg)
+
+	if m.id == nil {
+		t.Fatal("id should be set")
+	}
+	if m.id.PubKeyHex != id1.PubKeyHex {
+		t.Errorf("expected Identities array to win over legacy Identity, got pubkey %q, want %q", m.id.PubKeyHex, id1.PubKeyHex)
+	}
+}
+
+func TestModel_NavigateToServers_SavesIdentityToIdentitiesSlice(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	m := initialModel(appConfig{})
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	m.screen = screenIdentity
+	m.ident.result = id
+
+	newModel, _ := m.Update(navigateMsg{to: screenServers})
+	updated := newModel.(model)
+
+	if len(updated.cfg.Identities) != 1 {
+		t.Errorf("cfg.Identities count = %d, want 1", len(updated.cfg.Identities))
+	}
+	if updated.cfg.Identity != nil {
+		t.Error("legacy cfg.Identity should be nil after saving via Identities slice")
+	}
+}
+
+func TestModel_Identities_ConfigChanged_PersistsAndUpdatesActiveId(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	id1, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity id1: %v", err)
+	}
+	id2, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity id2: %v", err)
+	}
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id1.PrivKeyHex, PublicKey: id1.PubKeyHex},
+			{PrivateKey: id2.PrivKeyHex, PublicKey: id2.PubKeyHex},
+		},
+		ActiveIndex: 0,
+	}
+
+	m := initialModel(cfg)
+	m.screen = screenIdentities
+	m.identities = newIdentitiesModel(cfg)
+	m.identities.cursor = 1 // point at second entry
+
+	newModel, _ := m.Update(pressKey(tea.KeyEnter))
+	updated := newModel.(model)
+
+	if updated.identities.configChanged {
+		t.Error("configChanged should be reset after save")
+	}
+	if updated.cfg.ActiveIndex != 1 {
+		t.Errorf("cfg.ActiveIndex = %d, want 1", updated.cfg.ActiveIndex)
+	}
+	if updated.id == nil {
+		t.Fatal("m.id should be updated to the newly activated identity")
+	}
+	if updated.id.PubKeyHex != id2.PubKeyHex {
+		t.Errorf("m.id.PubKeyHex = %q, want %q", updated.id.PubKeyHex, id2.PubKeyHex)
+	}
+
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if got.ActiveIndex != 1 {
+		t.Errorf("saved cfg.ActiveIndex = %d, want 1", got.ActiveIndex)
 	}
 }

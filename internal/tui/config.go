@@ -12,22 +12,30 @@ type identityConfig struct {
 	PublicKey  string `json:"public_key"`
 }
 
+type identityEntry struct {
+	Name       string `json:"name,omitempty"`
+	PrivateKey string `json:"private_key"`
+	PublicKey  string `json:"public_key"`
+}
+
 type serverConfig struct {
 	URL         string `json:"url"`
 	Quickname   string `json:"quickname"`
 	Description string `json:"description"`
 }
 
-type userEntry struct {
+type contactEntry struct {
 	PubKey      string `json:"pub_key"`
 	DisplayName string `json:"display_name"`
 }
 
 type appConfig struct {
-	Identity   *identityConfig `json:"identity,omitempty"`
-	Servers    []serverConfig  `json:"servers"`
-	LastServer string          `json:"last_server,omitempty"`
-	Users      []userEntry     `json:"users,omitempty"`
+	Identity    *identityConfig `json:"identity,omitempty"` // kept for migration only
+	Identities  []identityEntry `json:"identities,omitempty"`
+	ActiveIndex int             `json:"active_index,omitempty"`
+	Servers     []serverConfig  `json:"servers"`
+	LastServer  string          `json:"last_server,omitempty"`
+	Contacts    []contactEntry  `json:"contacts,omitempty"`
 }
 
 func checkConfigPermissions() error {
@@ -67,7 +75,18 @@ func loadConfig() (appConfig, error) {
 	if err != nil {
 		return cfg, err
 	}
-	return cfg, json.Unmarshal(data, &cfg)
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return cfg, err
+	}
+	// Migrate legacy Identity field to Identities slice
+	if cfg.Identity != nil && len(cfg.Identities) == 0 {
+		cfg.Identities = []identityEntry{{
+			PrivateKey: cfg.Identity.PrivateKey,
+			PublicKey:  cfg.Identity.PublicKey,
+		}}
+		cfg.Identity = nil
+	}
+	return cfg, nil
 }
 
 func saveConfig(cfg appConfig) error {

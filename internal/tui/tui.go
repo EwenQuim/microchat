@@ -10,15 +10,16 @@ import (
 )
 
 type model struct {
-	screen  screen
-	cfg     appConfig
-	width   int
-	height  int
-	id      *identity // nil if no identity configured
-	servers serverModel
-	users   usersModel
-	main    mainModel
-	ident   identityModel
+	screen     screen
+	cfg        appConfig
+	width      int
+	height     int
+	id         *identity // nil if no identity configured
+	servers    serverModel
+	contacts   contactsModel
+	identities identitiesModel
+	main       mainModel
+	ident      identityModel
 
 	currentClient *generated.ClientWithResponses
 	currentServer serverConfig
@@ -28,14 +29,25 @@ func initialModel(cfg appConfig) model {
 	m := model{cfg: cfg}
 
 	// Restore identity from config
-	if cfg.Identity != nil {
+	if len(cfg.Identities) > 0 {
+		idx := cfg.ActiveIndex
+		if idx < 0 || idx >= len(cfg.Identities) {
+			idx = 0
+		}
+		e := cfg.Identities[idx]
+		id, err := identityFromHex(e.PrivateKey)
+		if err == nil {
+			m.id = &id
+		}
+	} else if cfg.Identity != nil {
+		// Legacy fallback (before migration)
 		id, err := identityFromHex(cfg.Identity.PrivateKey)
 		if err == nil {
 			m.id = &id
 		}
 	}
 
-	if cfg.Identity == nil {
+	if len(cfg.Identities) == 0 && cfg.Identity == nil {
 		m.screen = screenIdentity
 		m.ident = newIdentityModel()
 	} else {
@@ -67,20 +79,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ident = newIdentityModel()
 
 		case screenServers:
-			// If we just came from identity, save the new identity
+			// If we just came from identity setup, save the new identity
 			if prev == screenIdentity && m.ident.result.privKey != nil {
 				id := m.ident.result
 				m.id = &id
-				m.cfg.Identity = &identityConfig{
+				m.cfg.Identities = append(m.cfg.Identities, identityEntry{
 					PrivateKey: id.PrivKeyHex,
 					PublicKey:  id.PubKeyHex,
-				}
+				})
+				m.cfg.ActiveIndex = len(m.cfg.Identities) - 1
 				_ = saveConfig(m.cfg)
 			}
 			m.servers = newServerModel(m.cfg)
 
-		case screenUsers:
-			m.users = newUsersModel(m.cfg)
+		case screenIdentities:
+			m.identities = newIdentitiesModel(m.cfg)
+
+		case screenContacts:
+			m.contacts = newContactsModel(m.cfg)
 
 		case screenRooms:
 			srv := m.servers.selectedServer()
@@ -132,12 +148,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 
-	case screenUsers:
+	case screenIdentities:
 		var cmd tea.Cmd
-		m.users, cmd = m.users.update(msg)
-		if m.users.configChanged {
-			m.cfg.Users = m.users.users
-			m.users.configChanged = false
+		m.identities, cmd = m.identities.update(msg)
+		if m.identities.configChanged {
+			m.cfg.Identities = m.identities.entries
+			m.cfg.ActiveIndex = m.identities.activeIndex
+			m.identities.configChanged = false
+			// Update active identity in memory
+			if m.cfg.ActiveIndex < len(m.cfg.Identities) {
+				e := m.cfg.Identities[m.cfg.ActiveIndex]
+				if id, err := identityFromHex(e.PrivateKey); err == nil {
+					m.id = &id
+				}
+			}
+			_ = saveConfig(m.cfg)
+		}
+		return m, cmd
+
+	case screenContacts:
+		var cmd tea.Cmd
+		m.contacts, cmd = m.contacts.update(msg)
+		if m.contacts.configChanged {
+			m.cfg.Contacts = m.contacts.contacts
+			m.contacts.configChanged = false
 			_ = saveConfig(m.cfg)
 		}
 		return m, cmd
@@ -158,8 +192,10 @@ func (m model) View() tea.View {
 		content = m.ident.view(m.width, m.height)
 	case screenServers:
 		content = m.servers.view(m.width, m.height)
-	case screenUsers:
-		content = m.users.view(m.width, m.height)
+	case screenIdentities:
+		content = m.identities.view(m.width, m.height)
+	case screenContacts:
+		content = m.contacts.view(m.width, m.height)
 	case screenRooms:
 		content = m.main.view(m.width, m.height)
 	default:

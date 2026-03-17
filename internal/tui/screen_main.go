@@ -167,6 +167,15 @@ func helpBar(pairs ...string) string {
 	return " " + strings.Join(items, dim("  •  "))
 }
 
+// formatKeyFull renders a full key for list display: the leading chars are
+// dimmed and the final 8 characters are left at normal brightness.
+func formatKeyFull(key string) string {
+	if len(key) <= 8 {
+		return key
+	}
+	return dim(key[:len(key)-8]) + key[len(key)-8:]
+}
+
 func padRight(s string, width int) string {
 	sw := runewidth.StringWidth(s)
 	if sw >= width {

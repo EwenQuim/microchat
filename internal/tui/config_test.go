@@ -16,9 +16,8 @@ func TestSaveLoadConfig_Roundtrip(t *testing.T) {
 	}
 
 	cfg := appConfig{
-		Identity: &identityConfig{
-			PrivateKey: id.PrivKeyHex,
-			PublicKey:  id.PubKeyHex,
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
 		},
 		Servers: []serverConfig{
 			{URL: "http://server1.example", Quickname: "S1", Description: "First"},
@@ -36,14 +35,14 @@ func TestSaveLoadConfig_Roundtrip(t *testing.T) {
 		t.Fatalf("loadConfig: %v", err)
 	}
 
-	if got.Identity == nil {
-		t.Fatal("Identity should not be nil after roundtrip")
+	if len(got.Identities) != 1 {
+		t.Fatalf("Identities count = %d, want 1", len(got.Identities))
 	}
-	if got.Identity.PrivateKey != cfg.Identity.PrivateKey {
-		t.Errorf("Identity.PrivateKey = %q, want %q", got.Identity.PrivateKey, cfg.Identity.PrivateKey)
+	if got.Identities[0].PrivateKey != cfg.Identities[0].PrivateKey {
+		t.Errorf("Identities[0].PrivateKey = %q, want %q", got.Identities[0].PrivateKey, cfg.Identities[0].PrivateKey)
 	}
-	if got.Identity.PublicKey != cfg.Identity.PublicKey {
-		t.Errorf("Identity.PublicKey = %q, want %q", got.Identity.PublicKey, cfg.Identity.PublicKey)
+	if got.Identities[0].PublicKey != cfg.Identities[0].PublicKey {
+		t.Errorf("Identities[0].PublicKey = %q, want %q", got.Identities[0].PublicKey, cfg.Identities[0].PublicKey)
 	}
 	if got.LastServer != cfg.LastServer {
 		t.Errorf("LastServer = %q, want %q", got.LastServer, cfg.LastServer)
@@ -72,8 +71,8 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadConfig on missing file should not error, got: %v", err)
 	}
-	if cfg.Identity != nil {
-		t.Error("Identity should be nil for missing config")
+	if len(cfg.Identities) != 0 {
+		t.Error("Identities should be empty for missing config")
 	}
 	if len(cfg.Servers) != 0 {
 		t.Errorf("Servers should be empty, got %v", cfg.Servers)
@@ -151,10 +150,10 @@ func TestCheckConfigPermissions_WrongDirPerms(t *testing.T) {
 	}
 }
 
-func TestSaveLoadConfig_WithUsers(t *testing.T) {
+func TestSaveLoadConfig_WithContacts(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	cfg := appConfig{
-		Users: []userEntry{
+		Contacts: []contactEntry{
 			{PubKey: "abc123", DisplayName: "Alice"},
 			{PubKey: "def456", DisplayName: "Bob"},
 		},
@@ -166,17 +165,71 @@ func TestSaveLoadConfig_WithUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if len(got.Users) != 2 {
-		t.Fatalf("Users count = %d, want 2", len(got.Users))
+	if len(got.Contacts) != 2 {
+		t.Fatalf("Contacts count = %d, want 2", len(got.Contacts))
 	}
-	if got.Users[0].PubKey != "abc123" {
-		t.Errorf("Users[0].PubKey = %q, want abc123", got.Users[0].PubKey)
+	if got.Contacts[0].PubKey != "abc123" {
+		t.Errorf("Contacts[0].PubKey = %q, want abc123", got.Contacts[0].PubKey)
 	}
-	if got.Users[0].DisplayName != "Alice" {
-		t.Errorf("Users[0].DisplayName = %q, want Alice", got.Users[0].DisplayName)
+}
+
+func TestLoadConfig_MigratesLegacyIdentity(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
 	}
-	if got.Users[1].PubKey != "def456" {
-		t.Errorf("Users[1].PubKey = %q, want def456", got.Users[1].PubKey)
+	// Save old-style config with Identity field
+	cfg := appConfig{
+		Identity: &identityConfig{
+			PrivateKey: id.PrivKeyHex,
+			PublicKey:  id.PubKeyHex,
+		},
+	}
+	if err := saveConfig(cfg); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if len(got.Identities) != 1 {
+		t.Fatalf("Identities count = %d, want 1 after migration", len(got.Identities))
+	}
+	if got.Identities[0].PrivateKey != id.PrivKeyHex {
+		t.Errorf("Identities[0].PrivateKey = %q, want %q", got.Identities[0].PrivateKey, id.PrivKeyHex)
+	}
+	if got.Identity != nil {
+		t.Error("Identity should be nil after migration")
+	}
+}
+
+func TestSaveLoadConfig_WithIdentities(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	id1, _ := generateIdentity()
+	id2, _ := generateIdentity()
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{Name: "Main", PrivateKey: id1.PrivKeyHex, PublicKey: id1.PubKeyHex},
+			{Name: "Alt", PrivateKey: id2.PrivKeyHex, PublicKey: id2.PubKeyHex},
+		},
+		ActiveIndex: 1,
+	}
+	if err := saveConfig(cfg); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if len(got.Identities) != 2 {
+		t.Fatalf("Identities count = %d, want 2", len(got.Identities))
+	}
+	if got.ActiveIndex != 1 {
+		t.Errorf("ActiveIndex = %d, want 1", got.ActiveIndex)
+	}
+	if got.Identities[0].Name != "Main" {
+		t.Errorf("Identities[0].Name = %q, want Main", got.Identities[0].Name)
 	}
 }
 
@@ -192,8 +245,8 @@ func TestSaveLoadConfig_EmptyConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if got.Identity != nil {
-		t.Error("Identity should be nil")
+	if len(got.Identities) != 0 {
+		t.Error("Identities should be empty")
 	}
 	if len(got.Servers) != 0 {
 		t.Error("Servers should be empty")
