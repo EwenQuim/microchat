@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
+	"github.com/EwenQuim/microchat/pkg/crypto"
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
@@ -62,7 +63,8 @@ type chatModel struct {
 	msgCursorMode bool // true = message cursor active
 	msgCursor     int  // absolute index into m.messages
 
-	contacts []contactEntry // for display-name substitution
+	contacts    []contactEntry // for display-name substitution
+	invalidSigs map[string]bool
 
 	chatRenameMode bool   // true = waiting for user to confirm display name
 	pendingPubKey  string // pubkey of the contact being added
@@ -72,14 +74,15 @@ type chatModel struct {
 
 func newChatModel(client *generated.ClientWithResponses, server serverConfig, room, password string, id *identity, username string) chatModel {
 	return chatModel{
-		client:     client,
-		server:     server,
-		room:       room,
-		password:   password,
-		id:         id,
-		username:   username,
-		loading:    true,
-		colorCache: make(map[string][3]uint8),
+		client:      client,
+		server:      server,
+		room:        room,
+		password:    password,
+		id:          id,
+		username:    username,
+		loading:     true,
+		colorCache:  make(map[string][3]uint8),
+		invalidSigs: make(map[string]bool),
 	}
 }
 
@@ -163,6 +166,13 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 		m.messages = msg.messages
 		m.scroll = 0
 		m.err = ""
+		m.invalidSigs = make(map[string]bool)
+		for i, message := range m.messages {
+			key := msgKey(message, i)
+			if sigInvalid(message) {
+				m.invalidSigs[key] = true
+			}
+		}
 		return m, nil
 
 	case messageSentMsg:
@@ -350,7 +360,9 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 				content = *msg.Content
 			}
 			suffix := ""
-			if isContact {
+			if m.invalidSigs[msgKey(msg, start+i)] {
+				suffix = " \x1b[33m⚠\x1b[0m"
+			} else if isContact {
 				suffix = " " + dim("✓")
 			} else if truncPk != "" {
 				suffix = " " + dim(truncPk)
@@ -410,4 +422,28 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	}
 
 	return b.String()
+}
+
+// msgKey returns a stable map key for a message.
+func msgKey(msg generated.Message, idx int) string {
+	if msg.Id != nil && *msg.Id != "" {
+		return *msg.Id
+	}
+	return fmt.Sprintf("<idx:%d>", idx)
+}
+
+// sigInvalid returns true when a message has an absent or invalid signature.
+func sigInvalid(msg generated.Message) bool {
+	if msg.Pubkey == nil || *msg.Pubkey == "" ||
+		msg.Signature == nil || *msg.Signature == "" ||
+		msg.SignedTimestamp == nil || msg.Room == nil {
+		return true
+	}
+	content := ""
+	if msg.Content != nil {
+		content = *msg.Content
+	}
+	return crypto.VerifyMessageSignatureBTCD(
+		*msg.Pubkey, *msg.Signature, content, *msg.Room, *msg.SignedTimestamp,
+	) != nil
 }

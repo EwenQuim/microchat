@@ -164,10 +164,10 @@
 				},
 				"required": [
 					"content",
-					"user",
-					"signature",
 					"pubkey",
-					"timestamp"
+					"signature",
+					"timestamp",
+					"user"
 				],
 				"type": "object"
 			},
@@ -282,7 +282,7 @@
 		},
 		"/api/rooms": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetRooms.func2`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func3`\n\n---\n\n",
 				"operationId": "GET_/api/rooms",
 				"parameters": [
 					{
@@ -362,7 +362,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func7`\n\n---\n\n",
 				"operationId": "POST_/api/rooms",
 				"parameters": [
 					{
@@ -434,7 +434,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func4",
+				"summary": "func6",
 				"tags": [
 					"chat"
 				]
@@ -442,7 +442,7 @@
 		},
 		"/api/rooms/search": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func3`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func4`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func5`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/search",
 				"parameters": [
 					{
@@ -523,7 +523,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func3",
+				"summary": "func4",
 				"tags": [
 					"chat"
 				]
@@ -531,7 +531,7 @@
 		},
 		"/api/rooms/{room}/messages": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func8`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func9`\n\n---\n\n",
 				"operationId": "GET_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -613,13 +613,13 @@
 						"description": ""
 					}
 				},
-				"summary": "func5",
+				"summary": "func8",
 				"tags": [
 					"chat"
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func10`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.MessageRateLimit.func11`\n\n---\n\n",
 				"operationId": "POST_/api/rooms/:room/messages",
 				"parameters": [
 					{
@@ -699,7 +699,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func6",
+				"summary": "func10",
 				"tags": [
 					"chat"
 				]
@@ -773,7 +773,7 @@
 		},
 		"/api/users/{publicKey}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func7`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func12`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/jub0bs/cors.(*Middleware).Wrap`\n\n---\n\n",
 				"operationId": "GET_/api/users/:publicKey",
 				"parameters": [
 					{
@@ -842,7 +842,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func7",
+				"summary": "func12",
 				"tags": [
 					"user"
 				]

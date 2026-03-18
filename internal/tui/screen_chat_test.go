@@ -3,6 +3,7 @@ package tui
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
@@ -522,5 +523,124 @@ func TestPubkeyColorNotAllRed(t *testing.T) {
 	}
 	if allSameColor {
 		t.Errorf("all pubkeys mapped to same color (%d,%d,%d) — hue scaling bug", r0, g0, b0)
+	}
+}
+
+func TestChatModel_SigVerification_ValidSig_NoWarning(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	content := "hello world"
+	room := "testroom"
+	ts := time.Now().Unix()
+	sig, err := id.SignMessage(content, room, ts)
+	if err != nil {
+		t.Fatalf("SignMessage: %v", err)
+	}
+	msgID := "msg-valid-1"
+	msg := generated.Message{
+		Id:              &msgID,
+		Pubkey:          &id.PubKeyHex,
+		Signature:       &sig,
+		SignedTimestamp: &ts,
+		Room:            &room,
+		Content:         &content,
+	}
+	m := newChatModel(nil, serverConfig{}, room, "", nil, "alice")
+	m.loading = false
+	m2, _ := m.update(messagesLoadedMsg{messages: []generated.Message{msg}})
+
+	if m2.invalidSigs[msgKey(msg, 0)] {
+		t.Error("expected valid signature to not appear in invalidSigs")
+	}
+	v := m2.viewPanel(80, 10, true)
+	if strings.Contains(v, "⚠") {
+		t.Errorf("view should not show ⚠ for valid signature, got:\n%s", v)
+	}
+}
+
+func TestChatModel_SigVerification_MissingSig_ShowsWarning(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	content := "hello"
+	room := "testroom"
+	msgID := "msg-missing-sig"
+	msg := generated.Message{
+		Id:      &msgID,
+		Pubkey:  &id.PubKeyHex,
+		Content: &content,
+		Room:    &room,
+		// Signature intentionally nil
+	}
+	m := newChatModel(nil, serverConfig{}, room, "", nil, "alice")
+	m.loading = false
+	m2, _ := m.update(messagesLoadedMsg{messages: []generated.Message{msg}})
+
+	key := msgKey(msg, 0)
+	if !m2.invalidSigs[key] {
+		t.Error("expected message with missing signature to be in invalidSigs")
+	}
+	v := m2.viewPanel(80, 10, true)
+	if !strings.Contains(v, "⚠") {
+		t.Errorf("view should show ⚠ for missing signature, got:\n%s", v)
+	}
+}
+
+func TestChatModel_SigVerification_NoPubkey_ShowsWarning(t *testing.T) {
+	content := "hello"
+	room := "testroom"
+	msgID := "msg-no-pubkey"
+	msg := generated.Message{
+		Id:      &msgID,
+		Content: &content,
+		Room:    &room,
+		// Pubkey intentionally nil
+	}
+	m := newChatModel(nil, serverConfig{}, room, "", nil, "alice")
+	m.loading = false
+	m2, _ := m.update(messagesLoadedMsg{messages: []generated.Message{msg}})
+
+	v := m2.viewPanel(80, 10, true)
+	if !strings.Contains(v, "⚠") {
+		t.Errorf("view should show ⚠ for message with no pubkey, got:\n%s", v)
+	}
+}
+
+func TestChatModel_SigVerification_TamperedContent_ShowsWarning(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	originalContent := "hello"
+	tamperedContent := "tampered"
+	room := "testroom"
+	ts := time.Now().Unix()
+	sig, err := id.SignMessage(originalContent, room, ts)
+	if err != nil {
+		t.Fatalf("SignMessage: %v", err)
+	}
+	msgID := "msg-tampered"
+	msg := generated.Message{
+		Id:              &msgID,
+		Pubkey:          &id.PubKeyHex,
+		Signature:       &sig,
+		SignedTimestamp: &ts,
+		Room:            &room,
+		Content:         &tamperedContent, // content changed after signing
+	}
+	m := newChatModel(nil, serverConfig{}, room, "", nil, "alice")
+	m.loading = false
+	m2, _ := m.update(messagesLoadedMsg{messages: []generated.Message{msg}})
+
+	key := msgKey(msg, 0)
+	if !m2.invalidSigs[key] {
+		t.Error("expected tampered message to be in invalidSigs")
+	}
+	v := m2.viewPanel(80, 10, true)
+	if !strings.Contains(v, "⚠") {
+		t.Errorf("view should show ⚠ for tampered content, got:\n%s", v)
 	}
 }

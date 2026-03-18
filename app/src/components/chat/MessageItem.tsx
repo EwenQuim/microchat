@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
 import { hexToNpub } from "@/lib/core/crypto";
 import { useContacts } from "@/lib/web/hooks/useContacts";
+import type { SigStatus } from "@/lib/web/hooks/useSigVerification";
 import { cn } from "@/lib/web/utils";
 
 const generateColorFromPubkey = (pubkey: string): string => {
@@ -18,9 +19,10 @@ const generateColorFromPubkey = (pubkey: string): string => {
 interface MessageItemProps {
 	message: Message;
 	isOwn: boolean;
+	sigStatus?: SigStatus;
 }
 
-export function MessageItem({ message, isOwn }: MessageItemProps) {
+export function MessageItem({ message, isOwn, sigStatus }: MessageItemProps) {
 	const { contacts } = useContacts();
 
 	const pubkey = message.pubkey || "anonymous";
@@ -79,6 +81,22 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 						>
 							@{displayPubkey}
 						</Link>
+					)}
+					{sigStatus === "invalid" && (
+						<span
+							className="text-xs text-amber-500"
+							title="Signature verification failed — message may have been tampered"
+						>
+							⚠
+						</span>
+					)}
+					{sigStatus === "unknown" && (
+						<span
+							className="text-xs text-amber-500"
+							title="No signature — cannot verify authenticity"
+						>
+							⚠
+						</span>
 					)}
 					{formattedTime && (
 						<span className="text-xs text-muted-foreground">

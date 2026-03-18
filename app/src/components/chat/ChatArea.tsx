@@ -7,6 +7,7 @@ import { type KeyPair, signMessage } from "@/lib/core/crypto";
 import { useMessages } from "@/lib/web/hooks/useMessages";
 import { useRoomPassword } from "@/lib/web/hooks/useRoomPassword";
 import { useSendMessage } from "@/lib/web/hooks/useSendMessage";
+import { useSigVerification } from "@/lib/web/hooks/useSigVerification";
 import { cn } from "@/lib/web/utils";
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList";
@@ -40,6 +41,7 @@ export function ChatArea({
 	);
 
 	const sendMessageMutation = useSendMessage();
+	const sigStatuses = useSigVerification(messages ?? [], roomName ?? "");
 
 	// Track successful room visits
 	useEffect(() => {
@@ -159,6 +161,7 @@ export function ChatArea({
 					currentPubKey={currentPubKey}
 					className="flex-1 min-h-0"
 					onRetryPassword={() => setShowPasswordDialog(true)}
+					sigStatuses={sigStatuses}
 				/>
 
 				<MessageInput

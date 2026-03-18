@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
+import type { SigStatus } from "@/lib/web/hooks/useSigVerification";
 import { cn } from "@/lib/web/utils";
 import { MessageItem } from "./MessageItem";
 
@@ -11,6 +12,7 @@ interface MessageListProps {
 	currentPubKey: string;
 	className?: string;
 	onRetryPassword?: () => void;
+	sigStatuses?: Record<string, SigStatus> | null;
 }
 
 export function MessageList({
@@ -19,6 +21,7 @@ export function MessageList({
 	currentPubKey,
 	className,
 	onRetryPassword,
+	sigStatuses,
 }: MessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const shouldAutoScroll = useRef(true);
@@ -63,6 +66,9 @@ export function MessageList({
 							key={message.id}
 							message={message}
 							isOwn={message.pubkey === currentPubKey}
+							sigStatus={
+								sigStatuses && message.id ? sigStatuses[message.id] : undefined
+							}
 						/>
 					))}
 				</div>
