@@ -14,6 +14,7 @@ const (
 	contactsStateList    contactsState = iota
 	contactsStateAddNpub               // typing npub
 	contactsStateAddName               // typing display name
+	contactsStateRename                // editing display name of selected contact
 )
 
 type contactsModel struct {
@@ -38,6 +39,8 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 			m.inputNpub += msg.Content
 		case contactsStateAddName:
 			m.inputName += msg.Content
+		case contactsStateRename:
+			m.inputName += msg.Content
 		}
 
 	case tea.KeyMsg:
@@ -57,6 +60,12 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 				m.inputNpub = ""
 				m.inputName = ""
 				m.err = ""
+			case "r":
+				if len(m.contacts) > 0 {
+					m.state = contactsStateRename
+					m.inputName = m.contacts[m.cursor].DisplayName
+					m.err = ""
+				}
 			case "d":
 				if len(m.contacts) > 0 {
 					m.contacts = append(m.contacts[:m.cursor], m.contacts[m.cursor+1:]...)
@@ -127,6 +136,28 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 					m.inputName += s
 				}
 			}
+
+		case contactsStateRename:
+			switch msg.String() {
+			case "enter":
+				m.contacts[m.cursor].DisplayName = strings.TrimSpace(m.inputName)
+				m.configChanged = true
+				m.state = contactsStateList
+				m.inputName = ""
+			case "backspace":
+				if _, size := utf8.DecodeLastRuneInString(m.inputName); size > 0 {
+					m.inputName = m.inputName[:len(m.inputName)-size]
+				}
+			case "esc":
+				m.state = contactsStateList
+				m.inputName = ""
+			case "ctrl+c":
+				return m, tea.Quit
+			default:
+				if s := msg.String(); utf8.RuneCountInString(s) == 1 {
+					m.inputName += s
+				}
+			}
 		}
 	}
 	return m, nil
@@ -162,7 +193,7 @@ func (m contactsModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "d", "delete", "esc", "back", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "r", "rename", "d", "delete", "esc", "back", "q", "quit") + "\n")
 
 	case contactsStateAddNpub:
 		b.WriteString(pad + "Enter npub (public key):\n\n")
@@ -171,6 +202,11 @@ func (m contactsModel) view(width, height int) string {
 
 	case contactsStateAddName:
 		b.WriteString(pad + "Enter display name:\n\n")
+		b.WriteString(pad + "> " + m.inputName + "█\n\n")
+		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
+
+	case contactsStateRename:
+		b.WriteString(pad + "Rename contact:\n\n")
 		b.WriteString(pad + "> " + m.inputName + "█\n\n")
 		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
 	}

@@ -327,6 +327,59 @@ func TestContactsModel_AddName_Paste(t *testing.T) {
 	}
 }
 
+func TestContactsModel_Rename_REntersRenameMode(t *testing.T) {
+	m := makeContactsModel(contactEntry{PubKey: "aaa", DisplayName: "Alice"})
+	m2, _ := m.update(pressChar("r"))
+	if m2.state != contactsStateRename {
+		t.Errorf("expected contactsStateRename, got %v", m2.state)
+	}
+	if m2.inputName != "Alice" {
+		t.Errorf("inputName = %q, want pre-filled \"Alice\"", m2.inputName)
+	}
+}
+
+func TestContactsModel_Rename_EnterSavesName(t *testing.T) {
+	m := makeContactsModel(contactEntry{PubKey: "aaa", DisplayName: "Alice"})
+	m.state = contactsStateRename
+	m.inputName = "Alicia"
+	m2, _ := m.update(pressKey(tea.KeyEnter))
+	if m2.state != contactsStateList {
+		t.Errorf("expected contactsStateList, got %v", m2.state)
+	}
+	if m2.contacts[0].DisplayName != "Alicia" {
+		t.Errorf("DisplayName = %q, want \"Alicia\"", m2.contacts[0].DisplayName)
+	}
+	if !m2.configChanged {
+		t.Error("configChanged should be true")
+	}
+}
+
+func TestContactsModel_Rename_EscCancels(t *testing.T) {
+	m := makeContactsModel(contactEntry{PubKey: "aaa", DisplayName: "Alice"})
+	m.state = contactsStateRename
+	m.inputName = "Alicia"
+	m2, _ := m.update(pressKey(tea.KeyEscape))
+	if m2.state != contactsStateList {
+		t.Errorf("expected contactsStateList, got %v", m2.state)
+	}
+	if m2.contacts[0].DisplayName != "Alice" {
+		t.Errorf("DisplayName should be unchanged, got %q", m2.contacts[0].DisplayName)
+	}
+}
+
+func TestContactsModel_View_RenameMode_ShowsPrompt(t *testing.T) {
+	m := makeContactsModel(contactEntry{PubKey: "aaa", DisplayName: "Alice"})
+	m.state = contactsStateRename
+	m.inputName = "Alice"
+	v := m.view(80, 24)
+	if !strings.Contains(v, "Rename contact:") {
+		t.Errorf("view should show rename prompt, got:\n%s", v)
+	}
+	if !strings.Contains(v, "Alice") {
+		t.Errorf("view should show current input, got:\n%s", v)
+	}
+}
+
 func TestContactsModel_View_ShowsError(t *testing.T) {
 	m := makeContactsModel()
 	m.state = contactsStateAddNpub

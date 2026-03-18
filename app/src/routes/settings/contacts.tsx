@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,8 @@ function ContactsSettings() {
 	const [npubInput, setNpubInput] = useState("");
 	const [displayNameInput, setDisplayNameInput] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [editingNpub, setEditingNpub] = useState<string | null>(null);
+	const [editingName, setEditingName] = useState("");
 
 	const handleAdd = () => {
 		setError(null);
@@ -65,6 +67,7 @@ function ContactsSettings() {
 					} catch {
 						// keep as-is
 					}
+					const isEditing = editingNpub === contact.npub;
 					return (
 						<div
 							key={contact.npub}
@@ -74,25 +77,82 @@ function ContactsSettings() {
 								className="h-4 w-4 rounded-full shrink-0"
 								style={{ backgroundColor: color }}
 							/>
-							<div className="flex-1 min-w-0">
-								<span className="font-medium text-sm" style={{ color }}>
-									{contact.displayName}
-								</span>
-								<p
-									className="text-xs text-muted-foreground truncate"
-									title={fullNpub}
-								>
-									{truncateNpub(fullNpub)}
-								</p>
-							</div>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-								onClick={() => removeContact(contact.npub)}
-							>
-								<Trash2 className="h-4 w-4" />
-							</Button>
+							{isEditing ? (
+								<div className="flex-1 flex items-center gap-2 min-w-0">
+									<Input
+										className="h-7 text-sm"
+										value={editingName}
+										onChange={(e) => setEditingName(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												addContact(
+													editingNpub!,
+													editingName.trim() || editingNpub!,
+												);
+												setEditingNpub(null);
+											} else if (e.key === "Escape") {
+												setEditingNpub(null);
+											}
+										}}
+										autoFocus
+									/>
+									<Button
+										variant="outline"
+										size="sm"
+										className="h-7 px-2 shrink-0"
+										onClick={() => {
+											addContact(
+												editingNpub!,
+												editingName.trim() || editingNpub!,
+											);
+											setEditingNpub(null);
+										}}
+									>
+										Save
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										className="h-7 px-2 shrink-0"
+										onClick={() => setEditingNpub(null)}
+									>
+										Cancel
+									</Button>
+								</div>
+							) : (
+								<>
+									<div className="flex-1 min-w-0">
+										<span className="font-medium text-sm" style={{ color }}>
+											{contact.displayName}
+										</span>
+										<p
+											className="text-xs text-muted-foreground truncate"
+											title={fullNpub}
+										>
+											{truncateNpub(fullNpub)}
+										</p>
+									</div>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+										onClick={() => {
+											setEditingNpub(contact.npub);
+											setEditingName(contact.displayName);
+										}}
+									>
+										<Pencil className="h-4 w-4" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+										onClick={() => removeContact(contact.npub)}
+									>
+										<Trash2 className="h-4 w-4" />
+									</Button>
+								</>
+							)}
 						</div>
 					);
 				})}
