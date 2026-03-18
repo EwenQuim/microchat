@@ -119,7 +119,8 @@ func (m mainModel) update(msg tea.Msg) (mainModel, tea.Cmd) {
 }
 
 func (m mainModel) view(width, height int) string {
-	leftWidth := 28
+	const roomLineMax = 1 + 2 + maxServerNameWidth + 1 + maxRoomNameWidth // = 36
+	leftWidth := roomLineMax
 	if width < leftWidth+20 {
 		leftWidth = width / 3
 	}

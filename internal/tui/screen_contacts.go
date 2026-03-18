@@ -161,7 +161,7 @@ func (m contactsModel) view(width, height int) string {
 			}
 		}
 		b.WriteString("\n")
-		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "d", "delete", "esc/tab", "rooms", "q", "quit") + "\n")
+		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "d", "delete", "esc", "back", "q", "quit") + "\n")
 
 	case contactsStateAddNpub:
 		b.WriteString(pad + "Enter npub (public key):\n\n")
