@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -80,8 +81,8 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 				m.state = contactsStateAddName
 				m.err = ""
 			case "backspace":
-				if len(m.inputNpub) > 0 {
-					m.inputNpub = m.inputNpub[:len(m.inputNpub)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputNpub); size > 0 {
+					m.inputNpub = m.inputNpub[:len(m.inputNpub)-size]
 				}
 			case "esc":
 				m.state = contactsStateList
@@ -91,7 +92,7 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 				return m, tea.Quit
 			default:
 				s := msg.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.inputNpub += s
 				}
 			}
@@ -110,8 +111,8 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 				m.inputName = ""
 				m.err = ""
 			case "backspace":
-				if len(m.inputName) > 0 {
-					m.inputName = m.inputName[:len(m.inputName)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputName); size > 0 {
+					m.inputName = m.inputName[:len(m.inputName)-size]
 				}
 			case "esc":
 				m.state = contactsStateList
@@ -122,7 +123,7 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 				return m, tea.Quit
 			default:
 				s := msg.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.inputName += s
 				}
 			}

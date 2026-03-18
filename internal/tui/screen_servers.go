@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
@@ -171,8 +172,8 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 				m.err = ""
 				return m, fetchServerInfo(url)
 			case "backspace":
-				if len(m.inputText) > 0 {
-					m.inputText = m.inputText[:len(m.inputText)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputText); size > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-size]
 				}
 			case "esc":
 				m.state = serverStateList
@@ -182,7 +183,7 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 				return m, tea.Quit
 			default:
 				s := msg.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.inputText += s
 				}
 			}

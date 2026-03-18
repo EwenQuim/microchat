@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
@@ -220,15 +221,15 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				srv := m.selectedServer
 				return m, func() tea.Msg { return roomSelectedMsg{server: srv, room: room, password: password} }
 			case "backspace":
-				if len(m.passwdInput) > 0 {
-					m.passwdInput = m.passwdInput[:len(m.passwdInput)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.passwdInput); size > 0 {
+					m.passwdInput = m.passwdInput[:len(m.passwdInput)-size]
 				}
 			case "esc":
 				m.promptPasswd = false
 				m.passwdInput = ""
 			default:
 				s := km.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.passwdInput += s
 				}
 			}
@@ -346,8 +347,8 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 					return m, m.fetchSearch(m.servers[0], m.inputText)
 				}
 			case "backspace":
-				if len(m.inputText) > 0 {
-					m.inputText = m.inputText[:len(m.inputText)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputText); size > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-size]
 				}
 			case "esc":
 				m.state = roomStateList
@@ -360,7 +361,7 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				return m, tea.Quit
 			default:
 				s := msg.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.inputText += s
 				}
 			}
@@ -376,8 +377,8 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				m.state = roomStateLoading
 				return m, m.createRoom(name)
 			case "backspace":
-				if len(m.inputText) > 0 {
-					m.inputText = m.inputText[:len(m.inputText)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputText); size > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-size]
 				}
 			case "esc":
 				m.state = roomStateList
@@ -387,7 +388,7 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				return m, tea.Quit
 			default:
 				s := msg.String()
-				if len(s) == 1 {
+				if utf8.RuneCountInString(s) == 1 {
 					m.inputText += s
 				}
 			}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
@@ -16,10 +17,7 @@ func pubkeyColor(pubkey string) (r, g, b uint8) {
 	for _, ch := range pubkey {
 		hash = int32(ch) + ((hash << 5) - hash)
 	}
-	if hash < 0 {
-		hash = -hash
-	}
-	hue := hash % 360
+	hue := ((hash % 360) + 360) % 360
 	c := colorful.Hsl(float64(hue), 0.70, 0.55)
 	return uint8(c.R * 255), uint8(c.G * 255), uint8(c.B * 255)
 }
@@ -175,8 +173,8 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 				m.err = ""
 				return m, m.sendMessage(content)
 			case "backspace":
-				if len(m.inputText) > 0 {
-					m.inputText = m.inputText[:len(m.inputText)-1]
+				if _, size := utf8.DecodeLastRuneInString(m.inputText); size > 0 {
+					m.inputText = m.inputText[:len(m.inputText)-size]
 				}
 			default:
 				if t := msg.Key().Text; t != "" {

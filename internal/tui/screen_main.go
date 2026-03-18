@@ -194,8 +194,13 @@ func formatKeyFull(key string) string {
 
 func padRight(s string, width int) string {
 	sw := visibleWidth(s)
-	if sw >= width {
-		// Can't safely truncate ANSI-coded strings; return as-is.
+	if sw > width {
+		if ansiEscapeRe.MatchString(s) {
+			return s // preserve existing ANSI behavior
+		}
+		return runewidth.Truncate(s, width, "")
+	}
+	if sw == width {
 		return s
 	}
 	return s + strings.Repeat(" ", width-sw)
