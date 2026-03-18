@@ -34,14 +34,16 @@ type mainModel struct {
 	servers  []serverConfig
 	id       *identity
 	username string
+	contacts []contactEntry
 }
 
-func newMainModel(clients map[string]*generated.ClientWithResponses, servers []serverConfig, id *identity, username string) mainModel {
+func newMainModel(clients map[string]*generated.ClientWithResponses, servers []serverConfig, id *identity, username string, contacts []contactEntry) mainModel {
 	return mainModel{
 		clients:  clients,
 		servers:  servers,
 		id:       id,
 		username: username,
+		contacts: contacts,
 		rooms:    newRoomModel(clients, servers),
 		focus:    focusLeft,
 	}
@@ -56,6 +58,7 @@ func (m mainModel) update(msg tea.Msg) (mainModel, tea.Cmd) {
 	case roomSelectedMsg:
 		client := m.clients[msg.server.URL]
 		m.chat = newChatModel(client, msg.server, msg.room, msg.password, m.id, m.username)
+		m.chat.contacts = m.contacts
 		m.hasChat = true
 		if !msg.preview {
 			m.focus = focusRight

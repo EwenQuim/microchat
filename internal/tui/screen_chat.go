@@ -62,6 +62,8 @@ type chatModel struct {
 	msgCursorMode bool // true = message cursor active
 	msgCursor     int  // absolute index into m.messages
 
+	contacts []contactEntry // for display-name substitution
+
 	chatRenameMode bool   // true = waiting for user to confirm display name
 	pendingPubKey  string // pubkey of the contact being added
 	renameInput    string // editable display name (pre-filled from message)
@@ -325,8 +327,18 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 					truncPk = npub[len(npub)-8:]
 				}
 			}
+			contactName := ""
+			for _, c := range m.contacts {
+				if c.PubKey == fullPk {
+					contactName = c.DisplayName
+					break
+				}
+			}
+			isContact := contactName != ""
 			user := "?"
-			if msg.User != nil && *msg.User != "" {
+			if isContact {
+				user = contactName
+			} else if msg.User != nil && *msg.User != "" {
 				user = *msg.User
 			} else if truncPk != "" {
 				user = truncPk + "…"
@@ -335,9 +347,11 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			if msg.Content != nil {
 				content = *msg.Content
 			}
-			keyLabel := ""
-			if truncPk != "" {
-				keyLabel = " " + dim(truncPk)
+			suffix := ""
+			if isContact {
+				suffix = " " + dim("✓")
+			} else if truncPk != "" {
+				suffix = " " + dim(truncPk)
 			}
 			colorKey := user
 			if fullPk != "" {
@@ -349,7 +363,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			if m.msgCursorMode && start+i == m.msgCursor {
 				prefix = "▶"
 			}
-			fmt.Fprintf(&b, "%s %s%s%s %s\n", prefix, coloredUser, keyLabel, dim(":"), content)
+			fmt.Fprintf(&b, "%s %s%s%s %s\n", prefix, coloredUser, suffix, dim(":"), content)
 		}
 	}
 

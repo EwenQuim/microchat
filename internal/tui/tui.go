@@ -92,7 +92,7 @@ func initialModel(cfg appConfig) model {
 		clients := buildClientsMap(servers)
 		username := deriveUsername(m.id, cfg)
 		m.screen = screenRooms
-		m.main = newMainModel(clients, servers, m.id, username)
+		m.main = newMainModel(clients, servers, m.id, username, cfg.Contacts)
 	}
 
 	return m
@@ -145,7 +145,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			servers := m.servers.servers
 			clients := buildClientsMap(servers)
 			username := deriveUsername(m.id, m.cfg)
-			m.main = newMainModel(clients, servers, m.id, username)
+			m.main = newMainModel(clients, servers, m.id, username, m.cfg.Contacts)
 			return m, m.main.init()
 		}
 		return m, nil
@@ -212,6 +212,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			_ = saveConfig(m.cfg)
 			m.contacts = newContactsModel(m.cfg)
+			m.main.contacts = m.cfg.Contacts
+			m.main.chat.contacts = m.cfg.Contacts
 			return m, nil
 		}
 		var cmd tea.Cmd

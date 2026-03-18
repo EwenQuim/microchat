@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
 import { hexToNpub } from "@/lib/core/crypto";
+import { useContacts } from "@/lib/web/hooks/useContacts";
 import { cn } from "@/lib/web/utils";
 
 const generateColorFromPubkey = (pubkey: string): string => {
@@ -20,21 +21,29 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isOwn }: MessageItemProps) {
-	const formatPubkey = (pubkey: string): string => {
-		if (pubkey === "anonymous" || !pubkey) return "anonymous";
+	const { contacts } = useContacts();
+
+	const pubkey = message.pubkey || "anonymous";
+	const fullNpub =
+		pubkey !== "anonymous" && pubkey ? hexToNpub(pubkey) : pubkey;
+
+	const contact = contacts.find((c) => c.npub === fullNpub);
+	const isContact = !!contact;
+	const displayName = isContact
+		? contact.displayName
+		: message.user || "Anonymous";
+
+	const formatPubkey = (pk: string): string => {
+		if (pk === "anonymous" || !pk) return "anonymous";
 		try {
-			const npub = hexToNpub(pubkey);
-			// Display last 6 characters of npub
+			const npub = hexToNpub(pk);
 			return npub.slice(-6);
 		} catch {
-			return pubkey.slice(-6);
+			return pk.slice(-6);
 		}
 	};
 
-	const pubkey = message.pubkey || "anonymous";
 	const displayPubkey = formatPubkey(pubkey);
-	const fullNpub =
-		pubkey !== "anonymous" && pubkey ? hexToNpub(pubkey) : pubkey;
 	const userColor = generateColorFromPubkey(pubkey);
 
 	const formattedTime = message.timestamp
@@ -54,17 +63,23 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 						className="text-sm font-semibold hover:underline cursor-pointer"
 						style={{ color: userColor }}
 					>
-						{message.user || "Anonymous"}
+						{displayName}
 					</Link>
-					<Link
-						to="/user/$pubkey"
-						params={{ pubkey }}
-						search={{ displayName: message.user || "" }}
-						className="text-xs text-muted-foreground font-mono hover:underline cursor-pointer"
-						title={fullNpub}
-					>
-						@{displayPubkey}
-					</Link>
+					{isContact ? (
+						<span className="text-xs text-muted-foreground" title={fullNpub}>
+							✓
+						</span>
+					) : (
+						<Link
+							to="/user/$pubkey"
+							params={{ pubkey }}
+							search={{ displayName: message.user || "" }}
+							className="text-xs text-muted-foreground font-mono hover:underline cursor-pointer"
+							title={fullNpub}
+						>
+							@{displayPubkey}
+						</Link>
+					)}
 					{formattedTime && (
 						<span className="text-xs text-muted-foreground">
 							{formattedTime}

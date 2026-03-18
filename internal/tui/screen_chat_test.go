@@ -379,6 +379,114 @@ func TestChatModel_View_CursorMode_ShowsArrow(t *testing.T) {
 	}
 }
 
+func TestChatModel_View_ContactShowsDisplayName(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	user := "original_username"
+	content := "hello world"
+	msg := generated.Message{
+		Pubkey:  &pk,
+		User:    &user,
+		Content: &content,
+	}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "me")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+	m.contacts = []contactEntry{{PubKey: pk, DisplayName: "Alice Contact"}}
+
+	v := m.viewPanel(80, 10, true)
+
+	if !strings.Contains(v, "Alice Contact") {
+		t.Errorf("view should show contact display name, got:\n%s", v)
+	}
+	if strings.Contains(v, user) {
+		t.Errorf("view should not show original username %q when contact has display name, got:\n%s", user, v)
+	}
+}
+
+func TestChatModel_View_ContactHidesKeyLabel(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	user := "original_username"
+	content := "hello world"
+	msg := generated.Message{
+		Pubkey:  &pk,
+		User:    &user,
+		Content: &content,
+	}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "me")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+	m.contacts = []contactEntry{{PubKey: pk, DisplayName: "Alice Contact"}}
+
+	v := m.viewPanel(80, 10, true)
+
+	npub := id.NpubKey
+	truncPk := npub[len(npub)-8:]
+	if strings.Contains(v, truncPk) {
+		t.Errorf("view should hide truncated npub for known contact, got:\n%s", v)
+	}
+}
+
+func TestChatModel_View_ContactCheckmark(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	user := "original_username"
+	content := "hello world"
+	msg := generated.Message{
+		Pubkey:  &pk,
+		User:    &user,
+		Content: &content,
+	}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "me")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+	m.contacts = []contactEntry{{PubKey: pk, DisplayName: "Alice Contact"}}
+
+	v := m.viewPanel(80, 10, true)
+
+	if !strings.Contains(v, "✓") {
+		t.Errorf("view should show ✓ for known contact, got:\n%s", v)
+	}
+}
+
+func TestChatModel_View_NonContactShowsUser(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	user := "original_username"
+	content := "hello world"
+	msg := generated.Message{
+		Pubkey:  &pk,
+		User:    &user,
+		Content: &content,
+	}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "me")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+	// No contacts set
+
+	v := m.viewPanel(80, 10, true)
+
+	if !strings.Contains(v, user) {
+		t.Errorf("view should show original username for non-contact, got:\n%s", v)
+	}
+	if strings.Contains(v, "✓") {
+		t.Errorf("view should not show ✓ for non-contact, got:\n%s", v)
+	}
+}
+
 // Verify hue is spread across spectrum, not all red
 func TestPubkeyColorNotAllRed(t *testing.T) {
 	keys := []string{

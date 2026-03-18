@@ -7,7 +7,7 @@ import (
 )
 
 func makeMainModelWithChat() mainModel {
-	m := newMainModel(nil, nil, nil, "")
+	m := newMainModel(nil, nil, nil, "", nil)
 	m.chat = chatModel{room: "general"}
 	m.hasChat = true
 	return m
@@ -32,7 +32,7 @@ func TestMainModel_RightArrow_ShiftsFocusToChat(t *testing.T) {
 
 // TestMainModel_RightArrow_NoChat_NoOp verifies → does nothing when no chat is loaded.
 func TestMainModel_RightArrow_NoChat_NoOp(t *testing.T) {
-	m := newMainModel(nil, nil, nil, "")
+	m := newMainModel(nil, nil, nil, "", nil)
 	m.focus = focusLeft
 
 	m = sendMainKey(m, tea.KeyRight)
@@ -56,7 +56,7 @@ func TestMainModel_LeftArrow_ShiftsFocusToRooms(t *testing.T) {
 
 // TestMainModel_LeftArrow_AlreadyLeft_NoOp verifies ← does nothing when already on left.
 func TestMainModel_LeftArrow_AlreadyLeft_NoOp(t *testing.T) {
-	m := newMainModel(nil, nil, nil, "")
+	m := newMainModel(nil, nil, nil, "", nil)
 	m.focus = focusLeft
 
 	m = sendMainKey(m, tea.KeyLeft)
