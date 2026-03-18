@@ -487,6 +487,25 @@ func TestChatModel_View_NonContactShowsUser(t *testing.T) {
 	}
 }
 
+func TestChatModel_SendWithNoIdentity_ReturnsError(t *testing.T) {
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	cmd := m.sendMessage("hello")
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd")
+	}
+	result := cmd()
+	msg, ok := result.(messageSentMsg)
+	if !ok {
+		t.Fatalf("expected messageSentMsg, got %T", result)
+	}
+	if msg.err == nil {
+		t.Fatal("expected error when no identity configured")
+	}
+	if !strings.Contains(msg.err.Error(), "no identity") {
+		t.Errorf("error = %q, want it to contain 'no identity'", msg.err.Error())
+	}
+}
+
 // Verify hue is spread across spectrum, not all red
 func TestPubkeyColorNotAllRed(t *testing.T) {
 	keys := []string{

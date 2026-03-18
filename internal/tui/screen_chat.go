@@ -130,15 +130,17 @@ func (m chatModel) sendMessage(content string) tea.Cmd {
 		if password != "" {
 			req.RoomPassword = &password
 		}
-		if id != nil {
-			ts := time.Now().Unix()
-			sig, err := id.SignMessage(content, room, ts)
-			if err == nil {
-				req.Pubkey = &id.PubKeyHex
-				req.Signature = &sig
-				req.Timestamp = &ts
-			}
+		if id == nil {
+			return messageSentMsg{err: fmt.Errorf("no identity configured — add one in the Identities screen")}
 		}
+		ts := time.Now().Unix()
+		sig, err := id.SignMessage(content, room, ts)
+		if err != nil {
+			return messageSentMsg{err: fmt.Errorf("signing failed: %w", err)}
+		}
+		req.Pubkey = id.PubKeyHex
+		req.Signature = sig
+		req.Timestamp = ts
 		resp, err := client.POSTapiroomsRoommessagesWithResponse(context.Background(), room, nil, req)
 		if err != nil {
 			return messageSentMsg{err: err}

@@ -145,7 +145,6 @@
 						"type": "string"
 					},
 					"pubkey": {
-						"nullable": true,
 						"type": "string"
 					},
 					"room_password": {
@@ -153,12 +152,10 @@
 						"type": "string"
 					},
 					"signature": {
-						"nullable": true,
 						"type": "string"
 					},
 					"timestamp": {
 						"format": "int64",
-						"nullable": true,
 						"type": "integer"
 					},
 					"user": {
@@ -167,7 +164,10 @@
 				},
 				"required": [
 					"content",
-					"user"
+					"user",
+					"signature",
+					"pubkey",
+					"timestamp"
 				],
 				"type": "object"
 			},

@@ -18,8 +18,8 @@ type Message struct {
 type SendMessageRequest struct {
 	User         string `json:"user" validate:"required"`
 	Content      string `json:"content" validate:"required"`
-	Signature    string `json:"signature,omitempty"`
-	Pubkey       string `json:"pubkey,omitempty"`
-	Timestamp    int64  `json:"timestamp,omitempty"`
+	Signature    string `json:"signature" validate:"required"`
+	Pubkey       string `json:"pubkey" validate:"required"`
+	Timestamp    int64  `json:"timestamp" validate:"required"`
 	RoomPassword string `json:"room_password,omitempty"`
 }

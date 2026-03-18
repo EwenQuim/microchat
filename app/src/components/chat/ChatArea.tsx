@@ -163,7 +163,7 @@ export function ChatArea({
 
 				<MessageInput
 					onSend={handleSendMessage}
-					disabled={sendMessageMutation.isPending}
+					disabled={sendMessageMutation.isPending || !keys}
 					className="border-t bg-background sticky bottom-0 z-10"
 				/>
 			</div>

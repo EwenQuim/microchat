@@ -74,10 +74,10 @@ type Room struct {
 // SendMessageRequest SendMessageRequest schema
 type SendMessageRequest struct {
 	Content      string  `json:"content"`
-	Pubkey       *string `json:"pubkey,omitempty"`
+	Pubkey       string  `json:"pubkey"`
 	RoomPassword *string `json:"room_password,omitempty"`
-	Signature    *string `json:"signature,omitempty"`
-	Timestamp    *int64  `json:"timestamp,omitempty"`
+	Signature    string  `json:"signature"`
+	Timestamp    int64   `json:"timestamp"`
 	User         string  `json:"user"`
 }
 
