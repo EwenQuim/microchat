@@ -3,8 +3,10 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
+	"github.com/EwenQuim/microchat/internal/middleware"
 	"github.com/EwenQuim/microchat/internal/models"
 	"github.com/EwenQuim/microchat/internal/services"
 	"github.com/EwenQuim/microchat/pkg/crypto"
@@ -16,7 +18,7 @@ type GetMessagesQuery struct {
 	Password string `query:"password"`
 }
 
-func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
+func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLimiter) func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 	return func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 		room := c.PathParam("room")
 		params, err := c.Params()
@@ -27,6 +29,10 @@ func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithPara
 
 		err = chatService.ValidateRoomPassword(c.Context(), room, password)
 		if err != nil {
+			ip := middleware.IPFromRequest(c.Request())
+			if !pwLimiter.Allow("pw:"+ip, 5, time.Minute) {
+				return nil, fuego.HTTPError{Status: http.StatusTooManyRequests, Title: "Too Many Requests", Detail: "too many failed password attempts"}
+			}
 			slog.ErrorContext(c, "cannot validate password", "err", err)
 			time.Sleep(500 * time.Millisecond) // Mitigate brute-force attacks
 			return []models.Message{}, nil
@@ -36,7 +42,7 @@ func GetMessages(chatService *services.ChatService) func(c fuego.ContextWithPara
 	}
 }
 
-func SendMessage(chatService *services.ChatService) func(c fuego.ContextWithBody[models.SendMessageRequest]) (*models.Message, error) {
+func SendMessage(chatService *services.ChatService, pwLimiter *middleware.RateLimiter) func(c fuego.ContextWithBody[models.SendMessageRequest]) (*models.Message, error) {
 	return func(c fuego.ContextWithBody[models.SendMessageRequest]) (*models.Message, error) {
 		room := c.PathParam("room")
 		body, err := c.Body()
@@ -51,6 +57,10 @@ func SendMessage(chatService *services.ChatService) func(c fuego.ContextWithBody
 		if password != "" {
 			err := chatService.ValidateRoomPassword(c.Context(), room, password)
 			if err != nil {
+				ip := middleware.IPFromRequest(c.Request())
+				if !pwLimiter.Allow("pw:"+ip, 5, time.Minute) {
+					return nil, fuego.HTTPError{Status: http.StatusTooManyRequests, Title: "Too Many Requests", Detail: "too many failed password attempts"}
+				}
 				return nil, fmt.Errorf("invalid room password")
 			}
 		} else {
