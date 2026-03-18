@@ -1,10 +1,10 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 	"unicode/utf8"
 
+	table "charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -175,22 +175,29 @@ func (m contactsModel) view(width, height int) string {
 		if len(m.contacts) == 0 {
 			b.WriteString(pad + "(no contacts — press [a] to add one)\n")
 		} else {
-			for i, u := range m.contacts {
-				cursor := "  "
-				if i == m.cursor {
-					cursor = "▶ "
-				}
-				r, g, bv := pubkeyColor(u.PubKey)
-				var nameStr string
-				if u.DisplayName != "" {
-					nameStr = ansiColor(u.DisplayName, r, g, bv) + "  "
-				}
-				displayKey := u.PubKey
-				if npub, err := pubKeyHexToNpub(u.PubKey); err == nil {
+			nameW, keyW := 4, 10
+			rows := make([]table.Row, len(m.contacts))
+			for i, c := range m.contacts {
+				r, g, bv := pubkeyColor(c.PubKey)
+				name := ansiColor(c.DisplayName, r, g, bv)
+				displayKey := c.PubKey
+				if npub, err := pubKeyHexToNpub(c.PubKey); err == nil {
 					displayKey = npub
 				}
-				fmt.Fprintf(&b, "%s%s%s%s\n", pad, cursor, nameStr, formatKeyFull(displayKey))
+				key := formatKeyFull(displayKey)
+				rows[i] = table.Row{name, key}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+				if w := visibleWidth(key); w > keyW {
+					keyW = w
+				}
 			}
+			cols := []table.Column{
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "Public Key", Width: max(keyW, visibleWidth("Public Key"))},
+			}
+			b.WriteString(renderTable(cols, rows, m.cursor, pad))
 		}
 		b.WriteString("\n")
 		b.WriteString(helpBar("↑↓", "navigate", "a", "add", "r", "rename", "d", "delete", "esc", "back", "q", "quit") + "\n")

@@ -1,9 +1,9 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
+	table "charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -139,26 +139,34 @@ func (m identitiesModel) view(width, height int) string {
 		if len(m.entries) == 0 {
 			b.WriteString(pad + "(no identities)\n")
 		} else {
+			activeW, nameW, keyW := 1, 4, 10
+			rows := make([]table.Row, len(m.entries))
 			for i, e := range m.entries {
-				cursor := "  "
-				if i == m.cursor {
-					cursor = "▶ "
-				}
 				active := " "
 				if i == m.activeIndex {
 					active = "*"
 				}
 				r, g, bv := pubkeyColor(e.PublicKey)
-				var nameStr string
-				if e.Name != "" {
-					nameStr = ansiColor(e.Name, r, g, bv) + "  "
-				}
+				name := ansiColor(e.Name, r, g, bv)
 				displayKey := e.PublicKey
 				if npub, err := pubKeyHexToNpub(e.PublicKey); err == nil {
 					displayKey = npub
 				}
-				fmt.Fprintf(&b, "%s%s%s %s%s\n", pad, cursor, active, nameStr, formatKeyFull(displayKey))
+				key := formatKeyFull(displayKey)
+				rows[i] = table.Row{active, name, key}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+				if w := visibleWidth(key); w > keyW {
+					keyW = w
+				}
 			}
+			cols := []table.Column{
+				{Title: "", Width: activeW},
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "Public Key", Width: max(keyW, visibleWidth("Public Key"))},
+			}
+			b.WriteString(renderTable(cols, rows, m.cursor, pad))
 		}
 		b.WriteString("\n")
 		b.WriteString(helpBar("↑↓", "navigate", "enter", "activate", "a", "add", "d", "delete", "tab", "contacts", "esc", "rooms", "q", "quit") + "\n")

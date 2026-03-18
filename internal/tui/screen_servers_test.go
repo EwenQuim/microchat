@@ -394,8 +394,8 @@ func TestServerModel_View_ShowsCursor(t *testing.T) {
 	m.cursor = 0
 
 	v := m.view(80, 24)
-	if !strings.Contains(v, "▶") {
-		t.Error("view should show cursor ▶")
+	if !strings.Contains(v, "\x1b[1m") {
+		t.Error("view should highlight selected row (bold)")
 	}
 }
 

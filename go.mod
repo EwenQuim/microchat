@@ -3,7 +3,9 @@ module github.com/EwenQuim/microchat
 go 1.25.5
 
 require (
+	charm.land/bubbles/v2 v2.0.0
 	charm.land/bubbletea/v2 v2.0.2
+	charm.land/lipgloss/v2 v2.0.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
 	github.com/go-fuego/fuego v0.19.0

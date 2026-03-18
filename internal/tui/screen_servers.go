@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	table "charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
 )
@@ -226,21 +227,34 @@ func (m serverModel) view(width, height int) string {
 		if len(visible) == 0 {
 			b.WriteString(pad + "(no servers — press [a] to add one)\n")
 		} else {
+			nameW, urlW, flagW := 4, 3, 0
+			rows := make([]table.Row, len(visible))
 			for i, srv := range visible {
-				cursor := "  "
-				if i == visibleCursor {
-					cursor = "▶ "
-				}
 				name := srv.Quickname
 				if name == "" {
 					name = srv.URL
 				}
-				hint := ""
+				flags := ""
 				if srv.Status == ServerStatusAdvertise {
-					hint = " ⚑"
+					flags = "⚑"
 				}
-				fmt.Fprintf(&b, "%s%s%s  %s%s\n", pad, cursor, name, srv.URL, hint)
+				rows[i] = table.Row{name, srv.URL, flags}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+				if w := visibleWidth(srv.URL); w > urlW {
+					urlW = w
+				}
+				if w := visibleWidth(flags); w > flagW {
+					flagW = w
+				}
 			}
+			cols := []table.Column{
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "URL", Width: max(urlW, visibleWidth("URL"))},
+				{Title: "", Width: flagW},
+			}
+			b.WriteString(renderTable(cols, rows, visibleCursor, pad))
 		}
 		b.WriteString("\n")
 		b.WriteString(helpBar("↑↓", "navigate", "enter", "open", "a", "add", "d", "delete", "u", "contacts", "tab", "identities", "esc", "rooms", "q", "quit") + "\n")
