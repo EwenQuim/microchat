@@ -275,6 +275,60 @@ func TestInitialModel_WithIdentitiesArray_StartsOnRoomsScreen(t *testing.T) {
 	}
 }
 
+func TestModel_AddContactFromChat_SavedToConfig(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
+		},
+	}
+	m := initialModel(cfg)
+	m.screen = screenRooms
+
+	newModel, _ := m.Update(addContactFromChatMsg{pubKeyHex: "deadbeef", displayName: "Bob"})
+	updated := newModel.(model)
+
+	if len(updated.cfg.Contacts) != 1 {
+		t.Fatalf("expected 1 contact, got %d", len(updated.cfg.Contacts))
+	}
+	if updated.cfg.Contacts[0].PubKey != "deadbeef" {
+		t.Errorf("PubKey = %q, want %q", updated.cfg.Contacts[0].PubKey, "deadbeef")
+	}
+	if updated.cfg.Contacts[0].DisplayName != "Bob" {
+		t.Errorf("DisplayName = %q, want %q", updated.cfg.Contacts[0].DisplayName, "Bob")
+	}
+}
+
+func TestModel_AddContactFromChat_Deduplicates(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	cfg := appConfig{
+		Identities: []identityEntry{
+			{PrivateKey: id.PrivKeyHex, PublicKey: id.PubKeyHex},
+		},
+	}
+	m := initialModel(cfg)
+	m.screen = screenRooms
+
+	m2, _ := m.Update(addContactFromChatMsg{pubKeyHex: "deadbeef", displayName: "Bob"})
+	m3, _ := m2.(model).Update(addContactFromChatMsg{pubKeyHex: "deadbeef", displayName: "Bobby"})
+	updated := m3.(model)
+
+	if len(updated.cfg.Contacts) != 1 {
+		t.Fatalf("expected 1 contact after dedup, got %d", len(updated.cfg.Contacts))
+	}
+	if updated.cfg.Contacts[0].DisplayName != "Bobby" {
+		t.Errorf("DisplayName = %q, want %q (should be updated)", updated.cfg.Contacts[0].DisplayName, "Bobby")
+	}
+}
+
 func TestInitialModel_IdentitiesArray_ActiveIndexOutOfBounds_FallsToFirst(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 

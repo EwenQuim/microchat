@@ -37,6 +37,12 @@ type messageSentMsg struct {
 	err error
 }
 
+// addContactFromChatMsg is emitted when the user presses "a" in cursor mode on a message.
+type addContactFromChatMsg struct {
+	pubKeyHex   string
+	displayName string
+}
+
 type chatModel struct {
 	client   *generated.ClientWithResponses
 	server   serverConfig
@@ -52,6 +58,9 @@ type chatModel struct {
 	scroll     int  // offset from the bottom (0 = latest)
 	typing     bool // vim-style insert mode
 	colorCache map[string][3]uint8
+
+	msgCursorMode bool // true = message cursor active
+	msgCursor     int  // absolute index into m.messages
 }
 
 func newChatModel(client *generated.ClientWithResponses, server serverConfig, room, password string, id *identity, username string) chatModel {
@@ -181,10 +190,44 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 					m.inputText += t
 				}
 			}
+		} else if m.msgCursorMode {
+			switch msg.String() {
+			case "esc":
+				m.msgCursorMode = false
+			case "up", "k":
+				if m.msgCursor > 0 {
+					m.msgCursor--
+				}
+			case "down", "j":
+				if m.msgCursor < len(m.messages)-1 {
+					m.msgCursor++
+				}
+			case "a":
+				if m.msgCursor < len(m.messages) {
+					selected := m.messages[m.msgCursor]
+					if selected.Pubkey == nil || *selected.Pubkey == "" {
+						m.err = "Message has no public key"
+						return m, nil
+					}
+					userStr := "?"
+					if selected.User != nil && *selected.User != "" {
+						userStr = *selected.User
+					}
+					pk := *selected.Pubkey
+					return m, func() tea.Msg {
+						return addContactFromChatMsg{pubKeyHex: pk, displayName: userStr}
+					}
+				}
+			}
 		} else {
 			switch msg.String() {
 			case "i":
 				m.typing = true
+			case "v":
+				if len(m.messages) > 0 {
+					m.msgCursorMode = true
+					m.msgCursor = len(m.messages) - 1
+				}
 			case "enter":
 				content := strings.TrimSpace(m.inputText)
 				if content != "" && m.username != "" {
@@ -241,7 +284,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		for i := 0; i < contentHeight-shown; i++ {
 			b.WriteString("\n")
 		}
-		for _, msg := range m.messages[start:end] {
+		for i, msg := range m.messages[start:end] {
 			var fullPk, truncPk string
 			if msg.Pubkey != nil && *msg.Pubkey != "" {
 				fullPk = *msg.Pubkey
@@ -270,7 +313,11 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			}
 			r, g, bv := m.cachedColor(colorKey)
 			coloredUser := ansiColor(user, r, g, bv)
-			fmt.Fprintf(&b, " %s%s%s %s\n", coloredUser, keyLabel, dim(":"), content)
+			prefix := " "
+			if m.msgCursorMode && start+i == m.msgCursor {
+				prefix = "▶"
+			}
+			fmt.Fprintf(&b, "%s %s%s%s %s\n", prefix, coloredUser, keyLabel, dim(":"), content)
 		}
 	}
 
@@ -300,8 +347,10 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		b.WriteString(" Err: " + m.err + "\n")
 	} else if m.typing {
 		b.WriteString(helpBar("esc", "exit", "enter", "send", "⌫", "delete") + "\n")
+	} else if m.msgCursorMode {
+		b.WriteString(helpBar("↑↓", "navigate", "a", "add contact", "esc", "exit") + "\n")
 	} else {
-		b.WriteString(helpBar("i", "insert", "r", "refresh", "↑↓", "scroll", "tab", "servers") + "\n")
+		b.WriteString(helpBar("i", "insert", "r", "refresh", "↑↓", "scroll", "v", "select", "tab", "servers") + "\n")
 	}
 
 	return b.String()

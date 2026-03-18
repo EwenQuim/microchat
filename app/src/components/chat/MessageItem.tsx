@@ -50,6 +50,7 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 					<Link
 						to="/user/$pubkey"
 						params={{ pubkey }}
+						search={{ displayName: message.user || "" }}
 						className="text-sm font-semibold hover:underline cursor-pointer"
 						style={{ color: userColor }}
 					>
@@ -58,6 +59,7 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 					<Link
 						to="/user/$pubkey"
 						params={{ pubkey }}
+						search={{ displayName: message.user || "" }}
 						className="text-xs text-muted-foreground font-mono hover:underline cursor-pointer"
 						title={fullNpub}
 					>

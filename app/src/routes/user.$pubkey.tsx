@@ -1,16 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useGETApiUsersPublicKey } from "@/lib/api/generated/user/user";
 import { hexToNpub } from "@/lib/core/crypto";
+import { useContacts } from "@/lib/web/hooks/useContacts";
 
 export const Route = createFileRoute("/user/$pubkey")({
 	component: UserProfilePage,
+	validateSearch: (search: Record<string, unknown>) => ({
+		displayName: (search.displayName as string) || "",
+	}),
 });
 
 function UserProfilePage() {
 	const { pubkey } = Route.useParams();
+	const { displayName } = Route.useSearch();
+	const { contacts, addContact, removeContact } = useContacts();
 
 	const { data: response, isLoading, error } = useGETApiUsersPublicKey(pubkey);
+
+	const [displayNameInput, setDisplayNameInput] = useState(displayName);
 
 	if (isLoading) {
 		return (
@@ -45,6 +56,7 @@ function UserProfilePage() {
 	});
 
 	const npub = hexToNpub(user.public_key);
+	const isContact = contacts.some((c) => c.npub === npub);
 
 	return (
 		<div className="container mx-auto p-8">
@@ -78,6 +90,30 @@ function UserProfilePage() {
 						</div>
 						<p className="mt-1">{createdDate}</p>
 					</div>
+				</div>
+
+				<div className="mt-6 space-y-3">
+					{isContact ? (
+						<Button variant="destructive" onClick={() => removeContact(npub)}>
+							Remove Contact
+						</Button>
+					) : (
+						<div className="space-y-2">
+							<Input
+								placeholder="Display name"
+								value={displayNameInput}
+								onChange={(e) => setDisplayNameInput(e.target.value)}
+							/>
+							<Button
+								variant="outline"
+								onClick={() =>
+									addContact(npub, displayNameInput.trim() || npub)
+								}
+							>
+								Add Contact
+							</Button>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

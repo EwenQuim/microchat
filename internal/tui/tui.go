@@ -197,6 +197,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case screenRooms:
+		if ac, ok := msg.(addContactFromChatMsg); ok {
+			entry := contactEntry{PubKey: ac.pubKeyHex, DisplayName: ac.displayName}
+			found := false
+			for i, c := range m.cfg.Contacts {
+				if c.PubKey == entry.PubKey {
+					m.cfg.Contacts[i] = entry
+					found = true
+					break
+				}
+			}
+			if !found {
+				m.cfg.Contacts = append(m.cfg.Contacts, entry)
+			}
+			_ = saveConfig(m.cfg)
+			m.contacts = newContactsModel(m.cfg)
+			return m, nil
+		}
 		var cmd tea.Cmd
 		m.main, cmd = m.main.update(msg)
 		return m, cmd

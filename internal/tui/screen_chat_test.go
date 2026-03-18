@@ -161,6 +161,131 @@ func BenchmarkViewPanel_ColorCache(b *testing.B) {
 	}
 }
 
+func TestChatModel_CursorMode_VEnters(t *testing.T) {
+	pk := "abc123"
+	content := "hello"
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = []generated.Message{
+		{Pubkey: &pk, Content: &content},
+	}
+
+	m2, _ := m.update(pressRealChar('v', "v"))
+
+	if !m2.msgCursorMode {
+		t.Error("expected msgCursorMode=true after pressing v")
+	}
+	if m2.msgCursor != 0 {
+		t.Errorf("msgCursor = %d, want 0 (last message)", m2.msgCursor)
+	}
+}
+
+func TestChatModel_CursorMode_EscExits(t *testing.T) {
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.msgCursorMode = true
+	m.msgCursor = 0
+
+	m2, _ := m.update(pressKey(tea.KeyEscape))
+
+	if m2.msgCursorMode {
+		t.Error("expected msgCursorMode=false after pressing Esc in cursor mode")
+	}
+}
+
+func TestChatModel_CursorMode_UpMovesUp(t *testing.T) {
+	pk := "abc"
+	content := "msg"
+	msgs := []generated.Message{
+		{Pubkey: &pk, Content: &content},
+		{Pubkey: &pk, Content: &content},
+		{Pubkey: &pk, Content: &content},
+	}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = msgs
+	m.msgCursorMode = true
+	m.msgCursor = 2 // start at last
+
+	m2, _ := m.update(pressKey(tea.KeyUp))
+
+	if m2.msgCursor != 1 {
+		t.Errorf("msgCursor = %d, want 1 after pressing up", m2.msgCursor)
+	}
+}
+
+func TestChatModel_CursorMode_AEmitsMsg(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	user := "alice"
+	content := "hello"
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.loading = false
+	m.messages = []generated.Message{
+		{Pubkey: &pk, User: &user, Content: &content},
+	}
+	m.msgCursorMode = true
+	m.msgCursor = 0
+
+	_, cmd := m.update(pressRealChar('a', "a"))
+
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd after pressing a with a pubkey message")
+	}
+	result := cmd()
+	ac, ok := result.(addContactFromChatMsg)
+	if !ok {
+		t.Fatalf("expected addContactFromChatMsg, got %T", result)
+	}
+	if ac.pubKeyHex != pk {
+		t.Errorf("pubKeyHex = %q, want %q", ac.pubKeyHex, pk)
+	}
+	if ac.displayName != user {
+		t.Errorf("displayName = %q, want %q", ac.displayName, user)
+	}
+}
+
+func TestChatModel_CursorMode_AWithNoPubkey_ShowsError(t *testing.T) {
+	content := "hello"
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.loading = false
+	m.messages = []generated.Message{
+		{Content: &content}, // no pubkey
+	}
+	m.msgCursorMode = true
+	m.msgCursor = 0
+
+	m2, cmd := m.update(pressRealChar('a', "a"))
+
+	if m2.err == "" {
+		t.Error("expected error when pressing a on message with no pubkey")
+	}
+	if cmd != nil {
+		t.Error("expected nil cmd when no pubkey")
+	}
+}
+
+func TestChatModel_View_CursorMode_ShowsArrow(t *testing.T) {
+	pk := "abc123"
+	content := "hello"
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = []generated.Message{
+		{Pubkey: &pk, Content: &content},
+	}
+	m.msgCursorMode = true
+	m.msgCursor = 0
+
+	v := m.viewPanel(60, 10, true)
+
+	if !strings.Contains(v, "▶") {
+		t.Errorf("expected ▶ in view when in cursor mode, got:\n%s", v)
+	}
+}
+
 // Verify hue is spread across spectrum, not all red
 func TestPubkeyColorNotAllRed(t *testing.T) {
 	keys := []string{
