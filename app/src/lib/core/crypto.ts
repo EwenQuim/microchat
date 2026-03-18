@@ -87,27 +87,15 @@ export async function signMessage(params: {
 	);
 	const signatureHex = bytesToHex(signatureBytes);
 
-	// Self-verify the signature immediately
+	// Self-verify the signature immediately after creation
 	const selfVerify = secp256k1.verify(
 		signatureBytes,
 		eventHashBytes,
 		hexToBytes(params.publicKey),
 		{ prehash: false },
 	);
-
-	// Debug logging
-	console.log("DEBUG Frontend Signing:");
-	console.log("  Event hash:", eventHash);
-	console.log("  Signature length:", signatureBytes.length, "bytes");
-	console.log("  Signature hex length:", signatureHex.length, "chars");
-	console.log("  Self-verification:", selfVerify ? "✓ PASS" : "✗ FAIL");
-	console.log("  Content:", params.content);
-	console.log("  Room:", params.room);
-	console.log("  Timestamp:", timestamp);
-	console.log("  Pubkey:", params.publicKey);
-
 	if (!selfVerify) {
-		console.error("WARNING: Signature self-verification failed!");
+		throw new Error("Signature self-verification failed");
 	}
 
 	return {

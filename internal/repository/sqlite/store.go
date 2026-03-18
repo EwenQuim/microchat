@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -274,7 +275,7 @@ func (s *Store) RegisterUser(ctx context.Context, publicKey string) (*models.Use
 func (s *Store) GetUser(ctx context.Context, publicKey string) (*models.User, error) {
 
 	sqlcUser, err := s.queries.GetUserByPublicKey(ctx, publicKey)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("user not found")
 	}
 	if err != nil {
@@ -356,7 +357,7 @@ func sqlcUserToModel(user sqlc.User) *models.User {
 
 func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*models.UserWithPostCount, error) {
 	row, err := s.queries.GetUserWithPostCount(ctx, publicKey)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("user not found")
 	}
 	if err != nil {
@@ -381,7 +382,7 @@ func (s *Store) GetUserWithPostCount(ctx context.Context, publicKey string) (*mo
 
 func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password string) error {
 	passwordHash, err := s.queries.GetRoomPasswordHash(ctx, roomName)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("room not found")
 	}
 	if err != nil {

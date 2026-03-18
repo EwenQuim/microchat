@@ -7,8 +7,14 @@ run:
 linters:
   enable:
     - depguard
+    - errcheck
+    - errorlint
+    - forbidigo
+    - gosec
     - govet
     - ineffassign
+    - misspell
+    - revive
     - staticcheck
     - unused
 
@@ -20,5 +26,30 @@ linters:
           deny:
             - pkg: "log$"
               desc: "Use log/slog instead of the standard log package"
-    staticcheck:
-      checks: ["-SA1019"]
+    forbidigo:
+      forbid:
+        - pattern: "^fmt\\.Print(f|ln)?$"
+          msg: "Use slog or structured logging instead of fmt.Print*"
+    gosec:
+      excludes:
+        - G115
+    revive:
+      rules:
+        - name: early-return
+        - name: var-naming
+
+  exclusions:
+    rules:
+      # Generated code — skip heavy linting
+      - path: "internal/repository/sqlite/sqlc/"
+        linters:
+          - revive
+          - errcheck
+      # Test files — skip errcheck (cleanup lambdas use _ intentionally)
+      - path: "_test\\.go"
+        linters:
+          - errcheck
+      # CLI entry points use fmt.Print* for user-facing output
+      - path: "cmd/"
+        linters:
+          - forbidigo

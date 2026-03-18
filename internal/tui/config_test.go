@@ -119,7 +119,7 @@ func TestCheckConfigPermissions_WrongFilePerms(t *testing.T) {
 	if err := saveConfig(appConfig{}); err != nil {
 		t.Fatalf("saveConfig: %v", err)
 	}
-	if err := os.Chmod(configPath(), 0644); err != nil {
+	if err := os.Chmod(configPath(), 0644); err != nil { //nolint:gosec // intentionally setting insecure perms to test the check
 		t.Fatalf("chmod: %v", err)
 	}
 	err := checkConfigPermissions()
@@ -137,10 +137,10 @@ func TestCheckConfigPermissions_WrongDirPerms(t *testing.T) {
 		t.Fatalf("saveConfig: %v", err)
 	}
 	dirPath := filepath.Dir(configPath())
-	if err := os.Chmod(dirPath, 0755); err != nil {
+	if err := os.Chmod(dirPath, 0755); err != nil { //nolint:gosec // intentionally setting insecure perms to test the check
 		t.Fatalf("chmod dir: %v", err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(dirPath, 0700) })
+	t.Cleanup(func() { _ = os.Chmod(dirPath, 0700) }) //nolint:gosec // restoring to secure perms in cleanup
 	err := checkConfigPermissions()
 	if err == nil {
 		t.Error("expected error for wrong dir permissions")

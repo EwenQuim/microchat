@@ -66,14 +66,6 @@ func VerifyMessageSignature(pubkeyHex, signatureHex, content, room string, times
 
 	// Verify the signature
 	if !signature.Verify(eventHashBytes, pubkey) {
-		// Debug: print what we're verifying
-		fmt.Printf("DEBUG Signature Verification Failed:\n")
-		fmt.Printf("  Pubkey: %s\n", pubkeyHex)
-		fmt.Printf("  Signature length: %d bytes\n", len(signatureBytes))
-		fmt.Printf("  Event hash: %s\n", eventHash)
-		fmt.Printf("  Content: %s\n", content)
-		fmt.Printf("  Room: %s\n", room)
-		fmt.Printf("  Timestamp: %d\n", timestamp)
 		return fmt.Errorf("signature verification failed: signature does not match")
 	}
 

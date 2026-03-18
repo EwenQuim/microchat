@@ -21,7 +21,7 @@ type GetMessagesQuery struct {
 func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLimiter) func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 	return func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 		room := c.PathParam("room")
-		params, err := c.Params()
+		params, err := c.Params() //nolint:staticcheck // no replacement available yet in fuego
 		if err != nil {
 			return nil, err
 		}

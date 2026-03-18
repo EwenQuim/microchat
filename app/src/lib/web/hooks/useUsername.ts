@@ -29,9 +29,6 @@ export function useUsername() {
 
 		setUsernameState(name);
 		setKeysState(newKeys);
-
-		console.log("🔐 Generated new keypair for user:", name);
-		console.log("Public key:", newKeys.publicKey);
 	};
 
 	const importProfile = (name: string, nsec: string) => {
@@ -47,9 +44,6 @@ export function useUsername() {
 
 			setUsernameState(name);
 			setKeysState(importedKeys);
-
-			console.log("🔑 Imported profile for user:", name);
-			console.log("Public key:", publicKey);
 		} catch (error) {
 			console.error("Failed to import profile:", error);
 			throw new Error("Invalid nsec key. Please check and try again.");

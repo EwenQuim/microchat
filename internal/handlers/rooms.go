@@ -20,7 +20,7 @@ func GetRooms(chatService *services.ChatService) func(c fuego.ContextWithParams[
 			return nil, err
 		}
 
-		params, err := c.Params()
+		params, err := c.Params() //nolint:staticcheck // no replacement available yet in fuego
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ type SearchRoomsQuery struct {
 
 func SearchRooms(chatService *services.ChatService) func(c fuego.ContextWithParams[SearchRoomsQuery]) ([]models.Room, error) {
 	return func(c fuego.ContextWithParams[SearchRoomsQuery]) ([]models.Room, error) {
-		params, err := c.Params()
+		params, err := c.Params() //nolint:staticcheck // no replacement available yet in fuego
 		if err != nil {
 			return nil, err
 		}

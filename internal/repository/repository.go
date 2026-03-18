@@ -22,7 +22,7 @@ func NewRepository() (services.Repository, error) {
 		return memory.NewStore(), nil
 	}
 
-	slog.Info("Using SQLite database", "dbPath", dbPath)
+	slog.Info("Using SQLite database", "dbPath", dbPath) //nolint:gosec // G706: structured log field, not a format string
 	db, err := sqlite.InitDB(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize SQLite database: %w", err)

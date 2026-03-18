@@ -30,7 +30,7 @@ jobs:
         run: make build-server
 
       - name: Build CLI
-        run: make build-cli
+        run: make build-microchat
 
       - name: Run linter
         uses: golangci/golangci-lint-action@v9
@@ -63,7 +63,10 @@ jobs:
 
       - name: Install frontend dependencies
         run: cd app && npm ci
-      
+
+      - name: Lint
+        run: cd app && npm run lint
+
       - name: Typecheck
         run: cd app && npm run typecheck
 
