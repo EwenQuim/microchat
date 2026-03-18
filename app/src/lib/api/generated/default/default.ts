@@ -375,7 +375,7 @@ export function useGet<
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 

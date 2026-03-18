@@ -18,10 +18,24 @@ type identityEntry struct {
 	PublicKey  string `json:"public_key"`
 }
 
+type ServerStatus string
+
+const (
+	ServerStatusActive    ServerStatus = "active"
+	ServerStatusHidden    ServerStatus = "hidden"
+	ServerStatusAdvertise ServerStatus = "advertise"
+)
+
 type serverConfig struct {
-	URL         string `json:"url"`
-	Quickname   string `json:"quickname"`
-	Description string `json:"description"`
+	URL         string       `json:"url"`
+	Quickname   string       `json:"quickname"`
+	Description string       `json:"description"`
+	Status      ServerStatus `json:"status,omitempty"`       // omitted/empty → active
+	SuggestedBy string       `json:"suggested_by,omitempty"` // URL of server that suggested this one
+}
+
+func (s serverConfig) isVisible() bool {
+	return s.Status != ServerStatusHidden
 }
 
 type contactEntry struct {

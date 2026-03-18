@@ -96,6 +96,29 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 		m.cursor = len(m.servers) - 1
 		m.configChanged = true
 		m.err = ""
+		// Process advertised servers (cap at 10)
+		advertised := msg.info.SuggestedServers
+		if len(advertised) > 10 {
+			advertised = advertised[:10]
+		}
+		for _, suggestedURL := range advertised {
+			alreadyKnown := false
+			for _, existing := range m.servers {
+				if existing.URL == suggestedURL {
+					alreadyKnown = true
+					break
+				}
+			}
+			if !alreadyKnown {
+				m.servers = append(m.servers, serverConfig{
+					URL:         suggestedURL,
+					Quickname:   suggestedURL,
+					Status:      ServerStatusAdvertise,
+					SuggestedBy: msg.url,
+				})
+				m.configChanged = true
+			}
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -182,19 +205,40 @@ func (m serverModel) view(width, height int) string {
 
 	switch m.state {
 	case serverStateList:
-		if len(m.servers) == 0 {
+		visible := make([]serverConfig, 0, len(m.servers))
+		for _, srv := range m.servers {
+			if srv.isVisible() {
+				visible = append(visible, srv)
+			}
+		}
+		// Compute visible cursor position for display
+		visibleCursor := 0
+		count := 0
+		for i, srv := range m.servers {
+			if srv.isVisible() {
+				if i == m.cursor {
+					visibleCursor = count
+				}
+				count++
+			}
+		}
+		if len(visible) == 0 {
 			b.WriteString(pad + "(no servers — press [a] to add one)\n")
 		} else {
-			for i, srv := range m.servers {
+			for i, srv := range visible {
 				cursor := "  "
-				if i == m.cursor {
+				if i == visibleCursor {
 					cursor = "▶ "
 				}
 				name := srv.Quickname
 				if name == "" {
 					name = srv.URL
 				}
-				fmt.Fprintf(&b, "%s%s%s  %s\n", pad, cursor, name, srv.URL)
+				hint := ""
+				if srv.Status == ServerStatusAdvertise {
+					hint = " ⚑"
+				}
+				fmt.Fprintf(&b, "%s%s%s  %s%s\n", pad, cursor, name, srv.URL, hint)
 			}
 		}
 		b.WriteString("\n")

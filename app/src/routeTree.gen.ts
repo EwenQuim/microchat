@@ -16,9 +16,9 @@ import { Route as UserPubkeyRouteImport } from './routes/user.$pubkey'
 import { Route as SettingsUserRouteImport } from './routes/settings/user'
 import { Route as SettingsServersRouteImport } from './routes/settings/servers'
 import { Route as SettingsImportRouteImport } from './routes/settings/import'
+import { Route as SettingsIdentitiesRouteImport } from './routes/settings/identities'
 import { Route as SettingsExportRouteImport } from './routes/settings/export'
 import { Route as SettingsContactsRouteImport } from './routes/settings/contacts'
-import { Route as SettingsIdentitiesRouteImport } from './routes/settings/identities'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as ChatRoomNameRouteImport } from './routes/chat.$roomName'
 
@@ -57,6 +57,11 @@ const SettingsImportRoute = SettingsImportRouteImport.update({
   path: '/import',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsIdentitiesRoute = SettingsIdentitiesRouteImport.update({
+  id: '/identities',
+  path: '/identities',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsExportRoute = SettingsExportRouteImport.update({
   id: '/export',
   path: '/export',
@@ -65,11 +70,6 @@ const SettingsExportRoute = SettingsExportRouteImport.update({
 const SettingsContactsRoute = SettingsContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsIdentitiesRoute = SettingsIdentitiesRouteImport.update({
-  id: '/identities',
-  path: '/identities',
   getParentRoute: () => SettingsRoute,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
@@ -228,13 +228,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsImportRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/contacts': {
-      id: '/settings/contacts'
-      path: '/contacts'
-      fullPath: '/settings/contacts'
-      preLoaderRoute: typeof SettingsContactsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
     '/settings/identities': {
       id: '/settings/identities'
       path: '/identities'
@@ -247,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/export'
       fullPath: '/settings/export'
       preLoaderRoute: typeof SettingsExportRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/contacts': {
+      id: '/settings/contacts'
+      path: '/contacts'
+      fullPath: '/settings/contacts'
+      preLoaderRoute: typeof SettingsContactsRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/demo/tanstack-query': {

@@ -293,6 +293,81 @@ func TestServerModel_ServerInfoMsg_Success(t *testing.T) {
 	}
 }
 
+func TestServerModel_ServerInfoMsg_AdvertisedServersAdded(t *testing.T) {
+	m := serverModel{}
+	info := &generated.ServerInfoResponse{
+		SuggestedServers: []string{"https://backup.example.com", "https://other.example.com"},
+	}
+	m2, _ := m.update(serverInfoMsg{url: "http://primary.example.com/", info: info})
+
+	// 1 primary + 2 advertised
+	if len(m2.servers) != 3 {
+		t.Fatalf("servers count = %d, want 3", len(m2.servers))
+	}
+	if m2.servers[1].URL != "https://backup.example.com" {
+		t.Errorf("advertised[0].URL = %q, want https://backup.example.com", m2.servers[1].URL)
+	}
+	if m2.servers[1].Status != ServerStatusAdvertise {
+		t.Errorf("advertised[0].Status = %q, want advertise", m2.servers[1].Status)
+	}
+	if m2.servers[1].SuggestedBy != "http://primary.example.com/" {
+		t.Errorf("advertised[0].SuggestedBy = %q, want http://primary.example.com/", m2.servers[1].SuggestedBy)
+	}
+}
+
+func TestServerModel_ServerInfoMsg_AdvertisedCappedAt10(t *testing.T) {
+	m := serverModel{}
+	urls := make([]string, 20)
+	for i := range urls {
+		urls[i] = fmt.Sprintf("https://server%d.example.com", i)
+	}
+	info := &generated.ServerInfoResponse{SuggestedServers: urls}
+	m2, _ := m.update(serverInfoMsg{url: "http://primary.example.com/", info: info})
+
+	// 1 primary + at most 10 advertised
+	if len(m2.servers) != 11 {
+		t.Errorf("servers count = %d, want 11 (1 primary + 10 capped)", len(m2.servers))
+	}
+}
+
+func TestServerModel_ServerInfoMsg_AdvertisedSkipsDuplicates(t *testing.T) {
+	existing := serverConfig{URL: "https://backup.example.com", Quickname: "backup"}
+	m := makeServerModel(existing)
+	info := &generated.ServerInfoResponse{
+		SuggestedServers: []string{"https://backup.example.com", "https://new.example.com"},
+	}
+	m2, _ := m.update(serverInfoMsg{url: "http://primary.example.com/", info: info})
+
+	// existing + primary + 1 new advertised (duplicate skipped)
+	if len(m2.servers) != 3 {
+		t.Errorf("servers count = %d, want 3 (existing + primary + new)", len(m2.servers))
+	}
+}
+
+func TestServerModel_View_HiddenServerNotShown(t *testing.T) {
+	m := makeServerModel(
+		serverConfig{URL: "http://a.example", Quickname: "Alpha"},
+		serverConfig{URL: "http://b.example", Quickname: "Beta", Status: ServerStatusHidden},
+	)
+	v := m.view(80, 24)
+	if strings.Contains(v, "Beta") {
+		t.Error("hidden server should not appear in view")
+	}
+	if !strings.Contains(v, "Alpha") {
+		t.Error("visible server should appear in view")
+	}
+}
+
+func TestServerModel_View_AdvertiseServerShowsHint(t *testing.T) {
+	m := makeServerModel(
+		serverConfig{URL: "http://backup.example", Quickname: "Backup", Status: ServerStatusAdvertise},
+	)
+	v := m.view(80, 24)
+	if !strings.Contains(v, "⚑") {
+		t.Error("advertise server should show ⚑ hint in view")
+	}
+}
+
 func TestServerModel_ServerInfoMsg_Error(t *testing.T) {
 	m := serverModel{state: serverStateLoading} // truly empty — no defaults
 

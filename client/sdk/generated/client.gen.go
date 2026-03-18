@@ -83,8 +83,9 @@ type SendMessageRequest struct {
 
 // ServerInfoResponse ServerInfoResponse schema
 type ServerInfoResponse struct {
-	Description        *string `json:"description,omitempty"`
-	SuggestedQuickname *string `json:"suggested_quickname,omitempty"`
+	Description        *string  `json:"description,omitempty"`
+	SuggestedQuickname *string  `json:"suggested_quickname,omitempty"`
+	SuggestedServers   []string `json:"suggested_servers,omitempty"`
 }
 
 // User User schema

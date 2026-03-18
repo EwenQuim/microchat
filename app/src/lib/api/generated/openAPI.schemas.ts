@@ -197,6 +197,7 @@ export interface SendMessageRequest {
 export interface ServerInfoResponse {
 	description?: string;
 	suggested_quickname?: string;
+	suggested_servers?: string[] | null;
 }
 
 /**

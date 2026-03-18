@@ -14,16 +14,18 @@ function ServersSettings() {
 	const [showAddServerDialog, setShowAddServerDialog] = useState(false);
 	const { servers, addServer, removeServer } = useServers();
 
+	const visibleServers = servers.filter((s: Server) => s.status !== "hidden");
+
 	return (
 		<div className="space-y-4">
 			<h2 className="text-2xl font-semibold mb-4">Servers</h2>
 			<div className="space-y-2">
-				{servers.length === 0 && (
+				{visibleServers.length === 0 && (
 					<p className="text-sm text-muted-foreground py-2">
 						No servers configured.
 					</p>
 				)}
-				{servers.map((server: Server) => (
+				{visibleServers.map((server: Server) => (
 					<div
 						key={server.url}
 						className="flex items-center gap-3 p-3 rounded-lg border border-border"
@@ -40,6 +42,11 @@ function ServersSettings() {
 								{server.isLocal && (
 									<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
 										local
+									</span>
+								)}
+								{server.status === "advertise" && (
+									<span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 px-1.5 py-0.5 rounded">
+										migration suggested
 									</span>
 								)}
 							</div>

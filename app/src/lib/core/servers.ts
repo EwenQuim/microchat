@@ -1,3 +1,5 @@
+export type ServerStatus = "active" | "hidden" | "advertise";
+
 export interface Server {
 	url: string; // domain or http://... (no https://, no trailing slash)
 	quickname: string;
@@ -5,6 +7,8 @@ export interface Server {
 	color?: string;
 	addedAt: number;
 	isLocal?: boolean;
+	status?: ServerStatus; // omitted = "active"
+	suggestedBy?: string; // URL of server that suggested this one
 }
 
 /** Strip https:// before storage; keep http://; trim and remove trailing slash. */

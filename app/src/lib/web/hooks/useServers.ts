@@ -36,6 +36,7 @@ export function useServers() {
 				const info = res.data as {
 					suggested_quickname?: string;
 					description?: string;
+					suggested_servers?: string[] | null;
 				};
 				upsertServer({
 					url: localUrl,
@@ -44,6 +45,17 @@ export function useServers() {
 					isLocal: true,
 					addedAt: Date.now(),
 				});
+				const advertised = (info.suggested_servers ?? []).slice(0, 10);
+				for (const rawUrl of advertised) {
+					const normalized = normalizeServerUrl(rawUrl);
+					upsertServer({
+						url: normalized,
+						quickname: normalized,
+						addedAt: Date.now(),
+						status: "advertise",
+						suggestedBy: localUrl,
+					});
+				}
 				setServersState(getServers());
 			})
 			.catch(() => {

@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	Port         string
-	AdminPubkeys []string
-	QuickName    string
-	Description  string
+	Port                string
+	AdminPubkeys        []string
+	QuickName           string
+	Description         string
+	SuggestedServerList []string
 }
 
 func Load() *Config {
@@ -32,10 +33,23 @@ func Load() *Config {
 		}
 	}
 
+	// Parse comma-separated list of suggested server URLs
+	suggestedServerListStr := os.Getenv("SUGGESTED_SERVER_LIST")
+	var suggestedServerList []string
+	if suggestedServerListStr != "" {
+		for url := range strings.SplitSeq(suggestedServerListStr, ",") {
+			trimmed := strings.TrimSpace(url)
+			if trimmed != "" {
+				suggestedServerList = append(suggestedServerList, trimmed)
+			}
+		}
+	}
+
 	return &Config{
-		Port:         port,
-		AdminPubkeys: adminPubkeys,
-		QuickName:    quickName,
-		Description:  description,
+		Port:                port,
+		AdminPubkeys:        adminPubkeys,
+		QuickName:           quickName,
+		Description:         description,
+		SuggestedServerList: suggestedServerList,
 	}
 }

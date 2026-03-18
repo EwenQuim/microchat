@@ -188,7 +188,7 @@ export type HTTPStatusCodes =
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 
@@ -410,7 +410,7 @@ export function useGETApiRooms<
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 
@@ -562,7 +562,7 @@ export const usePOSTApiRooms = <TError = HTTPError | void, TContext = unknown>(
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 
@@ -810,7 +810,7 @@ export function useGETApiRoomsSearch<
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 
@@ -1078,7 +1078,7 @@ export function useGETApiRoomsRoomMessages<
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
-- `github.com/EwenQuim/microchat/internal/handlers.corsMiddleware`
+- `github.com/jub0bs/cors.(*Middleware).Wrap`
 
 ---
 
