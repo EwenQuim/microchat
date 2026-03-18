@@ -2,6 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useGETApiUsersPublicKey } from "@/lib/api/generated/user/user";
 import { hexToNpub } from "@/lib/core/crypto";
@@ -22,6 +30,8 @@ function UserProfilePage() {
 	const { data: response, isLoading, error } = useGETApiUsersPublicKey(pubkey);
 
 	const [displayNameInput, setDisplayNameInput] = useState(displayName);
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [added, setAdded] = useState(false);
 
 	if (isLoading) {
 		return (
@@ -97,25 +107,43 @@ function UserProfilePage() {
 						<Button variant="destructive" onClick={() => removeContact(npub)}>
 							Remove Contact
 						</Button>
+					) : added ? (
+						<p className="text-sm text-green-500">✓ Contact added</p>
 					) : (
-						<div className="space-y-2">
-							<Input
-								placeholder="Display name"
-								value={displayNameInput}
-								onChange={(e) => setDisplayNameInput(e.target.value)}
-							/>
-							<Button
-								variant="outline"
-								onClick={() =>
-									addContact(npub, displayNameInput.trim() || npub)
-								}
-							>
-								Add Contact
-							</Button>
-						</div>
+						<Button variant="outline" onClick={() => setDialogOpen(true)}>
+							Add Contact
+						</Button>
 					)}
 				</div>
 			</div>
+
+			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Add Contact</DialogTitle>
+					</DialogHeader>
+					<Input
+						placeholder="Display name"
+						value={displayNameInput}
+						onChange={(e) => setDisplayNameInput(e.target.value)}
+						autoFocus
+					/>
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="ghost">Cancel</Button>
+						</DialogClose>
+						<Button
+							onClick={() => {
+								addContact(npub, displayNameInput.trim() || npub);
+								setDialogOpen(false);
+								setAdded(true);
+							}}
+						>
+							Confirm
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

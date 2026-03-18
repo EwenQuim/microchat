@@ -214,7 +214,7 @@ func TestChatModel_CursorMode_UpMovesUp(t *testing.T) {
 	}
 }
 
-func TestChatModel_CursorMode_AEmitsMsg(t *testing.T) {
+func TestChatModel_CursorMode_AEntersRenameMode(t *testing.T) {
 	id, err := generateIdentity()
 	if err != nil {
 		t.Fatalf("generateIdentity: %v", err)
@@ -230,10 +230,81 @@ func TestChatModel_CursorMode_AEmitsMsg(t *testing.T) {
 	m.msgCursorMode = true
 	m.msgCursor = 0
 
-	_, cmd := m.update(pressRealChar('a', "a"))
+	m2, cmd := m.update(pressRealChar('a', "a"))
+
+	if cmd != nil {
+		t.Error("expected nil cmd — rename mode should not emit immediately")
+	}
+	if !m2.chatRenameMode {
+		t.Error("expected chatRenameMode=true after pressing a")
+	}
+	if m2.renameInput != user {
+		t.Errorf("renameInput = %q, want %q (pre-filled from message user)", m2.renameInput, user)
+	}
+	if m2.pendingPubKey != pk {
+		t.Errorf("pendingPubKey = %q, want %q", m2.pendingPubKey, pk)
+	}
+}
+
+func TestChatModel_RenameMode_TypingAppendsToInput(t *testing.T) {
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.chatRenameMode = true
+	m.renameInput = "alice"
+
+	m2, _ := m.update(pressRealChar('x', "x"))
+
+	if m2.renameInput != "alicex" {
+		t.Errorf("renameInput = %q, want %q", m2.renameInput, "alicex")
+	}
+}
+
+func TestChatModel_RenameMode_BackspaceDeletes(t *testing.T) {
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.chatRenameMode = true
+	m.renameInput = "alice"
+
+	m2, _ := m.update(pressKey(tea.KeyBackspace))
+
+	if m2.renameInput != "alic" {
+		t.Errorf("renameInput = %q, want %q after backspace", m2.renameInput, "alic")
+	}
+}
+
+func TestChatModel_RenameMode_EscExits(t *testing.T) {
+	pk := "abc123"
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.chatRenameMode = true
+	m.renameInput = "alice"
+	m.pendingPubKey = pk
+
+	m2, _ := m.update(pressKey(tea.KeyEscape))
+
+	if m2.chatRenameMode {
+		t.Error("expected chatRenameMode=false after esc")
+	}
+	if m2.renameInput != "" {
+		t.Errorf("renameInput = %q, want empty after esc", m2.renameInput)
+	}
+	if m2.pendingPubKey != "" {
+		t.Errorf("pendingPubKey = %q, want empty after esc", m2.pendingPubKey)
+	}
+}
+
+func TestChatModel_RenameMode_EnterEmitsMsg(t *testing.T) {
+	id, err := generateIdentity()
+	if err != nil {
+		t.Fatalf("generateIdentity: %v", err)
+	}
+	pk := id.PubKeyHex
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.chatRenameMode = true
+	m.renameInput = "alice renamed"
+	m.pendingPubKey = pk
+
+	m2, cmd := m.update(pressKey(tea.KeyEnter))
 
 	if cmd == nil {
-		t.Fatal("expected non-nil cmd after pressing a with a pubkey message")
+		t.Fatal("expected non-nil cmd after pressing enter in rename mode")
 	}
 	result := cmd()
 	ac, ok := result.(addContactFromChatMsg)
@@ -243,8 +314,30 @@ func TestChatModel_CursorMode_AEmitsMsg(t *testing.T) {
 	if ac.pubKeyHex != pk {
 		t.Errorf("pubKeyHex = %q, want %q", ac.pubKeyHex, pk)
 	}
-	if ac.displayName != user {
-		t.Errorf("displayName = %q, want %q", ac.displayName, user)
+	if ac.displayName != "alice renamed" {
+		t.Errorf("displayName = %q, want %q", ac.displayName, "alice renamed")
+	}
+	if m2.chatRenameMode {
+		t.Error("expected chatRenameMode=false after enter")
+	}
+	if !strings.Contains(m2.statusMsg, "alice renamed") {
+		t.Errorf("statusMsg = %q, expected to contain contact name", m2.statusMsg)
+	}
+}
+
+func TestChatModel_View_RenameMode_ShowsPrompt(t *testing.T) {
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "bob")
+	m.loading = false
+	m.chatRenameMode = true
+	m.renameInput = "alice"
+
+	v := m.viewPanel(60, 10, true)
+
+	if !strings.Contains(v, "Add contact as:") {
+		t.Errorf("expected 'Add contact as:' in view when chatRenameMode, got:\n%s", v)
+	}
+	if !strings.Contains(v, "alice") {
+		t.Errorf("expected renameInput 'alice' in view, got:\n%s", v)
 	}
 }
 

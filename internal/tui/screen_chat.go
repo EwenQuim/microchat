@@ -61,6 +61,11 @@ type chatModel struct {
 
 	msgCursorMode bool // true = message cursor active
 	msgCursor     int  // absolute index into m.messages
+
+	chatRenameMode bool   // true = waiting for user to confirm display name
+	pendingPubKey  string // pubkey of the contact being added
+	renameInput    string // editable display name (pre-filled from message)
+	statusMsg      string // success message shown after adding
 }
 
 func newChatModel(client *generated.ClientWithResponses, server serverConfig, room, password string, id *identity, username string) chatModel {
@@ -190,7 +195,33 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 					m.inputText += t
 				}
 			}
+		} else if m.chatRenameMode {
+			switch msg.String() {
+			case "esc":
+				m.chatRenameMode = false
+				m.renameInput = ""
+				m.pendingPubKey = ""
+			case "backspace":
+				if _, size := utf8.DecodeLastRuneInString(m.renameInput); size > 0 {
+					m.renameInput = m.renameInput[:len(m.renameInput)-size]
+				}
+			case "enter":
+				pk := m.pendingPubKey
+				name := m.renameInput
+				m.chatRenameMode = false
+				m.renameInput = ""
+				m.pendingPubKey = ""
+				m.statusMsg = "Contact added: " + name
+				return m, func() tea.Msg {
+					return addContactFromChatMsg{pubKeyHex: pk, displayName: name}
+				}
+			default:
+				if t := msg.Key().Text; t != "" {
+					m.renameInput += t
+				}
+			}
 		} else if m.msgCursorMode {
+			m.statusMsg = ""
 			switch msg.String() {
 			case "esc":
 				m.msgCursorMode = false
@@ -213,13 +244,14 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 					if selected.User != nil && *selected.User != "" {
 						userStr = *selected.User
 					}
-					pk := *selected.Pubkey
-					return m, func() tea.Msg {
-						return addContactFromChatMsg{pubKeyHex: pk, displayName: userStr}
-					}
+					m.pendingPubKey = *selected.Pubkey
+					m.renameInput = userStr
+					m.chatRenameMode = true
+					return m, nil
 				}
 			}
 		} else {
+			m.statusMsg = ""
 			switch msg.String() {
 			case "i":
 				m.typing = true
@@ -322,29 +354,37 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 	}
 
 	b.WriteString(sep + "\n")
-	cursor := ""
-	if m.typing {
-		cursor = "█"
-	}
-	if m.username != "" && m.id != nil {
-		r, g, bv := m.cachedColor(m.id.PubKeyHex)
-		coloredName := ansiColor(m.username, r, g, bv)
-
-		truncPk := m.id.PubKeyHex
-		if pk := m.id.PubKeyHex; len(pk) >= 8 {
-			npub, err := pubKeyHexToNpub(pk)
-			if err == nil && len(npub) >= 8 {
-				truncPk = npub[len(npub)-8:]
-			}
-		}
-		b.WriteString(" " + coloredName + " " + dim(truncPk) + " > " + m.inputText + cursor + "\n")
-	} else if m.username != "" {
-		b.WriteString(" " + m.username + " > " + m.inputText + cursor + "\n")
+	if m.chatRenameMode {
+		b.WriteString(" Add contact as: " + m.renameInput + "█\n")
 	} else {
-		b.WriteString(" (no username) > " + m.inputText + cursor + "\n")
+		cursor := ""
+		if m.typing {
+			cursor = "█"
+		}
+		if m.username != "" && m.id != nil {
+			r, g, bv := m.cachedColor(m.id.PubKeyHex)
+			coloredName := ansiColor(m.username, r, g, bv)
+
+			truncPk := m.id.PubKeyHex
+			if pk := m.id.PubKeyHex; len(pk) >= 8 {
+				npub, err := pubKeyHexToNpub(pk)
+				if err == nil && len(npub) >= 8 {
+					truncPk = npub[len(npub)-8:]
+				}
+			}
+			b.WriteString(" " + coloredName + " " + dim(truncPk) + " > " + m.inputText + cursor + "\n")
+		} else if m.username != "" {
+			b.WriteString(" " + m.username + " > " + m.inputText + cursor + "\n")
+		} else {
+			b.WriteString(" (no username) > " + m.inputText + cursor + "\n")
+		}
 	}
 	if m.err != "" {
 		b.WriteString(" Err: " + m.err + "\n")
+	} else if m.statusMsg != "" {
+		b.WriteString(" ✓ " + m.statusMsg + "\n")
+	} else if m.chatRenameMode {
+		b.WriteString(helpBar("enter", "confirm", "esc", "cancel") + "\n")
 	} else if m.typing {
 		b.WriteString(helpBar("esc", "exit", "enter", "send", "⌫", "delete") + "\n")
 	} else if m.msgCursorMode {
