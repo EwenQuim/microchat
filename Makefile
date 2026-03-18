@@ -80,6 +80,7 @@ lint:
 	go tool modernize -fix ./...
 	golangci-lint run --config .golangci.yml
 	cd app && npm run format
+	cd app && npm run lint
 
 clean:
 	@echo "Cleaning build artifacts..."
