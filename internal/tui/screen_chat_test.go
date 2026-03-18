@@ -375,8 +375,8 @@ func TestChatModel_View_CursorMode_ShowsArrow(t *testing.T) {
 
 	v := m.viewPanel(60, 10, true)
 
-	if !strings.Contains(v, "▶") {
-		t.Errorf("expected ▶ in view when in cursor mode, got:\n%s", v)
+	if !strings.Contains(v, ">") {
+		t.Errorf("expected > in view when in cursor mode, got:\n%s", v)
 	}
 }
 

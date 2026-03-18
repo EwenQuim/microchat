@@ -286,7 +286,7 @@ func TestContactsModel_View_ShowsCursor(t *testing.T) {
 		contactEntry{PubKey: "bbb", DisplayName: "Bob"},
 	)
 	v := m.view(80, 24)
-	if !strings.Contains(v, "▶") {
+	if !strings.Contains(v, ">") {
 		t.Error("view should show cursor indicator for selected row")
 	}
 }

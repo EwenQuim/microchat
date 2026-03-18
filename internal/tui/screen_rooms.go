@@ -434,7 +434,7 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 			for i, sr := range m.serverRooms {
 				cursor := "  "
 				if i == m.cursor {
-					cursor = "▶ "
+					cursor = "> "
 				}
 				b.WriteString(roomLine(sr, cursor))
 			}
@@ -452,7 +452,7 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 			for i, sr := range m.serverRooms {
 				cursor := "  "
 				if i == m.cursor {
-					cursor = "▶ "
+					cursor = "> "
 				}
 				b.WriteString(roomLine(sr, cursor))
 			}

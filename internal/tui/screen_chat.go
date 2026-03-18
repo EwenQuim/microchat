@@ -376,7 +376,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			coloredUser := ansiColor(user, r, g, bv)
 			prefix := " "
 			if m.msgCursorMode && start+i == m.msgCursor {
-				prefix = "▶"
+				prefix = ">"
 			}
 			fmt.Fprintf(&b, "%s %s%s%s %s\n", prefix, coloredUser, suffix, dim(":"), content)
 		}

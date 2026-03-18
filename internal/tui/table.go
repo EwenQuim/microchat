@@ -24,7 +24,7 @@ func renderTable(cols []table.Column, rows []table.Row, cursor int, pad string) 
 	for i, row := range rows {
 		indicator := " "
 		if i == cursor {
-			indicator = "▶"
+			indicator = ">"
 		}
 		newRows[i] = append(table.Row{indicator}, row...)
 	}
