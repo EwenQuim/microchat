@@ -435,7 +435,7 @@ func TestChatModel_View_ContactHidesKeyLabel(t *testing.T) {
 	}
 }
 
-func TestChatModel_View_ContactCheckmark(t *testing.T) {
+func TestChatModel_View_ContactNoCheckmark(t *testing.T) {
 	id, err := generateIdentity()
 	if err != nil {
 		t.Fatalf("generateIdentity: %v", err)
@@ -455,8 +455,8 @@ func TestChatModel_View_ContactCheckmark(t *testing.T) {
 
 	v := m.viewPanel(80, 10, true)
 
-	if !strings.Contains(v, "✓") {
-		t.Errorf("view should show ✓ for known contact, got:\n%s", v)
+	if strings.Contains(v, "✓") {
+		t.Errorf("view should not show ✓ for contact, got:\n%s", v)
 	}
 }
 

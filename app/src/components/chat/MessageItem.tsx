@@ -30,10 +30,7 @@ export function MessageItem({ message, isOwn, sigStatus }: MessageItemProps) {
 		pubkey !== "anonymous" && pubkey ? hexToNpub(pubkey) : pubkey;
 
 	const contact = contacts.find((c) => c.npub === fullNpub);
-	const isContact = !!contact;
-	const displayName = isContact
-		? contact.displayName
-		: message.user || "Anonymous";
+	const displayName = contact?.displayName || message.user || "Anonymous";
 
 	const formatPubkey = (pk: string): string => {
 		if (pk === "anonymous" || !pk) return "anonymous";
@@ -67,11 +64,7 @@ export function MessageItem({ message, isOwn, sigStatus }: MessageItemProps) {
 					>
 						{displayName}
 					</Link>
-					{isContact ? (
-						<span className="text-xs text-muted-foreground" title={fullNpub}>
-							✓
-						</span>
-					) : (
+					{!contact && (
 						<Link
 							to="/user/$pubkey"
 							params={{ pubkey }}

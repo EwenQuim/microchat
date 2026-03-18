@@ -339,6 +339,9 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 					truncPk = npub[len(npub)-8:]
 				}
 			}
+			if m.id != nil && fullPk == m.id.PubKeyHex {
+				truncPk = "(me)"
+			}
 			contactName := ""
 			for _, c := range m.contacts {
 				if c.PubKey == fullPk {
@@ -362,9 +365,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			suffix := ""
 			if m.invalidSigs[msgKey(msg, start+i)] {
 				suffix = " \x1b[33m⚠\x1b[0m"
-			} else if isContact {
-				suffix = " " + dim("✓")
-			} else if truncPk != "" {
+			} else if !isContact && truncPk != "" {
 				suffix = " " + dim(truncPk)
 			}
 			colorKey := user
@@ -392,15 +393,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		if m.username != "" && m.id != nil {
 			r, g, bv := m.cachedColor(m.id.PubKeyHex)
 			coloredName := ansiColor(m.username, r, g, bv)
-
-			truncPk := m.id.PubKeyHex
-			if pk := m.id.PubKeyHex; len(pk) >= 8 {
-				npub, err := pubKeyHexToNpub(pk)
-				if err == nil && len(npub) >= 8 {
-					truncPk = npub[len(npub)-8:]
-				}
-			}
-			b.WriteString(" " + coloredName + " " + dim(truncPk) + " > " + m.inputText + cursor + "\n")
+			b.WriteString(" " + coloredName + " " + dim("(me)") + " > " + m.inputText + cursor + "\n")
 		} else if m.username != "" {
 			b.WriteString(" " + m.username + " > " + m.inputText + cursor + "\n")
 		} else {
