@@ -13,11 +13,8 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as UserPubkeyRouteImport } from './routes/user.$pubkey'
-import { Route as SettingsUserRouteImport } from './routes/settings/user'
 import { Route as SettingsServersRouteImport } from './routes/settings/servers'
-import { Route as SettingsImportRouteImport } from './routes/settings/import'
 import { Route as SettingsIdentitiesRouteImport } from './routes/settings/identities'
-import { Route as SettingsExportRouteImport } from './routes/settings/export'
 import { Route as SettingsContactsRouteImport } from './routes/settings/contacts'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as ChatRoomNameRouteImport } from './routes/chat.$roomName'
@@ -42,29 +39,14 @@ const UserPubkeyRoute = UserPubkeyRouteImport.update({
   path: '/user/$pubkey',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsUserRoute = SettingsUserRouteImport.update({
-  id: '/user',
-  path: '/user',
-  getParentRoute: () => SettingsRoute,
-} as any)
 const SettingsServersRoute = SettingsServersRouteImport.update({
   id: '/servers',
   path: '/servers',
   getParentRoute: () => SettingsRoute,
 } as any)
-const SettingsImportRoute = SettingsImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => SettingsRoute,
-} as any)
 const SettingsIdentitiesRoute = SettingsIdentitiesRouteImport.update({
   id: '/identities',
   path: '/identities',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsExportRoute = SettingsExportRouteImport.update({
-  id: '/export',
-  path: '/export',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsContactsRoute = SettingsContactsRouteImport.update({
@@ -89,11 +71,8 @@ export interface FileRoutesByFullPath {
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/settings/contacts': typeof SettingsContactsRoute
-  '/settings/export': typeof SettingsExportRoute
   '/settings/identities': typeof SettingsIdentitiesRoute
-  '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
-  '/settings/user': typeof SettingsUserRoute
   '/user/$pubkey': typeof UserPubkeyRoute
   '/settings/': typeof SettingsIndexRoute
 }
@@ -102,11 +81,8 @@ export interface FileRoutesByTo {
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/settings/contacts': typeof SettingsContactsRoute
-  '/settings/export': typeof SettingsExportRoute
   '/settings/identities': typeof SettingsIdentitiesRoute
-  '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
-  '/settings/user': typeof SettingsUserRoute
   '/user/$pubkey': typeof UserPubkeyRoute
   '/settings': typeof SettingsIndexRoute
 }
@@ -117,11 +93,8 @@ export interface FileRoutesById {
   '/chat/$roomName': typeof ChatRoomNameRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/settings/contacts': typeof SettingsContactsRoute
-  '/settings/export': typeof SettingsExportRoute
   '/settings/identities': typeof SettingsIdentitiesRoute
-  '/settings/import': typeof SettingsImportRoute
   '/settings/servers': typeof SettingsServersRoute
-  '/settings/user': typeof SettingsUserRoute
   '/user/$pubkey': typeof UserPubkeyRoute
   '/settings/': typeof SettingsIndexRoute
 }
@@ -133,11 +106,8 @@ export interface FileRouteTypes {
     | '/chat/$roomName'
     | '/demo/tanstack-query'
     | '/settings/contacts'
-    | '/settings/export'
     | '/settings/identities'
-    | '/settings/import'
     | '/settings/servers'
-    | '/settings/user'
     | '/user/$pubkey'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -146,11 +116,8 @@ export interface FileRouteTypes {
     | '/chat/$roomName'
     | '/demo/tanstack-query'
     | '/settings/contacts'
-    | '/settings/export'
     | '/settings/identities'
-    | '/settings/import'
     | '/settings/servers'
-    | '/settings/user'
     | '/user/$pubkey'
     | '/settings'
   id:
@@ -160,11 +127,8 @@ export interface FileRouteTypes {
     | '/chat/$roomName'
     | '/demo/tanstack-query'
     | '/settings/contacts'
-    | '/settings/export'
     | '/settings/identities'
-    | '/settings/import'
     | '/settings/servers'
-    | '/settings/user'
     | '/user/$pubkey'
     | '/settings/'
   fileRoutesById: FileRoutesById
@@ -207,13 +171,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserPubkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/user': {
-      id: '/settings/user'
-      path: '/user'
-      fullPath: '/settings/user'
-      preLoaderRoute: typeof SettingsUserRouteImport
-      parentRoute: typeof SettingsRoute
-    }
     '/settings/servers': {
       id: '/settings/servers'
       path: '/servers'
@@ -221,25 +178,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsServersRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/import': {
-      id: '/settings/import'
-      path: '/import'
-      fullPath: '/settings/import'
-      preLoaderRoute: typeof SettingsImportRouteImport
-      parentRoute: typeof SettingsRoute
-    }
     '/settings/identities': {
       id: '/settings/identities'
       path: '/identities'
       fullPath: '/settings/identities'
       preLoaderRoute: typeof SettingsIdentitiesRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/export': {
-      id: '/settings/export'
-      path: '/export'
-      fullPath: '/settings/export'
-      preLoaderRoute: typeof SettingsExportRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/contacts': {
@@ -268,21 +211,15 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsContactsRoute: typeof SettingsContactsRoute
-  SettingsExportRoute: typeof SettingsExportRoute
   SettingsIdentitiesRoute: typeof SettingsIdentitiesRoute
-  SettingsImportRoute: typeof SettingsImportRoute
   SettingsServersRoute: typeof SettingsServersRoute
-  SettingsUserRoute: typeof SettingsUserRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsContactsRoute: SettingsContactsRoute,
-  SettingsExportRoute: SettingsExportRoute,
   SettingsIdentitiesRoute: SettingsIdentitiesRoute,
-  SettingsImportRoute: SettingsImportRoute,
   SettingsServersRoute: SettingsServersRoute,
-  SettingsUserRoute: SettingsUserRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 
