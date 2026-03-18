@@ -2,13 +2,21 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/EwenQuim/microchat/internal/models"
 )
 
+// MessageQueryParams controls pagination for GetMessages.
+// Zero values apply defaults: Limit=50, Before=now.
+type MessageQueryParams struct {
+	Limit  int        // 0 = default (50)
+	Before *time.Time // nil = latest
+}
+
 type Repository interface {
 	SaveMessage(ctx context.Context, room, user, content, signature, pubkey string, timestamp int64) (*models.Message, error)
-	GetMessages(ctx context.Context, room string) ([]models.Message, error)
+	GetMessages(ctx context.Context, room string, params MessageQueryParams) ([]models.Message, error)
 	GetRooms(ctx context.Context) ([]models.Room, error)
 	SearchRooms(ctx context.Context, query string) ([]models.Room, error)
 	CreateRoom(ctx context.Context, name string, password *string) (*models.Room, error)
@@ -38,8 +46,8 @@ func (s *ChatService) SendMessage(ctx context.Context, room, user, content, sign
 	return s.repo.SaveMessage(ctx, room, user, content, signature, pubkey, timestamp)
 }
 
-func (s *ChatService) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
-	return s.repo.GetMessages(ctx, room)
+func (s *ChatService) GetMessages(ctx context.Context, room string, params MessageQueryParams) ([]models.Message, error) {
+	return s.repo.GetMessages(ctx, room, params)
 }
 
 func (s *ChatService) GetRooms(ctx context.Context) ([]models.Room, error) {

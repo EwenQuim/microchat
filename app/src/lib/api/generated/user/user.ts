@@ -171,7 +171,7 @@ export type HTTPStatusCodes =
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func7`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetUser.func12`
 
 #### Middlewares:
 
@@ -181,7 +181,7 @@ export type HTTPStatusCodes =
 ---
 
 
- * @summary func7
+ * @summary func12
  */
 export type gETApiUsersPublicKeyResponse200ApplicationJson = {
 	data: User;
@@ -376,7 +376,7 @@ export function useGETApiUsersPublicKey<
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary func7
+ * @summary func12
  */
 
 export function useGETApiUsersPublicKey<

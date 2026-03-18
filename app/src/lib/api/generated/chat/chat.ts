@@ -189,6 +189,7 @@ export type HTTPStatusCodes =
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
 - `github.com/jub0bs/cors.(*Middleware).Wrap`
+- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func3`
 
 ---
 
@@ -405,17 +406,18 @@ export function useGETApiRooms<
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func4`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.CreateRoom.func6`
 
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
 - `github.com/jub0bs/cors.(*Middleware).Wrap`
+- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func7`
 
 ---
 
 
- * @summary func4
+ * @summary func6
  */
 export type pOSTApiRoomsResponse200ApplicationJson = {
 	data: Room;
@@ -533,7 +535,7 @@ export type POSTApiRoomsMutationBody = CreateRoomRequest;
 export type POSTApiRoomsMutationError = HTTPError | void;
 
 /**
- * @summary func4
+ * @summary func6
  */
 export const usePOSTApiRooms = <TError = HTTPError | void, TContext = unknown>(
 	options?: {
@@ -557,17 +559,18 @@ export const usePOSTApiRooms = <TError = HTTPError | void, TContext = unknown>(
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func3`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SearchRooms.func4`
 
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
 - `github.com/jub0bs/cors.(*Middleware).Wrap`
+- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func5`
 
 ---
 
 
- * @summary func3
+ * @summary func4
  */
 export type gETApiRoomsSearchResponse200ApplicationJson = {
 	data: Room[];
@@ -770,7 +773,7 @@ export function useGETApiRoomsSearch<
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary func3
+ * @summary func4
  */
 
 export function useGETApiRoomsSearch<
@@ -805,17 +808,18 @@ export function useGETApiRoomsSearch<
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func5`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.GetMessages.func8`
 
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
 - `github.com/jub0bs/cors.(*Middleware).Wrap`
+- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.IPRateLimit.func9`
 
 ---
 
 
- * @summary func5
+ * @summary func8
  */
 export type gETApiRoomsRoomMessagesResponse200ApplicationJson = {
 	data: Message[];
@@ -1033,7 +1037,7 @@ export function useGETApiRoomsRoomMessages<
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary func5
+ * @summary func8
  */
 
 export function useGETApiRoomsRoomMessages<
@@ -1073,17 +1077,18 @@ export function useGETApiRoomsRoomMessages<
 /**
  * #### Controller: 
 
-`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func6`
+`github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.SendMessage.func10`
 
 #### Middlewares:
 
 - `github.com/go-fuego/fuego.defaultLogger.middleware`
 - `github.com/jub0bs/cors.(*Middleware).Wrap`
+- `github.com/EwenQuim/microchat/internal/handlers.RegisterChatRoutes.MessageRateLimit.func11`
 
 ---
 
 
- * @summary func6
+ * @summary func10
  */
 export type pOSTApiRoomsRoomMessagesResponse200ApplicationJson = {
 	data: Message;
@@ -1205,7 +1210,7 @@ export type POSTApiRoomsRoomMessagesMutationBody = SendMessageRequest;
 export type POSTApiRoomsRoomMessagesMutationError = HTTPError | void;
 
 /**
- * @summary func6
+ * @summary func10
  */
 export const usePOSTApiRoomsRoomMessages = <
 	TError = HTTPError | void,

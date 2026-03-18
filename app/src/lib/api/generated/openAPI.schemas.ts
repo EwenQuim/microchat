@@ -184,10 +184,10 @@ export interface Room {
  */
 export interface SendMessageRequest {
 	content: string;
-	pubkey?: string | null;
+	pubkey: string;
 	room_password?: string | null;
-	signature?: string | null;
-	timestamp?: number | null;
+	signature: string;
+	timestamp: number;
 	user: string;
 }
 
@@ -197,7 +197,7 @@ export interface SendMessageRequest {
 export interface ServerInfoResponse {
 	description?: string;
 	suggested_quickname?: string;
-	suggested_servers?: string[] | null;
+	suggested_servers?: (string | null)[] | null;
 }
 
 /**
@@ -226,4 +226,6 @@ export type GETApiRoomsSearchParams = {
 
 export type GETApiRoomsRoomMessagesParams = {
 	password?: string;
+	limit?: number;
+	before?: string;
 };

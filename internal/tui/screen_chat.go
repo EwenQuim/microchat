@@ -33,6 +33,12 @@ type messagesLoadedMsg struct {
 	err      error
 }
 
+// olderMessagesLoadedMsg carries older (paginated) messages or an error.
+type olderMessagesLoadedMsg struct {
+	messages []generated.Message
+	err      error
+}
+
 // messageSentMsg is sent after posting a message.
 type messageSentMsg struct {
 	err error
@@ -70,6 +76,10 @@ type chatModel struct {
 	pendingPubKey  string // pubkey of the contact being added
 	renameInput    string // editable display name (pre-filled from message)
 	statusMsg      string // success message shown after adding
+
+	hasMore      bool
+	loadingOlder bool
+	oldestTime   *time.Time
 }
 
 func newChatModel(client *generated.ClientWithResponses, server serverConfig, room, password string, id *identity, username string) chatModel {
@@ -83,6 +93,7 @@ func newChatModel(client *generated.ClientWithResponses, server serverConfig, ro
 		loading:     true,
 		colorCache:  make(map[string][3]uint8),
 		invalidSigs: make(map[string]bool),
+		hasMore:     true,
 	}
 }
 
@@ -104,7 +115,9 @@ func (m chatModel) fetchMessages() tea.Cmd {
 	room := m.room
 	password := m.password
 	return func() tea.Msg {
-		params := &generated.GETapiroomsRoommessagesParams{}
+		params := &generated.GETapiroomsRoommessagesParams{
+			Limit: new(50),
+		}
 		if password != "" {
 			params.Password = &password
 		}
@@ -116,6 +129,34 @@ func (m chatModel) fetchMessages() tea.Cmd {
 			return messagesLoadedMsg{err: fmt.Errorf("server error: %d", resp.StatusCode())}
 		}
 		return messagesLoadedMsg{messages: *resp.JSON200}
+	}
+}
+
+func (m chatModel) fetchOlderMessages() tea.Cmd {
+	client := m.client
+	room := m.room
+	password := m.password
+	oldest := m.oldestTime
+	return func() tea.Msg {
+		if oldest == nil {
+			return olderMessagesLoadedMsg{err: fmt.Errorf("no oldest time")}
+		}
+		before := oldest.Format(time.RFC3339)
+		params := &generated.GETapiroomsRoommessagesParams{
+			Limit:  new(50),
+			Before: new(before),
+		}
+		if password != "" {
+			params.Password = &password
+		}
+		resp, err := client.GETapiroomsRoommessagesWithResponse(context.Background(), room, params)
+		if err != nil {
+			return olderMessagesLoadedMsg{err: err}
+		}
+		if resp.JSON200 == nil {
+			return olderMessagesLoadedMsg{err: fmt.Errorf("server error: %d", resp.StatusCode())}
+		}
+		return olderMessagesLoadedMsg{messages: *resp.JSON200}
 	}
 }
 
@@ -172,6 +213,34 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 			if sigInvalid(message) {
 				m.invalidSigs[key] = true
 			}
+		}
+		if len(m.messages) > 0 {
+			m.oldestTime = m.messages[0].Timestamp
+		}
+		m.hasMore = len(m.messages) == 50
+		return m, nil
+
+	case olderMessagesLoadedMsg:
+		m.loadingOlder = false
+		if msg.err != nil {
+			m.err = msg.err.Error()
+			return m, nil
+		}
+		prepended := len(msg.messages)
+		m.messages = append(msg.messages, m.messages...)
+		m.scroll += prepended
+		// Rebuild invalidSigs with new indices
+		m.invalidSigs = make(map[string]bool)
+		for i, message := range m.messages {
+			if sigInvalid(message) {
+				m.invalidSigs[msgKey(message, i)] = true
+			}
+		}
+		if prepended > 0 {
+			m.oldestTime = m.messages[0].Timestamp
+		}
+		if prepended < 50 {
+			m.hasMore = false
 		}
 		return m, nil
 
@@ -283,6 +352,11 @@ func (m chatModel) update(msg tea.Msg) (chatModel, tea.Cmd) {
 				}
 			case "up":
 				m.scroll++
+				// Heuristic: near top of loaded messages → fetch older
+				if len(m.messages)-m.scroll <= 3 && m.hasMore && !m.loadingOlder {
+					m.loadingOlder = true
+					return m, m.fetchOlderMessages()
+				}
 			case "down":
 				if m.scroll > 0 {
 					m.scroll--
@@ -327,8 +401,16 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 		end := min(start+contentHeight, len(m.messages))
 		// Pad empty lines above messages so they appear at the bottom
 		shown := end - start
+		// Reserve one line for "Loading older…" if needed
+		loadingOlderLine := m.loadingOlder && start == 0
+		if loadingOlderLine {
+			shown++ // account for the indicator line
+		}
 		for i := 0; i < contentHeight-shown; i++ {
 			b.WriteString("\n")
+		}
+		if loadingOlderLine {
+			b.WriteString(dim(" Loading older…") + "\n")
 		}
 		for i, msg := range m.messages[start:end] {
 			var fullPk, truncPk string

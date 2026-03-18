@@ -124,16 +124,29 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	return sqlcMessageToModel(sqlcMsg), nil
 }
 
-func (s *Store) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
+func (s *Store) GetMessages(ctx context.Context, room string, params services.MessageQueryParams) ([]models.Message, error) {
+	limit := params.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	before := time.Now().Add(time.Second)
+	if params.Before != nil {
+		before = *params.Before
+	}
 
-	sqlcMessages, err := s.queries.GetMessagesByRoom(ctx, room)
+	sqlcMessages, err := s.queries.GetMessagesByRoomPaginated(ctx, sqlc.GetMessagesByRoomPaginatedParams{
+		Room:      room,
+		Timestamp: before,
+		Limit:     int64(limit),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get messages: %w", err)
 	}
 
-	messages := make([]models.Message, 0, len(sqlcMessages))
-	for _, msg := range sqlcMessages {
-		messages = append(messages, *sqlcMessageToModel(msg))
+	// Results come DESC from DB; reverse to return ASC to callers
+	messages := make([]models.Message, len(sqlcMessages))
+	for i, msg := range sqlcMessages {
+		messages[len(sqlcMessages)-1-i] = *sqlcMessageToModel(msg)
 	}
 
 	return messages, nil

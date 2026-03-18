@@ -3,11 +3,12 @@ INSERT INTO messages (id, room, user, content, timestamp, signature, pubkey, sig
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
--- name: GetMessagesByRoom :many
+-- name: GetMessagesByRoomPaginated :many
 SELECT * FROM messages
 WHERE room = ?
-ORDER BY timestamp ASC
-LIMIT 100;
+  AND timestamp < ?
+ORDER BY timestamp DESC
+LIMIT ?;
 
 -- name: GetRoomsWithLasMessage :many
 SELECT

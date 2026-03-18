@@ -16,16 +16,18 @@ import (
 
 type GetMessagesQuery struct {
 	Password string `query:"password"`
+	Limit    int    `query:"limit"`
+	Before   string `query:"before"` // RFC3339
 }
 
 func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLimiter) func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 	return func(c fuego.ContextWithParams[GetMessagesQuery]) ([]models.Message, error) {
 		room := c.PathParam("room")
-		params, err := c.Params() //nolint:staticcheck // no replacement available yet in fuego
+		queryParams, err := c.Params() //nolint:staticcheck // no replacement available yet in fuego
 		if err != nil {
 			return nil, err
 		}
-		password := params.Password
+		password := queryParams.Password
 
 		err = chatService.ValidateRoomPassword(c.Context(), room, password)
 		if err != nil {
@@ -38,7 +40,21 @@ func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLi
 			return []models.Message{}, nil
 		}
 
-		return chatService.GetMessages(c.Context(), room)
+		msgParams := services.MessageQueryParams{
+			Limit: queryParams.Limit,
+		}
+		if queryParams.Before != "" {
+			t, parseErr := time.Parse(time.RFC3339, queryParams.Before)
+			if parseErr != nil {
+				return nil, fuego.HTTPError{Status: http.StatusBadRequest, Title: "Bad Request", Detail: "invalid 'before' timestamp: use RFC3339 format"}
+			}
+			msgParams.Before = &t
+		}
+		if msgParams.Limit > 200 {
+			msgParams.Limit = 200
+		}
+
+		return chatService.GetMessages(c.Context(), room, msgParams)
 	}
 }
 

@@ -79,16 +79,38 @@ func (s *Store) SaveMessage(ctx context.Context, room, user, content, signature,
 	return &msg, nil
 }
 
-func (s *Store) GetMessages(ctx context.Context, room string) ([]models.Message, error) {
+func (s *Store) GetMessages(ctx context.Context, room string, params services.MessageQueryParams) ([]models.Message, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	messages, exists := s.messages[room]
+	limit := params.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	before := time.Now().Add(time.Second)
+	if params.Before != nil {
+		before = *params.Before
+	}
+
+	all, exists := s.messages[room]
 	if !exists {
 		return []models.Message{}, nil
 	}
 
-	return messages, nil
+	// Collect messages with timestamp < before
+	filtered := make([]models.Message, 0, len(all))
+	for _, msg := range all {
+		if msg.Timestamp.Before(before) {
+			filtered = append(filtered, msg)
+		}
+	}
+
+	// Return the last `limit` entries (most recent before cursor), in ASC order
+	if len(filtered) > limit {
+		filtered = filtered[len(filtered)-limit:]
+	}
+
+	return filtered, nil
 }
 
 func (s *Store) GetRooms(ctx context.Context) ([]models.Room, error) {

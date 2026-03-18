@@ -19,7 +19,7 @@ type stubRepo struct{}
 func (s *stubRepo) SaveMessage(_ context.Context, _, _, _, _, _ string, _ int64) (*models.Message, error) {
 	return &models.Message{}, nil
 }
-func (s *stubRepo) GetMessages(_ context.Context, _ string) ([]models.Message, error) {
+func (s *stubRepo) GetMessages(_ context.Context, _ string, _ services.MessageQueryParams) ([]models.Message, error) {
 	return nil, nil
 }
 func (s *stubRepo) GetRooms(_ context.Context) ([]models.Room, error) { return nil, nil }
@@ -53,6 +53,32 @@ func newTestServer(t *testing.T) *fuego.Server {
 	apiGroup := fuego.Group(s, "/api")
 	RegisterChatRoutes(apiGroup, chatService, &config.Config{})
 	return s
+}
+
+func TestGetMessages_InvalidBefore_Returns400(t *testing.T) {
+	s := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/rooms/test/messages?before=not-a-date", nil)
+	w := httptest.NewRecorder()
+
+	s.Mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400 for invalid before param; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestGetMessages_ValidBefore_Returns200(t *testing.T) {
+	s := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/rooms/test/messages?before=2025-01-01T00:00:00Z&limit=10", nil)
+	w := httptest.NewRecorder()
+
+	s.Mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200 for valid before param; body: %s", w.Code, w.Body.String())
+	}
 }
 
 func TestSendMessage_MissingSignature_Returns400(t *testing.T) {

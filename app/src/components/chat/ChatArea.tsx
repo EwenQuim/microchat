@@ -34,14 +34,11 @@ export function ChatArea({
 	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | undefined>();
 	const queryClient = useQueryClient();
-	const { data: messages, isLoading } = useMessages(
-		roomName,
-		password,
-		serverUrl,
-	);
+	const { messages, isLoading, isLoadingOlder, hasMore, loadOlder } =
+		useMessages(roomName, password, serverUrl);
 
 	const sendMessageMutation = useSendMessage();
-	const sigStatuses = useSigVerification(messages ?? [], roomName ?? "");
+	const sigStatuses = useSigVerification(messages, roomName ?? "");
 
 	// Track successful room visits
 	useEffect(() => {
@@ -156,12 +153,15 @@ export function ChatArea({
 				</div>
 
 				<MessageList
-					messages={messages || []}
+					messages={messages}
 					isLoading={isLoading}
 					currentPubKey={currentPubKey}
 					className="flex-1 min-h-0"
 					onRetryPassword={() => setShowPasswordDialog(true)}
 					sigStatuses={sigStatuses}
+					hasMore={hasMore}
+					isLoadingOlder={isLoadingOlder}
+					onLoadOlder={loadOlder}
 				/>
 
 				<MessageInput

@@ -159,15 +159,22 @@ func (q *Queries) GetMessageCountByRoom(ctx context.Context, room string) (int64
 	return count, err
 }
 
-const getMessagesByRoom = `-- name: GetMessagesByRoom :many
+const getMessagesByRoomPaginated = `-- name: GetMessagesByRoomPaginated :many
 SELECT id, room, user, content, timestamp, signature, pubkey, signed_timestamp FROM messages
 WHERE room = ?
-ORDER BY timestamp ASC
-LIMIT 100
+  AND timestamp < ?
+ORDER BY timestamp DESC
+LIMIT ?
 `
 
-func (q *Queries) GetMessagesByRoom(ctx context.Context, room string) ([]Message, error) {
-	rows, err := q.db.QueryContext(ctx, getMessagesByRoom, room)
+type GetMessagesByRoomPaginatedParams struct {
+	Room      string    `json:"room"`
+	Timestamp time.Time `json:"timestamp"`
+	Limit     int64     `json:"limit"`
+}
+
+func (q *Queries) GetMessagesByRoomPaginated(ctx context.Context, arg GetMessagesByRoomPaginatedParams) ([]Message, error) {
+	rows, err := q.db.QueryContext(ctx, getMessagesByRoomPaginated, arg.Room, arg.Timestamp, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +233,7 @@ func (q *Queries) GetRoomPasswordHash(ctx context.Context, name string) (sql.Nul
 	return password_hash, err
 }
 
-const GetRoomsWithLasMessage = `-- name: GetRoomsWithLasMessage :many
+const getRoomsWithLasMessage = `-- name: GetRoomsWithLasMessage :many
 SELECT
     r.name,
     CASE WHEN r.password_hash IS NOT NULL THEN 1 ELSE 0 END as has_password,
@@ -250,7 +257,7 @@ ORDER BY last_msg.timestamp DESC, r.name ASC
 LIMIT 100
 `
 
-type GetRoomsWithMessageCountRow struct {
+type GetRoomsWithLasMessageRow struct {
 	Name                 string `json:"name"`
 	HasPassword          int64  `json:"has_password"`
 	LastMessageContent   string `json:"last_message_content"`
@@ -258,15 +265,15 @@ type GetRoomsWithMessageCountRow struct {
 	LastMessageTimestamp string `json:"last_message_timestamp"`
 }
 
-func (q *Queries) GetRoomsWithLasMessage(ctx context.Context) ([]GetRoomsWithMessageCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, GetRoomsWithLasMessage)
+func (q *Queries) GetRoomsWithLasMessage(ctx context.Context) ([]GetRoomsWithLasMessageRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRoomsWithLasMessage)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetRoomsWithMessageCountRow{}
+	items := []GetRoomsWithLasMessageRow{}
 	for rows.Next() {
-		var i GetRoomsWithMessageCountRow
+		var i GetRoomsWithLasMessageRow
 		if err := rows.Scan(
 			&i.Name,
 			&i.HasPassword,

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Message } from "@/lib/api/generated/openAPI.schemas";
@@ -13,6 +13,9 @@ interface MessageListProps {
 	className?: string;
 	onRetryPassword?: () => void;
 	sigStatuses?: Record<string, SigStatus> | null;
+	hasMore?: boolean;
+	isLoadingOlder?: boolean;
+	onLoadOlder?: () => void;
 }
 
 export function MessageList({
@@ -22,9 +25,14 @@ export function MessageList({
 	className,
 	onRetryPassword,
 	sigStatuses,
+	hasMore,
+	isLoadingOlder,
+	onLoadOlder,
 }: MessageListProps) {
-	const scrollRef = useRef<HTMLDivElement>(null);
+	const viewportRef = useRef<HTMLDivElement>(null);
 	const shouldAutoScroll = useRef(true);
+	const prevScrollHeightRef = useRef<number | null>(null);
+	const prevMessagesLengthRef = useRef(0);
 
 	const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
 		const target = e.currentTarget;
@@ -33,9 +41,58 @@ export function MessageList({
 		shouldAutoScroll.current = isAtBottom;
 	};
 
+	// Auto-scroll to bottom when new messages arrive at bottom
+	useEffect(() => {
+		const viewport = viewportRef.current;
+		if (!viewport) return;
+
+		const messagesLengthIncreased =
+			messages.length > prevMessagesLengthRef.current;
+		const messagesAppended =
+			messagesLengthIncreased &&
+			prevScrollHeightRef.current !== null &&
+			viewport.scrollHeight > prevScrollHeightRef.current;
+
+		if (messages.length > 0 && prevMessagesLengthRef.current === 0) {
+			// Initial load: scroll to bottom
+			viewport.scrollTop = viewport.scrollHeight;
+		} else if (messagesAppended && shouldAutoScroll.current) {
+			// New messages appended at bottom and user is near bottom
+			viewport.scrollTop = viewport.scrollHeight;
+		} else if (
+			messagesLengthIncreased &&
+			prevScrollHeightRef.current !== null &&
+			!shouldAutoScroll.current
+		) {
+			// Older messages prepended: preserve scroll position
+			const heightDiff = viewport.scrollHeight - prevScrollHeightRef.current;
+			viewport.scrollTop += heightDiff;
+		}
+
+		prevMessagesLengthRef.current = messages.length;
+		prevScrollHeightRef.current = viewport.scrollHeight;
+	}, [messages]);
+
 	return (
-		<ScrollArea className={cn("px-4", className)} onScroll={handleScroll}>
-			<div ref={scrollRef} className="pb-4">
+		<ScrollArea
+			className={cn("px-4", className)}
+			viewportRef={viewportRef}
+			onScroll={handleScroll}
+		>
+			<div className="pb-4">
+				{hasMore && (
+					<div className="text-center my-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onLoadOlder}
+							disabled={isLoadingOlder}
+						>
+							{isLoadingOlder ? "Loading..." : "Load older messages"}
+						</Button>
+					</div>
+				)}
+
 				{isLoading && messages.length === 0 && (
 					<div className="text-center text-muted-foreground my-8">
 						Loading messages...

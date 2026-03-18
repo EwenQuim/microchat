@@ -555,6 +555,20 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "before",
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"responses": {

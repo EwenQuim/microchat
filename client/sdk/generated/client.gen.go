@@ -120,6 +120,8 @@ type GETapiroomssearchParams struct {
 // GETapiroomsRoommessagesParams defines parameters for GETapiroomsRoommessages.
 type GETapiroomsRoommessagesParams struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty"`
+	Limit    *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Before   *string `form:"before,omitempty" json:"before,omitempty"`
 	Accept   *string `json:"Accept,omitempty"`
 }
 
@@ -624,6 +626,38 @@ func NewGETapiroomsRoommessagesRequest(server string, room string, params *GETap
 		if params.Password != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "password", *params.Password, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
