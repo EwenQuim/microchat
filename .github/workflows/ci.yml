@@ -32,10 +32,16 @@ jobs:
       - name: Build CLI
         run: make build-microchat
 
+      # install-mode: goinstall builds golangci-lint from source with this job's Go
+      # toolchain. Prebuilt binaries are compiled with go1.25, which refuses to lint a
+      # module targeting go1.26 ("language version used to build golangci-lint is lower
+      # than the targeted Go version"); building with go1.26 also gives analyzers that
+      # understand the go1.26 new(value) builtin.
       - name: Run linter
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7
+          version: v2.12.2
+          install-mode: goinstall
 
       - name: Run tests
         run: make test
