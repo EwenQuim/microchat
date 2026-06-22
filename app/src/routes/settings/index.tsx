@@ -2,7 +2,10 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings/")({
 	beforeLoad: () => {
-		throw redirect({ to: "/settings/identities", search: { import: undefined } });
+		throw redirect({
+			to: "/settings/identities",
+			search: { import: undefined },
+		});
 	},
 	component: () => null,
 });
