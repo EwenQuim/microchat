@@ -143,6 +143,35 @@ func TestChatModel_View_PubkeyOnlyDisplayName(t *testing.T) {
 	}
 }
 
+func TestChatModel_View_ShowsTimestamp(t *testing.T) {
+	pk := "abc123"
+	content := "hello world"
+	ts := time.Date(2020, 1, 1, 15, 4, 0, 0, time.UTC)
+	msg := generated.Message{Pubkey: &pk, Content: &content, Timestamp: &ts}
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+
+	v := m.viewPanel(60, 10, true)
+	if !strings.Contains(v, "15:04") {
+		t.Errorf("view should contain message timestamp 15:04, got:\n%s", v)
+	}
+}
+
+func TestChatModel_View_NilTimestamp_NoPanic(t *testing.T) {
+	pk := "abc123"
+	content := "hello world"
+	msg := generated.Message{Pubkey: &pk, Content: &content} // Timestamp nil
+	m := newChatModel(nil, serverConfig{}, "room", "", nil, "alice")
+	m.loading = false
+	m.messages = []generated.Message{msg}
+
+	v := m.viewPanel(60, 10, true)
+	if !strings.Contains(v, content) {
+		t.Errorf("view should still render content with nil timestamp, got:\n%s", v)
+	}
+}
+
 func BenchmarkViewPanel_ColorCache(b *testing.B) {
 	pk := "03d884d6abcdef1234567890"
 	content := "hello world"

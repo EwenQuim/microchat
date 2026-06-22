@@ -27,6 +27,15 @@ func ansiColor(s string, r, g, b uint8) string {
 	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", r, g, b, s)
 }
 
+// formatMsgTime renders a message timestamp as HH:MM, or 5 spaces when absent so the
+// content column stays aligned.
+func formatMsgTime(t *time.Time) string {
+	if t == nil {
+		return "     "
+	}
+	return t.Format("15:04")
+}
+
 // messagesLoadedMsg carries fetched messages or an error.
 type messagesLoadedMsg struct {
 	messages []generated.Message
@@ -460,7 +469,7 @@ func (m chatModel) viewPanel(width, height int, focused bool) string {
 			if m.msgCursorMode && start+i == m.msgCursor {
 				prefix = ">"
 			}
-			fmt.Fprintf(&b, "%s %s%s%s %s\n", prefix, coloredUser, suffix, dim(":"), content)
+			fmt.Fprintf(&b, "%s %s %s%s%s %s\n", prefix, dim(formatMsgTime(msg.Timestamp)), coloredUser, suffix, dim(":"), content)
 		}
 	}
 

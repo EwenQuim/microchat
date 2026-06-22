@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/EwenQuim/microchat/client/sdk/generated"
 )
 
@@ -168,5 +169,112 @@ func TestRoomModel_ZeroServers_StartsInListState(t *testing.T) {
 	m := makeRoomModel()
 	if m.state != roomStateList {
 		t.Errorf("state = %v, want roomStateList when no servers configured", m.state)
+	}
+}
+
+// TestRoomModel_ViewPanel_ShowsNavItems verifies the sidebar nav (Servers/Identities/Contacts) is rendered.
+func TestRoomModel_ViewPanel_ShowsNavItems(t *testing.T) {
+	srvA := serverConfig{URL: "http://a.example", Quickname: "Alpha"}
+	m := makeRoomModel(srvA)
+	m.state = roomStateList
+	m.serverRooms = []serverRoom{{server: srvA, room: makeRoom("general")}}
+
+	v := m.viewPanel(40, 24, true)
+	for _, want := range []string{"Servers", "Identities", "Contacts", "⚙"} {
+		if !strings.Contains(v, want) {
+			t.Errorf("view should contain nav item %q, got:\n%s", want, v)
+		}
+	}
+}
+
+// TestRoomModel_Down_CrossesIntoNav verifies the cursor moves from the last room into the nav section.
+func TestRoomModel_Down_CrossesIntoNav(t *testing.T) {
+	srvA := serverConfig{URL: "http://a.example", Quickname: "Alpha"}
+	m := makeRoomModel(srvA)
+	m.state = roomStateList
+	m.serverRooms = []serverRoom{{server: srvA, room: makeRoom("general")}}
+	m.cursor = 0
+
+	m2, _ := m.update(pressKey(tea.KeyDown))
+	if m2.cursor != 1 {
+		t.Fatalf("cursor = %d, want 1 (first nav item) after down from last room", m2.cursor)
+	}
+
+	// Cursor must not move past the last nav item (1 room + 3 nav => max index 3).
+	for range 5 {
+		m2, _ = m2.update(pressKey(tea.KeyDown))
+	}
+	if m2.cursor != 3 {
+		t.Errorf("cursor = %d, want 3 (clamped at last nav item)", m2.cursor)
+	}
+}
+
+// TestRoomModel_Enter_OnNav_SelectsSection verifies Enter on a nav item emits a
+// focused sectionSelectedMsg for the matching section.
+func TestRoomModel_Enter_OnNav_SelectsSection(t *testing.T) {
+	srvA := serverConfig{URL: "http://a.example", Quickname: "Alpha"}
+	cases := []struct {
+		cursor int
+		want   screen
+	}{
+		{1, screenServers},
+		{2, screenIdentities},
+		{3, screenContacts},
+	}
+	for _, tc := range cases {
+		m := makeRoomModel(srvA)
+		m.state = roomStateList
+		m.serverRooms = []serverRoom{{server: srvA, room: makeRoom("general")}}
+		m.cursor = tc.cursor
+
+		_, cmd := m.update(pressKey(tea.KeyEnter))
+		msg := runCmd(cmd)
+		sec, ok := msg.(sectionSelectedMsg)
+		if !ok {
+			t.Fatalf("cursor %d: expected sectionSelectedMsg, got %T", tc.cursor, msg)
+		}
+		if sec.to != tc.want {
+			t.Errorf("cursor %d: sectionSelectedMsg.to = %v, want %v", tc.cursor, sec.to, tc.want)
+		}
+		if !sec.focus {
+			t.Errorf("cursor %d: Enter on a nav item should focus the section", tc.cursor)
+		}
+	}
+}
+
+// TestRoomModel_PreviewCmd_OnNav_SelectsSection verifies arrowing onto a nav item
+// previews that section (unfocused) in the right pane.
+func TestRoomModel_PreviewCmd_OnNav_SelectsSection(t *testing.T) {
+	srvA := serverConfig{URL: "http://a.example", Quickname: "Alpha"}
+	m := makeRoomModel(srvA)
+	m.state = roomStateList
+	m.serverRooms = []serverRoom{{server: srvA, room: makeRoom("general")}}
+	m.cursor = 1 // first nav item (Servers)
+
+	msg := runCmd(m.previewCmd())
+	sec, ok := msg.(sectionSelectedMsg)
+	if !ok {
+		t.Fatalf("expected sectionSelectedMsg from previewCmd on nav item, got %T", msg)
+	}
+	if sec.to != screenServers {
+		t.Errorf("sectionSelectedMsg.to = %v, want screenServers", sec.to)
+	}
+	if sec.focus {
+		t.Error("arrow preview should not focus the section")
+	}
+}
+
+// TestRoomModel_Enter_OnRoom_StillOpensRoom verifies room selection is unaffected by the nav section.
+func TestRoomModel_Enter_OnRoom_StillOpensRoom(t *testing.T) {
+	srvA := serverConfig{URL: "http://a.example", Quickname: "Alpha"}
+	m := makeRoomModel(srvA)
+	m.state = roomStateList
+	m.serverRooms = []serverRoom{{server: srvA, room: makeRoom("general")}}
+	m.cursor = 0
+
+	_, cmd := m.update(pressKey(tea.KeyEnter))
+	msg := runCmd(cmd)
+	if _, ok := msg.(roomSelectedMsg); !ok {
+		t.Fatalf("expected roomSelectedMsg when entering a room, got %T", msg)
 	}
 }

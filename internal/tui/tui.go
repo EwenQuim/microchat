@@ -59,6 +59,56 @@ func deriveUsername(id *identity, cfg appConfig) string {
 	return username
 }
 
+// syncMainConfig persists and propagates config edits made in the in-pane management
+// sections of mainModel, mirroring the per-screen save logic used for the full-screen
+// settings screens. It clears the changed flags it consumes.
+func (m model) syncMainConfig() (model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	if m.main.serversSec.configChanged {
+		m.main.serversSec.configChanged = false
+		m.cfg.Servers = m.main.serversSec.servers
+		_ = saveConfig(m.cfg)
+		// Refresh the rooms list against the updated server set, preserving the cursor.
+		clients := buildClientsMap(m.cfg.Servers)
+		m.main.clients = clients
+		m.main.servers = m.cfg.Servers
+		m.main.rooms.clients = clients
+		m.main.rooms.servers = m.cfg.Servers
+		m.main.rooms.loading = make(map[string]bool, len(m.cfg.Servers))
+		for _, srv := range m.cfg.Servers {
+			m.main.rooms.loading[srv.URL] = true
+		}
+		cmd = tea.Batch(cmd, m.main.rooms.init())
+	}
+
+	if m.main.identitiesSec.configChanged {
+		m.main.identitiesSec.configChanged = false
+		m.cfg.Identities = m.main.identitiesSec.entries
+		m.cfg.ActiveIndex = m.main.identitiesSec.activeIndex
+		if m.cfg.ActiveIndex >= 0 && m.cfg.ActiveIndex < len(m.cfg.Identities) {
+			if id, err := identityFromHex(m.cfg.Identities[m.cfg.ActiveIndex].PrivateKey); err == nil {
+				m.id = &id
+				m.main.id = &id
+				m.main.username = deriveUsername(&id, m.cfg)
+				m.main.chat.id = &id
+				m.main.chat.username = m.main.username
+			}
+		}
+		_ = saveConfig(m.cfg)
+	}
+
+	if m.main.contactsSec.configChanged {
+		m.main.contactsSec.configChanged = false
+		m.cfg.Contacts = m.main.contactsSec.contacts
+		m.main.contacts = m.cfg.Contacts
+		m.main.chat.contacts = m.cfg.Contacts
+		_ = saveConfig(m.cfg)
+	}
+
+	return m, cmd
+}
+
 func initialModel(cfg appConfig) model {
 	m := model{cfg: cfg}
 
@@ -92,7 +142,7 @@ func initialModel(cfg appConfig) model {
 		clients := buildClientsMap(servers)
 		username := deriveUsername(m.id, cfg)
 		m.screen = screenRooms
-		m.main = newMainModel(clients, servers, m.id, username, cfg.Contacts)
+		m.main = newMainModel(cfg, clients, servers, m.id, username, cfg.Contacts)
 	}
 
 	return m
@@ -145,7 +195,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			servers := m.servers.servers
 			clients := buildClientsMap(servers)
 			username := deriveUsername(m.id, m.cfg)
-			m.main = newMainModel(clients, servers, m.id, username, m.cfg.Contacts)
+			m.main = newMainModel(m.cfg, clients, servers, m.id, username, m.cfg.Contacts)
 			return m, m.main.init()
 		}
 		return m, nil
@@ -218,7 +268,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		var cmd tea.Cmd
 		m.main, cmd = m.main.update(msg)
-		return m, cmd
+		m, cmd2 := m.syncMainConfig()
+		return m, tea.Batch(cmd, cmd2)
 	}
 
 	return m, nil

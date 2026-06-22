@@ -127,6 +127,62 @@ func (m identitiesModel) update(msg tea.Msg) (identitiesModel, tea.Cmd) {
 	return m, nil
 }
 
+// viewPanel renders the Identities section inside the right pane of the main two-pane view.
+func (m identitiesModel) viewPanel(width, height int, focused bool) string {
+	var body []string
+	var help string
+
+	switch m.state {
+	case identitiesStateList:
+		if len(m.entries) == 0 {
+			body = append(body, " (no identities)")
+		} else {
+			activeW, nameW := 1, 4
+			rows := make([]table.Row, len(m.entries))
+			for i, e := range m.entries {
+				active := " "
+				if i == m.activeIndex {
+					active = "*"
+				}
+				r, g, bv := pubkeyColor(e.PublicKey)
+				name := ansiColor(e.Name, r, g, bv)
+				displayKey := e.PublicKey
+				if npub, err := pubKeyHexToNpub(e.PublicKey); err == nil {
+					displayKey = npub
+				}
+				rows[i] = table.Row{active, name, displayKey}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+			}
+			other := 3 + (activeW + 2) + (nameW + 2) // cursor + active + name
+			keyW := fitColumnWidth(width, 64, other)
+			for i := range rows {
+				rows[i][2] = dim(truncCell(rows[i][2], keyW))
+			}
+			cols := []table.Column{
+				{Title: "", Width: activeW},
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "Public Key", Width: max(keyW, visibleWidth("Public Key"))},
+			}
+			body = panelBodyLines(renderTable(cols, rows, m.cursor, ""))
+		}
+		help = helpBar("↑↓", "select", "enter", "activate", "a", "add", "d", "delete", "←", "back")
+
+	case identitiesStateAddKey:
+		body = panelBodyLines(m.sub.view(width, height))
+
+	case identitiesStateAddName:
+		body = append(body, " Name this identity (optional):", "", " > "+m.inputName+"█")
+		help = helpBar("enter", "confirm", "esc", "cancel")
+	}
+
+	if m.err != "" {
+		body = append(body, "", " Error: "+m.err)
+	}
+	return renderPanel(width, height, focused, "Identities", body, help)
+}
+
 func (m identitiesModel) view(width, height int) string {
 	var b strings.Builder
 	pad := "  "
