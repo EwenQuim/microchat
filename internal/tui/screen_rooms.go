@@ -17,6 +17,17 @@ const (
 	maxRoomNameWidth   = 20
 )
 
+// roomNavTargets are the management screens pinned at the bottom of the rooms panel.
+// They occupy cursor indices immediately after the room list.
+var roomNavTargets = []struct {
+	label string
+	to    screen
+}{
+	{"Servers", screenServers},
+	{"Identities", screenIdentities},
+	{"Contacts", screenContacts},
+}
+
 type roomState int
 
 const (
@@ -155,7 +166,12 @@ func (m roomModel) createRoom(name string) tea.Cmd {
 }
 
 func (m roomModel) previewCmd() tea.Cmd {
-	if m.cursor >= len(m.serverRooms) {
+	if navIdx := m.cursor - len(m.serverRooms); navIdx >= 0 {
+		// Cursor is on a pinned nav item: preview that section in the right pane.
+		if navIdx < len(roomNavTargets) {
+			to := roomNavTargets[navIdx].to
+			return func() tea.Msg { return sectionSelectedMsg{to: to, focus: false} }
+		}
 		return nil
 	}
 	sr := m.serverRooms[m.cursor]
@@ -286,7 +302,7 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 				}
 				return m, m.previewCmd()
 			case "down", "j":
-				if m.cursor < len(m.serverRooms)-1 {
+				if m.cursor < len(m.serverRooms)+len(roomNavTargets)-1 {
 					m.cursor++
 				}
 				return m, m.previewCmd()
@@ -314,6 +330,11 @@ func (m roomModel) update(msg tea.Msg) (roomModel, tea.Cmd) {
 					room := m.selectedRoom
 					srv := m.selectedServer
 					return m, func() tea.Msg { return roomSelectedMsg{server: srv, room: room, password: ""} }
+				}
+				// Cursor is on a pinned nav item: open the section in the right pane and focus it.
+				if navIdx := m.cursor - len(m.serverRooms); navIdx >= 0 && navIdx < len(roomNavTargets) {
+					to := roomNavTargets[navIdx].to
+					return m, func() tea.Msg { return sectionSelectedMsg{to: to, focus: true} }
 				}
 			case "/":
 				m.state = roomStateSearch
@@ -421,48 +442,85 @@ func (m roomModel) viewPanel(width, height int, focused bool) string {
 		return b.String()
 	}
 
+	// Build the body lines for the current state; nav is pinned in list/loading states.
+	var body []string
 	if m.err != "" {
-		b.WriteString(" Error: " + m.err + "\n")
+		body = append(body, " Error: "+m.err)
 	}
-
+	showNav := false
 	switch m.state {
 	case roomStateLoading:
+		showNav = true
 		if len(m.serverRooms) == 0 {
-			b.WriteString(" Loading…\n")
+			body = append(body, " Loading…")
 		} else {
 			// Partial results: show rooms from servers that already responded
 			for i, sr := range m.serverRooms {
-				cursor := "  "
-				if i == m.cursor {
-					cursor = "> "
-				}
-				b.WriteString(roomLine(sr, cursor))
+				body = append(body, roomCursorLine(sr, i == m.cursor))
 			}
-			b.WriteString(dim(" (loading…)") + "\n")
+			body = append(body, dim(" (loading…)"))
 		}
 	case roomStateList:
+		showNav = true
 		if len(m.serverRooms) == 0 {
-			b.WriteString(" (no rooms)\n")
+			body = append(body, " (no rooms)")
 			if len(m.servers) == 0 {
-				b.WriteString(" [tab] to add a server\n")
+				body = append(body, " [tab] to add a server")
 			} else {
-				b.WriteString(" [c] to create one\n")
+				body = append(body, " [c] to create one")
 			}
 		} else {
 			for i, sr := range m.serverRooms {
-				cursor := "  "
-				if i == m.cursor {
-					cursor = "> "
-				}
-				b.WriteString(roomLine(sr, cursor))
+				body = append(body, roomCursorLine(sr, i == m.cursor))
 			}
 		}
 	case roomStateSearch:
-		b.WriteString(" Search: " + m.inputText + "█\n")
+		body = append(body, " Search: "+m.inputText+"█")
 	case roomStateCreate:
-		b.WriteString(" New room name:\n")
-		b.WriteString(" > " + m.inputText + "█\n")
+		body = append(body, " New room name:", " > "+m.inputText+"█")
+	}
+
+	if !showNav {
+		for _, line := range body {
+			b.WriteString(line + "\n")
+		}
+		return b.String()
+	}
+
+	// Pinned nav block: a dim rule followed by the management screens.
+	nav := make([]string, 0, len(roomNavTargets)+1)
+	nav = append(nav, dim(strings.Repeat("─", width)))
+	for i, item := range roomNavTargets {
+		cursor := "  "
+		if m.cursor == len(m.serverRooms)+i {
+			cursor = "> "
+		}
+		nav = append(nav, " "+cursor+"⚙ "+item.label)
+	}
+
+	// Pin nav to the bottom: header took 2 lines; fill the gap between body and nav.
+	avail := max(height-2-len(nav), 0)
+	if len(body) > avail {
+		body = body[:avail] // keep the nav visible on very small terminals
+	}
+	for _, line := range body {
+		b.WriteString(line + "\n")
+	}
+	for i := len(body); i < avail; i++ {
+		b.WriteString("\n")
+	}
+	for _, line := range nav {
+		b.WriteString(line + "\n")
 	}
 
 	return b.String()
+}
+
+// roomCursorLine renders a room entry with the selection caret, trimming the trailing newline.
+func roomCursorLine(sr serverRoom, selected bool) string {
+	cursor := "  "
+	if selected {
+		cursor = "> "
+	}
+	return strings.TrimRight(roomLine(sr, cursor), "\n")
 }

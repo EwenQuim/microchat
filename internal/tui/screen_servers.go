@@ -198,6 +198,85 @@ func (m serverModel) update(msg tea.Msg) (serverModel, tea.Cmd) {
 	return m, nil
 }
 
+// viewPanel renders the Servers section inside the right pane of the main two-pane view.
+func (m serverModel) viewPanel(width, height int, focused bool) string {
+	var body []string
+	var help string
+
+	switch m.state {
+	case serverStateList:
+		visible := make([]serverConfig, 0, len(m.servers))
+		for _, srv := range m.servers {
+			if srv.isVisible() {
+				visible = append(visible, srv)
+			}
+		}
+		visibleCursor, count := 0, 0
+		for i, srv := range m.servers {
+			if srv.isVisible() {
+				if i == m.cursor {
+					visibleCursor = count
+				}
+				count++
+			}
+		}
+		if len(visible) == 0 {
+			body = append(body, " (no servers — press a to add one)")
+		} else {
+			nameW, urlW, flagW := 4, 3, 0
+			rows := make([]table.Row, len(visible))
+			for i, srv := range visible {
+				name := srv.Quickname
+				if name == "" {
+					name = srv.URL
+				}
+				flags := ""
+				if srv.Status == ServerStatusAdvertise {
+					flags = "⚑"
+				}
+				rows[i] = table.Row{name, srv.URL, flags}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+				if w := visibleWidth(srv.URL); w > urlW {
+					urlW = w
+				}
+				if w := visibleWidth(flags); w > flagW {
+					flagW = w
+				}
+			}
+			other := 3 + (nameW + 2) // cursor col + name col
+			if flagW > 0 {
+				other += flagW + 2
+			}
+			urlW = fitColumnWidth(width, urlW, other)
+			for i := range rows {
+				rows[i][1] = truncCell(rows[i][1], urlW)
+			}
+			cols := []table.Column{
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "URL", Width: max(urlW, visibleWidth("URL"))},
+				{Title: "", Width: flagW},
+			}
+			body = panelBodyLines(renderTable(cols, rows, visibleCursor, ""))
+		}
+		help = helpBar("↑↓", "select", "a", "add", "d", "delete", "←", "back")
+
+	case serverStateAddURL:
+		body = append(body, " Enter server URL:", "", " > "+m.inputText+"█")
+		help = helpBar("enter", "confirm", "esc", "cancel")
+
+	case serverStateLoading:
+		body = append(body, " Connecting to "+m.inputText+"…")
+		help = helpBar("esc", "cancel")
+	}
+
+	if m.err != "" {
+		body = append(body, "", " Error: "+m.err)
+	}
+	return renderPanel(width, height, focused, "Servers", body, help)
+}
+
 func (m serverModel) view(width, height int) string {
 	var b strings.Builder
 	pad := "  "

@@ -163,6 +163,61 @@ func (m contactsModel) update(msg tea.Msg) (contactsModel, tea.Cmd) {
 	return m, nil
 }
 
+// viewPanel renders the Contacts section inside the right pane of the main two-pane view.
+func (m contactsModel) viewPanel(width, height int, focused bool) string {
+	var body []string
+	var help string
+
+	switch m.state {
+	case contactsStateList:
+		if len(m.contacts) == 0 {
+			body = append(body, " (no contacts — press a to add one)")
+		} else {
+			nameW := 4
+			rows := make([]table.Row, len(m.contacts))
+			for i, c := range m.contacts {
+				r, g, bv := pubkeyColor(c.PubKey)
+				name := ansiColor(c.DisplayName, r, g, bv)
+				displayKey := c.PubKey
+				if npub, err := pubKeyHexToNpub(c.PubKey); err == nil {
+					displayKey = npub
+				}
+				rows[i] = table.Row{name, displayKey}
+				if w := visibleWidth(name); w > nameW {
+					nameW = w
+				}
+			}
+			keyW := fitColumnWidth(width, 64, 3+(nameW+2)) // cursor + name
+			for i := range rows {
+				rows[i][1] = dim(truncCell(rows[i][1], keyW))
+			}
+			cols := []table.Column{
+				{Title: "Name", Width: max(nameW, visibleWidth("Name"))},
+				{Title: "Public Key", Width: max(keyW, visibleWidth("Public Key"))},
+			}
+			body = panelBodyLines(renderTable(cols, rows, m.cursor, ""))
+		}
+		help = helpBar("↑↓", "select", "a", "add", "r", "rename", "d", "delete", "←", "back")
+
+	case contactsStateAddNpub:
+		body = append(body, " Enter npub (public key):", "", " > "+m.inputNpub+"█")
+		help = helpBar("enter", "confirm", "esc", "cancel")
+
+	case contactsStateAddName:
+		body = append(body, " Enter display name:", "", " > "+m.inputName+"█")
+		help = helpBar("enter", "confirm", "esc", "cancel")
+
+	case contactsStateRename:
+		body = append(body, " Rename contact:", "", " > "+m.inputName+"█")
+		help = helpBar("enter", "confirm", "esc", "cancel")
+	}
+
+	if m.err != "" {
+		body = append(body, "", " Error: "+m.err)
+	}
+	return renderPanel(width, height, focused, "Contacts", body, help)
+}
+
 func (m contactsModel) view(width, height int) string {
 	var b strings.Builder
 	pad := "  "
