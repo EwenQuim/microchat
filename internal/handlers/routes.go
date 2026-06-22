@@ -11,6 +11,15 @@ import (
 	"github.com/jub0bs/cors"
 )
 
+// Rate limits per route, keyed by their window duration.
+const (
+	roomsRateLimitPerMin       = 120 // GET /rooms and GET /rooms/search
+	createRoomRateLimitPerHour = 10  // POST /rooms
+	getMessagesRateLimitPerMin = 60  // GET /rooms/{room}/messages
+	sendMessageBurst           = 20  // POST /rooms/{room}/messages burst allowance
+	sendMessageRateLimitPerMin = 30  // POST /rooms/{room}/messages sustained
+)
+
 func RegisterChatRoutes(s *fuego.Server, chatService *services.ChatService, cfg *config.Config) {
 	corsMw, err := cors.NewMiddleware(cors.Config{
 		Origins:        []string{"*"},
@@ -33,21 +42,21 @@ func RegisterChatRoutes(s *fuego.Server, chatService *services.ChatService, cfg 
 	chatGroup := fuego.Group(s, "/rooms", option.TagInfo("chat", "routes relative to rooms and messaging"))
 
 	fuego.Get(chatGroup, "", GetRooms(chatService),
-		option.Middleware(middleware.IPRateLimit(minuteRL, 120, time.Minute)),
+		option.Middleware(middleware.IPRateLimit(minuteRL, roomsRateLimitPerMin, time.Minute)),
 	)
 	fuego.Get(chatGroup, "/search", SearchRooms(chatService),
-		option.Middleware(middleware.IPRateLimit(minuteRL, 120, time.Minute)),
+		option.Middleware(middleware.IPRateLimit(minuteRL, roomsRateLimitPerMin, time.Minute)),
 	)
 	fuego.Post(chatGroup, "", CreateRoom(chatService),
 		option.RequestContentType("application/json"),
-		option.Middleware(middleware.IPRateLimit(hourRL, 10, time.Hour)),
+		option.Middleware(middleware.IPRateLimit(hourRL, createRoomRateLimitPerHour, time.Hour)),
 	)
 	fuego.Get(chatGroup, "/{room}/messages", GetMessages(chatService, minuteRL),
-		option.Middleware(middleware.IPRateLimit(minuteRL, 60, time.Minute)),
+		option.Middleware(middleware.IPRateLimit(minuteRL, getMessagesRateLimitPerMin, time.Minute)),
 	)
 	fuego.Post(chatGroup, "/{room}/messages", SendMessage(chatService, minuteRL),
 		option.RequestContentType("application/json"),
-		option.Middleware(middleware.MessageRateLimit(minuteRL, 20, 30, time.Minute)),
+		option.Middleware(middleware.MessageRateLimit(minuteRL, sendMessageBurst, sendMessageRateLimitPerMin, time.Minute)),
 	)
 
 	// User routes

@@ -16,7 +16,7 @@ type Room struct {
 
 var _ fuego.OutTransformer = (*Room)(nil)
 
-// InTransform implements fuego.InTransformer.
+// OutTransform implements fuego.OutTransformer.
 func (r *Room) OutTransform(context.Context) error {
 	if r.HasPassword {
 		r.LastMessageContent = nil

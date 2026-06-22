@@ -1,12 +1,16 @@
 package crypto
 
 import (
+	"errors"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 const bcryptCost = 12
+
+// ErrInvalidPassword is returned when a password does not match the stored hash.
+var ErrInvalidPassword = errors.New("invalid password")
 
 // HashPassword hashes a password using bcrypt with a cost factor of 12
 func HashPassword(password string) (string, error) {
@@ -33,7 +37,7 @@ func VerifyPassword(password, hash string) error {
 
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if err != nil {
-		return fmt.Errorf("invalid password")
+		return ErrInvalidPassword
 	}
 
 	return nil

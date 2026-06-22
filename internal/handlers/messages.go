@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,12 @@ import (
 	"github.com/EwenQuim/microchat/pkg/crypto"
 
 	"github.com/go-fuego/fuego"
+)
+
+const (
+	maxMessageLimit           = 200                    // cap on messages returned per request
+	maxPasswordAttemptsPerMin = 5                      // failed room-password attempts per IP per minute
+	passwordFailDelay         = 500 * time.Millisecond // delay on password failure to slow brute-force
 )
 
 type GetMessagesQuery struct {
@@ -32,11 +39,11 @@ func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLi
 		err = chatService.ValidateRoomPassword(c.Context(), room, password)
 		if err != nil {
 			ip := middleware.IPFromRequest(c.Request())
-			if !pwLimiter.Allow("pw:"+ip, 5, time.Minute) {
+			if !pwLimiter.Allow("pw:"+ip, maxPasswordAttemptsPerMin, time.Minute) {
 				return nil, fuego.HTTPError{Status: http.StatusTooManyRequests, Title: "Too Many Requests", Detail: "too many failed password attempts"}
 			}
 			slog.ErrorContext(c, "cannot validate password", "err", err)
-			time.Sleep(500 * time.Millisecond) // Mitigate brute-force attacks
+			time.Sleep(passwordFailDelay) // Mitigate brute-force attacks
 			return []models.Message{}, nil
 		}
 
@@ -50,8 +57,8 @@ func GetMessages(chatService *services.ChatService, pwLimiter *middleware.RateLi
 			}
 			msgParams.Before = &t
 		}
-		if msgParams.Limit > 200 {
-			msgParams.Limit = 200
+		if msgParams.Limit > maxMessageLimit {
+			msgParams.Limit = maxMessageLimit
 		}
 
 		return chatService.GetMessages(c.Context(), room, msgParams)
@@ -74,7 +81,7 @@ func SendMessage(chatService *services.ChatService, pwLimiter *middleware.RateLi
 			err := chatService.ValidateRoomPassword(c.Context(), room, password)
 			if err != nil {
 				ip := middleware.IPFromRequest(c.Request())
-				if !pwLimiter.Allow("pw:"+ip, 5, time.Minute) {
+				if !pwLimiter.Allow("pw:"+ip, maxPasswordAttemptsPerMin, time.Minute) {
 					return nil, fuego.HTTPError{Status: http.StatusTooManyRequests, Title: "Too Many Requests", Detail: "too many failed password attempts"}
 				}
 				return nil, fmt.Errorf("invalid room password")
@@ -82,7 +89,7 @@ func SendMessage(chatService *services.ChatService, pwLimiter *middleware.RateLi
 		} else {
 			// Check if room requires password
 			err := chatService.ValidateRoomPassword(c.Context(), room, "")
-			if err != nil && err.Error() == "invalid password" {
+			if errors.Is(err, crypto.ErrInvalidPassword) {
 				return nil, fmt.Errorf("password required for this room")
 			}
 		}

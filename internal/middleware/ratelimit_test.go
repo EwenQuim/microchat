@@ -1,9 +1,38 @@
 package middleware
 
 import (
+	"net/http/httptest"
 	"testing"
 	"time"
 )
+
+func TestIPFromRequest(t *testing.T) {
+	tests := []struct {
+		name       string
+		forwarded  string
+		remoteAddr string
+		want       string
+	}{
+		{"x-forwarded-for single", "203.0.113.7", "10.0.0.1:1234", "203.0.113.7"},
+		{"x-forwarded-for chain", "203.0.113.7, 70.41.3.18", "10.0.0.1:1234", "203.0.113.7"},
+		{"x-forwarded-for with spaces", "  203.0.113.7  ,70.41.3.18", "10.0.0.1:1234", "203.0.113.7"},
+		{"fallback to remote addr", "", "10.0.0.1:1234", "10.0.0.1"},
+		{"remote addr without port", "", "10.0.0.1", "10.0.0.1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := httptest.NewRequest("GET", "/", nil)
+			r.RemoteAddr = tt.remoteAddr
+			if tt.forwarded != "" {
+				r.Header.Set("X-Forwarded-For", tt.forwarded)
+			}
+			if got := IPFromRequest(r); got != tt.want {
+				t.Errorf("IPFromRequest() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestAllow_UnderLimit(t *testing.T) {
 	rl := NewRateLimiter(time.Minute)

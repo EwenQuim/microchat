@@ -9,6 +9,7 @@ import (
 
 	"github.com/EwenQuim/microchat/internal/models"
 	"github.com/EwenQuim/microchat/internal/services"
+	"github.com/EwenQuim/microchat/pkg/crypto"
 	"github.com/google/uuid"
 )
 
@@ -315,7 +316,7 @@ func (s *Store) ValidateRoomPassword(ctx context.Context, roomName, password str
 
 	// In-memory store uses plain text comparison for simplicity
 	if *room.PasswordHash != password {
-		return fmt.Errorf("invalid password")
+		return crypto.ErrInvalidPassword
 	}
 
 	return nil
